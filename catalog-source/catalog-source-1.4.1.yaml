@@ -1,0 +1,34 @@
+#
+# Copyright IBM Corporation 2021
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   IBM Corporation - implementation
+#
+
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: wazi-codeready-operator-catalog
+  namespace: openshift-marketplace
+  labels:
+    name: wazi-codeready-operator-catalog
+    app.kubernetes.io/name: wazi-codeready-operator-catalog
+    app.kubernetes.io/instance: wazi-codeready-operator-catalog-1.4.1
+    app.kubernetes.io/version: "1.4.1"
+    app.kubernetes.io/component: workspaces
+    app.kubernetes.io/part-of: wazi-developer
+    app.kubernetes.io/managed-by: olm
+  annotations:
+    productVersion: "1.4.1"
+            
+spec:
+  displayName: IBM Wazi Developer Operators
+  publisher: IBM
+  sourceType: grpc
+  image: icr.io/cpopen/ibm-wazi-developer-for-workspaces-catalog@sha256:dd6ed0f026ba1ef9abea6bcdf8b8f812ce6f79356ef085149e750b1ff0dd71fe
+  # tag: icr.io/cpopen/ibm-wazi-developer-for-workspaces-catalog:1.4.1

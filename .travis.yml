@@ -1,0 +1,28 @@
+language: generic
+sudo: required
+dist: trusty
+group: bluezone
+services:
+  - docker
+env:
+  global:
+  - IMAGE_DEVFILE="icr.io/wazi-code/ibm-wazi-developer-for-workspaces-dev-file"
+  - IMAGE_PLUGIN="icr.io/wazi-code/ibm-wazi-developer-for-workspaces-plugin"
+  - IMAGE_OPERATOR="icr.io/cpopen/ibm-wazi-developer-for-workspaces-operator"
+  - IMAGE_CATALOG="icr.io/cpopen/ibm-wazi-developer-for-workspaces-catalog"
+  - DOCKERFILE_DEVFILE="./codeready-workspaces-devfileregistry/build/dockerfiles/Dockerfile"
+  - DOCKERFILE_PLUGIN="./codeready-workspaces-pluginregistry/build/dockerfiles/Dockerfile"
+  - DOCKERFILE_OPERATOR="./codeready-workspaces-operator/Dockerfile"
+  - DOCKERFILE_CATALOG="./codeready-workspaces-operator/bundle/Dockerfile"
+before_install:
+  - touch ./codeready-workspaces-operator/bundle/bundles.db
+  - curl -L https://api.github.com/repos/che-incubator/header-rewrite-traefik-plugin/zipball --output ./codeready-workspaces-operator/asset-header-rewrite-traefik-plugin.zip
+  - echo $DOCKER_KEY | docker login -u $DOCKER_USER --password-stdin registry.redhat.io
+install:
+  - docker build -t ${IMAGE_DEVFILE}:travis -f ${DOCKERFILE_DEVFILE} --target "registry" ./codeready-workspaces-devfileregistry
+  - docker build -t ${IMAGE_PLUGIN}:travis -f ${DOCKERFILE_PLUGIN} --target "registry" ./codeready-workspaces-pluginregistry
+  - docker build -t ${IMAGE_OPERATOR}:travis -f ${DOCKERFILE_OPERATOR} ./codeready-workspaces-operator
+  - docker build -t ${IMAGE_CATALOG}:travis -f ${DOCKERFILE_CATALOG} ./codeready-workspaces-operator
+script: echo "Success!"
+notifications:
+  slack: ibm-systems-z:kiD2FZtJUJtUSp57dwHWwNX1
