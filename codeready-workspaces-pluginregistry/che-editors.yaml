@@ -22,7 +22,7 @@ editors:
     components:
       - name: theia-ide
         container:
-          image: 'registry.redhat.io/codeready-workspaces/theia-rhel8:2.14'
+          image: 'registry.redhat.io/codeready-workspaces/theia-rhel8@sha256:928f5792cc39e6b7785f4f92ec0d6a5b9cd36fb285c1f72d12239beb05d8696e'
           env:
             - name: THEIA_PLUGINS
               value: 'local-dir:///plugins'
@@ -116,7 +116,7 @@ editors:
         volume: {}
       - name: che-machine-exec
         container:
-          image: 'registry.redhat.io/codeready-workspaces/machineexec-rhel8:2.14'
+          image: 'registry.redhat.io/codeready-workspaces/machineexec-rhel8@sha256:1e25377fe0538ef380030a898fcfcff9493ff0bdbaa4db77d648cdcb0036816b'
           memoryLimit: 128Mi
           memoryRequest: 32Mi
           cpuLimit: 500m
@@ -143,7 +143,7 @@ editors:
             - exposedPort: 3333
       - name: remote-runtime-injector
         container:
-          image: 'registry.redhat.io/codeready-workspaces/theia-endpoint-rhel8:2.14'
+          image: 'registry.redhat.io/codeready-workspaces/theia-endpoint-rhel8@sha256:128e281bceaccfcb3f9c3aebdd218b6bb6381f9c41cff2259eba47dd49d95c4d'
           memoryLimit: 128Mi
           memoryRequest: 32Mi
           cpuLimit: 500m
@@ -176,7 +176,7 @@ editors:
     components:
       - name: intellij
         container:
-          image: 'registry.redhat.io/codeready-workspaces/idea-rhel8:2.14'
+          image: 'registry.redhat.io/codeready-workspaces/idea-rhel8@sha256:073d1a803faac261bae15642e66213a54cf2cb96429254c1138b0eda3f182105'
           volumeMounts:
             - name: projector-user
               path: /home/projector-user

@@ -10,7 +10,7 @@
 #   IBM Corporation - implementation
 #
 
-displayName: Wazi Developer
-description: COBOL, PL/I, HLASM, REXX stack for IBM Z Open Editor 2.0.0, IBM Z Open Debug 2.0.0, Zowe Explorer 1.22.0, Zowe CLI 6.37.2, Ansible 5.3.0
+displayName: Wazi Code
+description: COBOL, PL/I, HLASM, REXX stack for IBM Z Open Editor 2.1.0, IBM Z Open Debug 2.1.0, Zowe Explorer 2.0.2, Zowe CLI 7.1.1, Ansible 5.8.0
 tags: ["COBOL", "PL/I", "PLI", "PL1", "HLASM", "JCL", "IDE", "LSP", "language-server", "z/OS", "zOS", "IBM Z", "Z Software", "Zowe", "Mainframe", "REXX", "Debug", "Ansible"]
 icon: /images/type-wazi.svg

@@ -359,7 +359,7 @@ update_container_image_references
 assertFileContentEquals "${METAS_DIR}/meta.yaml" "${expected_metayaml}"
 
 #################################################################
-initTest "Should replace 2.11 image references in theia-ide devfile.yaml with RELATED_IMAGE env vars "
+initTest "Should replace 2.14 image references in theia-ide devfile.yaml with RELATED_IMAGE env vars "
 
 devfileyaml=$(cat <<-END
 schemaVersion: 2.1.0
@@ -375,7 +375,7 @@ events:
 components:
   - name: theia-ide
     container:
-      image: 'registry.redhat.io/codeready-workspaces/theia-rhel8:2.11'
+      image: 'registry.redhat.io/codeready-workspaces/theia-rhel8@sha256:be279f90a9aeeb885fcedca4749396ce16825eb66947900b549cfdf16f97dfeb'
       env:
         - name: THEIA_PLUGINS
           value: 'local-dir:///plugins'
@@ -465,7 +465,7 @@ components:
     volume: {}
   - name: che-machine-exec
     container:
-      image: 'registry.redhat.io/codeready-workspaces/machineexec-rhel8:2.11'
+      image: 'registry.redhat.io/codeready-workspaces/machineexec-rhel8@sha256:bfdd8cf61a6fad757f1e8334aa84dbf44baddf897ff8def7496bf6dbc066679d'
       command:
         - /go/bin/che-machine-exec
         - '--url'
@@ -477,7 +477,7 @@ components:
     attributes: {}
   - name: remote-runtime-injector
     container:
-      image: 'registry.redhat.io/codeready-workspaces/theia-endpoint-rhel8:2.11'
+      image: 'registry.redhat.io/codeready-workspaces/theia-endpoint-rhel8@sha256:cda289285594c87d1acfb77543aae109973cd1b84953bde061a27889423979c5'
       env:
         - name: PLUGIN_REMOTE_ENDPOINT_EXECUTABLE
           value: /remote-endpoint/plugin-remote-endpoint
@@ -644,7 +644,7 @@ assertFileContentEquals "${METAS_DIR}/devfile.yaml" "${expected_devfileyaml}"
 
 
 #################################################################
-initTest "Should replace 2.11 image references in che-machine-exec-plugin devfile.yaml with RELATED_IMAGE env vars "
+initTest "Should replace 2.14 image references in che-machine-exec-plugin devfile.yaml with RELATED_IMAGE env vars "
 
 devfileyaml=$(cat <<-END
 schemaVersion: 2.1.0
@@ -653,7 +653,7 @@ metadata:
 components:
   - name: che-machine-exec
     container:
-      image: 'registry.redhat.io/codeready-workspaces/machineexec-rhel8:2.11'
+      image: 'registry.redhat.io/codeready-workspaces/machineexec-rhel8@sha256:bfdd8cf61a6fad757f1e8334aa84dbf44baddf897ff8def7496bf6dbc066679d'
       command:
         - /go/bin/che-machine-exec
         - '--url'
@@ -733,7 +733,7 @@ metadata:
     - Snippets
   icon: /images/redhat-java-icon.png
 sidecar:
-  image: 'registry.redhat.io/codeready-workspaces/plugin-java11-rhel8:2.11'
+  image: 'registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:2036cbb70aae5f5d507657bd4b820e340ee0bacf3d4b520d80dbd21aad85e13a'
   name: vscode-java
   memoryLimit: 1500Mi
   cpuLimit: 500m
@@ -759,7 +759,7 @@ metadata:
     - Snippets
   icon: /images/redhat-java-icon.png
 sidecar:
-  image: 'registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:d0337762e71fd4badabcb38a582b2f35e7e7fc1c9c0f2e841e339d45b7bd34ed'
+  image: 'registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:2036cbb70aae5f5d507657bd4b820e340ee0bacf3d4b520d80dbd21aad85e13a'
   name: vscode-java
   memoryLimit: 1500Mi
   cpuLimit: 500m
@@ -769,7 +769,7 @@ extensions:
 END
 )
 echo "$cheTheiaPluginYaml" > "${METAS_DIR}/che-theia-plugin.yaml"
-export RELATED_IMAGE_codeready_workspaces_plugin_java11_plugin_registry_image_GIXDCMIK='registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:d0337762e71fd4badabcb38a582b2f35e7e7fc1c9c0f2e841e339d45b7bd34ed'
+export RELATED_IMAGE_codeready_workspaces_plugin_java11_plugin_registry_image_GIXDCMIK='registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:2036cbb70aae5f5d507657bd4b820e340ee0bacf3d4b520d80dbd21aad85e13a'
 # shellcheck disable=SC1090
 source "${script_dir}/entrypoint.sh"
 
@@ -781,15 +781,15 @@ assertFileContentEquals "${METAS_DIR}/che-theia-plugin.yaml" "${expected_cheThei
 initTest "Should replace image references in external_images.txt with RELATED_IMAGE env vars"
 
 externalImagesTxt=$(cat <<-END
-registry.redhat.io/codeready-workspaces/machineexec-rhel8:2.11
-registry.redhat.io/codeready-workspaces/plugin-java11-rhel8:2.11
-registry.redhat.io/codeready-workspaces/stacks-golang-rhel8:2.11
+registry.redhat.io/codeready-workspaces/machineexec-rhel8@sha256:bfdd8cf61a6fad757f1e8334aa84dbf44baddf897ff8def7496bf6dbc066679d
+registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:2036cbb70aae5f5d507657bd4b820e340ee0bacf3d4b520d80dbd21aad85e13a
+registry.redhat.io/codeready-workspaces/stacks-golang-rhel8@sha256:ef135a05399a4d5f58bcb059b6634498bee5adbbcf8ddb2956abf25819e82462
 END
 )
 expected_externalImagesTxt=$(cat <<-END
 registry.redhat.io/codeready-workspaces/machineexec-rhel8@sha256:bfdd8cf61a6fad757f1e8334aa84dbf44baddf897ff8def7496bf6dbc066679d
-registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:d0337762e71fd4badabcb38a582b2f35e7e7fc1c9c0f2e841e339d45b7bd34ed
-registry.redhat.io/codeready-workspaces/stacks-golang-rhel8@sha256:30e71577cb80ffaf1f67a292b4c96ab74108a2361347fc593cbb505784629db2
+registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:2036cbb70aae5f5d507657bd4b820e340ee0bacf3d4b520d80dbd21aad85e13a
+registry.redhat.io/codeready-workspaces/stacks-golang-rhel8@sha256:ef135a05399a4d5f58bcb059b6634498bee5adbbcf8ddb2956abf25819e82462
 
 END
 )
@@ -797,8 +797,8 @@ END
 echo "$externalImagesTxt" > "${METAS_DIR}/external_images.txt"
 
 export RELATED_IMAGE_codeready_workspaces_machineexec_plugin_registry_image_GIXDCMIK='registry.redhat.io/codeready-workspaces/machineexec-rhel8@sha256:bfdd8cf61a6fad757f1e8334aa84dbf44baddf897ff8def7496bf6dbc066679d'
-export RELATED_IMAGE_codeready_workspaces_plugin_java11_plugin_registry_image_GIXDCMIK='registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:d0337762e71fd4badabcb38a582b2f35e7e7fc1c9c0f2e841e339d45b7bd34ed'
-export RELATED_IMAGE_codeready_workspaces_stacks_golang_plugin_registry_image_GIXDCMIK='registry.redhat.io/codeready-workspaces/stacks-golang-rhel8@sha256:30e71577cb80ffaf1f67a292b4c96ab74108a2361347fc593cbb505784629db2'
+export RELATED_IMAGE_codeready_workspaces_plugin_java11_plugin_registry_image_GIXDCMIK='registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:2036cbb70aae5f5d507657bd4b820e340ee0bacf3d4b520d80dbd21aad85e13a'
+export RELATED_IMAGE_codeready_workspaces_stacks_golang_plugin_registry_image_GIXDCMIK='registry.redhat.io/codeready-workspaces/stacks-golang-rhel8@sha256:ef135a05399a4d5f58bcb059b6634498bee5adbbcf8ddb2956abf25819e82462'
 
 # shellcheck disable=SC1090
 source "${script_dir}/entrypoint.sh"

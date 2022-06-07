@@ -12,21 +12,30 @@
 
 apiVersion: 1.0.0
 metadata:
-    generateName: wazidev-
+    generateName: wazicode-
+projects:
+  - name: zopeneditor-sample
+    source:
+      type: git
+      location: "https://github.com/IBM/zopeneditor-sample.git"
+      branch: wazi-main
+attributes:
+  extensions.ignoreRecommendations: 'true'
 components:
 - type: chePlugin
-  id: ibm/wazi-developer/latest
-  alias: wazi-developer
+  id: ibm/wazi-code/latest
+  alias: wazi-code
   preferences:
-    Zowe-Temp-Folder-Location: '{"folderPath": "/projects"}'
+    zowe.files.temporaryDownloadsFolder.path: /projects
     zopeneditor.zapp.useDefaultOnlineZappSchema: true
+    zopeneditor.zcodeformat.useDefaultOnlineZCodeFormatSchema: true
 - type: chePlugin
   id: ibm/wazi-debug/latest
   alias: wazi-debug
 - type: dockerimage
   alias: wazi-terminal
-  image: icr.io/wazi-code/ibm-wazi-developer-for-workspaces-codeready@sha256:f78dfe340e0407f277cd6b8b0cb8803ddd3320a2753b74dc653d333004a12129
-  memoryLimit: 512Mi
+  image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:3f10050adbd00eb2fa8cb9ba58503b698079190cd56c5b2d735e409fa1ce8285
+  memoryLimit: 1024Mi
   volumes:
     - name: zowe
       containerPath: /home/wazi/.zowe

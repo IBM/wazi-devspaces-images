@@ -14,24 +14,46 @@ apiVersion:                                          operators.coreos.com/v1alph
 kind:                                                ClusterServiceVersion
 metadata:
   labels:
-    app.kubernetes.io/name:                          idzee-codeready-workspaces
+    app.kubernetes.io/name:                          wazi-devspaces
     app.kubernetes.io/instance:                      che
     app.kubernetes.io/managed-by:                    olm
     operatorframework.io/arch.amd64:                 supported
     operatorframework.io/arch.s390x:                 supported
   annotations:
+    operatorframework.io/initialization-resource:    |-
+      {
+        "apiVersion":                              "wazi.code.ibm.com/v1",
+        "kind":                                    "WaziLicense",
+        "metadata":                                {
+          "name":                                  "wazi-devspaces-license"
+        },
+        "spec":                                    {
+          "license":                               {
+            "accept":                              false
+          }
+        }
+      }
     alm-examples:                                    |-
       [
+        {
+         "apiVersion":                              "wazi.code.ibm.com/v1",
+         "kind":                                    "WaziLicense",
+         "metadata":                                {
+           "name":                                  "wazi-devspaces-license"
+         },
+         "spec":                                    {
+           "license":                               {
+             "accept":                              false
+           }
+         }
+        },
         {
           "apiVersion":                              "org.eclipse.che/v1",
           "kind":                                    "CheCluster",
           "metadata":                                {
-            "name":                                  "idzee-codeready-workspaces"
+            "name":                                  "wazi-devspaces"
           },
           "spec":                                    {
-            "license":                               {
-              "accept":                              false
-            },
             "auth":                                  {
               "externalIdentityProvider":            false,
               "identityProviderAdminUserName":       "",
@@ -68,7 +90,7 @@ metadata:
               "serverExposureStrategy":              "",
               "serverTrustStoreConfigMapName":       "",
               "tlsSupport":                          true,
-              "workspaceNamespaceDefault":           "idzee-codeready-<username>"
+              "workspaceNamespaceDefault":           "wazi-devspaces-<username>"
             },
             "storage":                               {
               "postgresPVCStorageClassName":         "",
@@ -83,27 +105,26 @@ metadata:
     capabilities:                                    Seamless Upgrades
     categories:                                      Developer Tools
     certified:                                       "true"
-    containerImage:                                  icr.io/cpopen/ibm-wazi-developer-for-workspaces-operator@ha256:8d7bef2f925b34b3f2abdb1befadbfcf734a40edbc2342163a7c265d65217098
+    containerImage:                                  icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:7715e865bb9ba22783e7743922307dba260b3032106cf361fc87918e0ca2998c
     createdAt:                                       "2021-12-23T18:24:30+00:00"
     description:                                     Personal z/OS cloud IDE for development and testing.
-      k8s workspaces.
-    operatorframework.io/suggested-namespace:        idzee-codeready-workspaces
+    operatorframework.io/suggested-namespace:        wazi-devspaces
     operatorframework.io/cluster-monitoring:         "true"
-    operators.openshift.io/infrastructure-features:  '["disconnected", "proxy-aware",
-      "fips"]'
+    operators.openshift.io/infrastructure-features:  '["disconnected", "proxy-aware", "fips"]'
     operators.operatorframework.io/builder:          operator-sdk-v1.6.1+git
     operators.operatorframework.io/project_layout:   go.kubebuilder.io/v3
-    repository:                                      https://github.com/IBM/wazi-codeready-workspaces-images
+    repository:                                      https://github.com/IBM/wazi-devspaces-images
     support:                                         IBM
     olm.skipRange:                                   ">=1.4.0 <2.0.0"
-  name:                                              ibm-developer-for-zos-enterprise-edition.v2.0.0
+  name:                                              ibm-wazi-for-devspaces.v2.1.0
   namespace:                                         placeholder
 spec:
+  minKubeVersion:                                    1.19.0
   apiservicedefinitions:                             {}
   customresourcedefinitions:
     owned:
       - description:                                 Personal z/OS cloud IDE for development and testing. [Documentation](https://ibm.biz/wazi-crw-doc) and [License](https://ibm.biz/wazi-crw-license) information are available online.
-        displayName:                                 IBM Developer for z/OS Enterprise Edition
+        displayName:                                 IBM Wazi for Dev Spaces
         kind:                                        CheCluster
         name:                                        checlusters.org.eclipse.che
         resources:
@@ -138,16 +159,6 @@ spec:
             name:                                    ''
             version:                                 v1
         specDescriptors:
-          - description:                             Configuration settings for the Che installation licensing.
-            displayName:                             License
-            path:                                    license
-          - description:                             License agreement https://ibm.biz/wazi-crw-license must be accepted.
-            displayName:                             License Acceptance
-            path:                                    license.accept
-            value:
-              - false
-            x-descriptors:
-              - urn:alm:descriptor:com.tectonic.ui:checkbox
           - description:                             Configuration settings related to the Authentication used
               by the Che installation.
             displayName:                             Authentication
@@ -228,86 +239,102 @@ spec:
             x-descriptors:
               - urn:alm:descriptor:com.tectonic.ui:hidden
         statusDescriptors:
-          - description:                             IBM Developer for z/OS Enterprise Edition - Status
+          - description:                             IBM Wazi for Dev Spaces - Status
             displayName:                             Status
             path:                                    cheClusterRunning
             x-descriptors:
               - urn:alm:descriptor:io.kubernetes.phase
-          - description:                             IBM Developer for z/OS Enterprise Edition - URL Route
+          - description:                             IBM Wazi for Dev Spaces - URL Route
             displayName:                             URL Route
             path:                                    cheURL
             x-descriptors:
               - urn:alm:descriptor:org.w3:link
-          - description:                             IBM Developer for z/OS Enterprise Edition - Che Server Version
+          - description:                             IBM Wazi for Dev Spaces - Che Server Version
             displayName:                             Che Server Version
             path:                                    cheVersion
             x-descriptors:
               - urn:alm:descriptor:org.w3:link
-          - description:                             IBM Developer for z/OS Enterprise Edition - Devfile Registry URL
+          - description:                             IBM Wazi for Dev Spaces - Devfile Registry URL
             displayName:                             Devfile registry URL (/devfiles)
             path:                                    devfileRegistryURL
             x-descriptors:
               - urn:alm:descriptor:org.w3:link
-          - description:                             IBM Developer for z/OS Enterprise Edition - Help URL
+          - description:                             IBM Wazi for Dev Spaces - Help URL
             displayName:                             Help URL
             path:                                    helpLink
             x-descriptors:
               - urn:alm:descriptor:org.w3:link
-          - description:                             IBM Developer for z/OS Enterprise Edition - Keycloak SSO Admin Console
+          - description:                             IBM Wazi for Dev Spaces - Keycloak SSO Admin Console
             displayName:                             Keycloak SSO Admin Console
             path:                                    keycloakURL
             x-descriptors:
               - urn:alm:descriptor:org.w3:link
-          - description:                             IBM Developer for z/OS Enterprise Edition - Message
+          - description:                             IBM Wazi for Dev Spaces - Message
             displayName:                             Message
             path:                                    message
             x-descriptors:
               - urn:alm:descriptor:text
-          - description:                             IBM Developer for z/OS Enterprise Edition - Identity Provider Credentials
+          - description:                             IBM Wazi for Dev Spaces - Identity Provider Credentials
             displayName:                             Identity Provider Credentials
             path:                                    openShiftOAuthUserCredentialsSecret
             x-descriptors:
               - urn:alm:descriptor:text
-          - description:                             IBM Developer for z/OS Enterprise Edition - Plugin Registry URL
+          - description:                             IBM Wazi for Dev Spaces - Plugin Registry URL
             displayName:                             Plugin registry URL (/plugins)
             path:                                    pluginRegistryURL
             x-descriptors:
               - urn:alm:descriptor:org.w3:link
-          - description:                             IBM Developer for z/OS Enterprise Edition - Reason
+          - description:                             IBM Wazi for Dev Spaces - Reason
             displayName:                             Reason
             path:                                    reason
             x-descriptors:
               - urn:alm:descriptor:text
         version:                                     v1
+      - description:                                 Personal z/OS cloud IDE for development and testing. [Documentation](https://ibm.biz/wazi-crw-doc) and [License](https://ibm.biz/wazi-crw-license) information are available online.
+        displayName:                                 IBM Wazi for Dev Spaces - License
+        kind:                                        WaziLicense
+        name:                                        wazilicenses.wazi.code.ibm.com
+        specDescriptors:
+          - description:                             Configuration settings for the Che installation licensing.
+            displayName:                             License
+            path:                                    license
+          - description:                             License agreement https://ibm.biz/wazi-crw-license must be accepted.
+            displayName:                             License Acceptance
+            path:                                    license.accept
+            value:
+              - false
+            x-descriptors:
+              - urn:alm:descriptor:com.tectonic.ui:checkbox
+        version:                                     v1
   description:                                       |
-    IBM Wazi Developer for Workspaces is a component shipped with either IBM Wazi Developer for Red Hat CodeReady Workspaces or IBM Developer for z/OS Enterprise Edition (IDzEE).
+    IBM Wazi for Dev Spaces is a component shipped with either IBM Wazi Code or IBM Developer for z/OS Enterprise Edition (IDzEE).
     
     # Name
-    IBM Wazi Developer for Workspaces
+    IBM Wazi for Dev Spaces
     
     ## Introduction
-    IBM Wazi Developer for Workspaces provides a modern experience for mainframe software developers working with z/OS applications in the cloud. Powered by the open source projects Zowe and Red Hat CodeReady Workspaces, IBM Wazi Developer for Workspaces offers an easy, streamlined onboarding process to provide mainframe developers with the tools they need. Using container technology, IBM Wazi Developer for Workspaces brings the necessary tools to the task at hand.
+    IBM Wazi for Dev Spaces provides a modern experience for mainframe software developers working with z/OS applications in the cloud. Powered by the open source projects Zowe and Red Hat OpenShift Dev Spaces, IBM Wazi for Dev Spaces offers an easy, streamlined onboarding process to provide mainframe developers with the tools they need. Using container technology, IBM Wazi for Dev Spaces brings the necessary tools to the task at hand.
     
     ## Details
-    IBM Wazi Developer for Workspaces provides a custom stack with the all-in-one mainframe development package that enables mainframe developers to:
+    IBM Wazi for Dev Spaces provides a custom stack with the all-in-one mainframe development package that enables mainframe developers to:
 
-    - Use a modern mainframe editor with rich language support for COBOL, JCL, Assembler (HLASM), REXX, and PL/I, which provides language-specific features such as syntax highlighting, outline view, declaration hovering, code completion, snippets, a preview of copybooks, copybook navigation, and basic refactoring using IBM Z Open Editor, a component of IBM Wazi Developer for VS Code
+    - Use a modern mainframe editor with rich language support for COBOL, JCL, Assembler (HLASM), REXX, and PL/I, which provides language-specific features such as syntax highlighting, outline view, declaration hovering, code completion, snippets, a preview of copybooks, copybook navigation, and basic refactoring using IBM Z Open Editor, a component of IBM Wazi for VS Code
     - Integrate with any flavor of Git source code management (SCM)
     - Perform a user build with IBM Dependency Based Build for any flavor of Git
     - Work with z/OS resources such as MVS, UNIX files, and JES jobs
     - Connect to the Z host with z/OSMF or IBM Remote System Explorer (RSE) API, using Zowe Explorer plus IBM Z Open Editor for a graphical user interface and Zowe CLI plus the RSE API plug-in for Zowe CLI for command line access
     - Debug COBOL and PL/I applications using IBM Z Open Debug
-    - Use a mainframe development package with a custom plug-in and devfile registry support from the [IBM Wazi Developer stack](https://github.com/IBM/wazi-codeready-workspaces-images)
+    - Use a mainframe development package with a custom plug-in and devfile registry support from the [IBM Wazi Code stack](https://github.com/IBM/wazi-devspaces-images)
     - Leverage the full language support for Ansible and Red Hat Ansible Certified Content for IBM Z to author and execute playbooks to configure z/OS for development. Automate the deployment and configuration of tools and dependencies such as build, test and debug, to quickly build, deploy and run your applications.
     
     ## Prerequisites
-    Before you install IBM Wazi Developer for Workspaces, ensure that the following prerequisites are met. Ensure that you have the latest version of each tool mentioned below. If you previously installed these tools, check the versions and update if necessary.
+    Before you install IBM Wazi for Dev Spaces, ensure that the following prerequisites are met. Ensure that you have the latest version of each tool mentioned below. If you previously installed these tools, check the versions and update if necessary.
 
     - Ensure that you have a connection to a Red Hat&reg; OpenShift Container Platform (OCP) cluster, and that you have cluster-admin permissions.
     - Install the OpenShift command-line interface (CLI), which lets you create applications and manage OpenShift Container Platform projects from a terminal.
 
     ### Resources Required
-    The IBM Wazi Developer for Workspaces central controller and user workspaces consist of a set of containers. Those containers contribute to the resources consumed in terms of CPU and RAM limits and requests.
+    The IBM Wazi for Dev Spaces central controller and user workspaces consist of a set of containers. Those containers contribute to the resources consumed in terms of CPU and RAM limits and requests.
     
     **Controller services**: 
     | Pod | Container Name | Default memory limit | Default memory request |
@@ -326,7 +353,7 @@ spec:
     | `kubernetes`, `openshift`, `dockerimage` | `che.workspace.default_memory_limit_mb`, `che.workspace.default_memory_request_mb`                     | 1 GiB   | 200 MiB  |
     | `JWT Proxy`                              | `che.server.secure_exposer.jwtproxy.memory_limit`, `che.server.secure_exposer.jwtproxy.memory_request` | 128 MiB | 15 MiB   |
     | `Wazi Plugins`                           |                                                                                                        | 256 MiB | 2048 MiB |
-    | `Wazi Terminal`                          |                                                                                                        | 200 MiB | 512 MiB  |
+    | `Wazi Terminal`                          |                                                                                                        | 200 MiB | 1024 MiB |
     
     **Note**: For larger deployments, [increase the memory limits](https://access.redhat.com/documentation/en-us/red_hat_codeready_workspaces/2.14/html-single/installation_guide/index#advanced-configuration-options-for-the-codeready-workspaces-server-component_crw).
     
@@ -346,12 +373,12 @@ spec:
     All pods run in `restricted` mode, see [Managing security context constraints](https://docs.openshift.com/container-platform/latest/authentication/managing-security-context-constraints.html) for more information.
     
     ## Installing
-    The Operator will manage the lifecycle of an instance of IBM Wazi Developer for Workspaces.
+    The Operator will manage the lifecycle of an instance of IBM Wazi for Dev Spaces.
     
     | Product Name                              | Installed Namespace        |
     | ----------------------------------------- | -------------------------- |
-    | IBM Wazi Developer for Workspaces         | wazi-codeready-workspaces  |
-    | IBM Developer for z/OS Enterprise Edition | idzee-codeready-workspaces |
+    | IBM Wazi for Dev Spaces                   | wazi-devspaces             |
+    | IBM Developer for z/OS Enterprise Edition | idzee-devspaces            |
     
     **Note**: If you have a license for the IBM Developer for z/OS Enterprise Edition (IDzEE), use the `IBM Developer for z/OS Enterprise Edition` tile.
     
@@ -361,14 +388,14 @@ spec:
     1. Search for `z/os`. A set of Operator tiles will be filtered on the main window.
     1. Click the **Product Name** tile, and then click **Install**.
     1. Review all settings and click the **Install** button.
-    1. When the Operator is installed, an entry with the product name will appear under **Operators** > **Installed Operators**. Select the installed Operator name from the installed namespace. In the `Details` section click **Create instance** under **Provided APIs**.
-    1. Expand the `License` section. Review the terms of the license agreement. Accept the license agreement based on the terms and conditions provided.
+    1. When the Operator is installed, an entry with the product name will appear under **Operators** > **Installed Operators**. Select the installed Operator name from the installed namespace.
+    1. Select `IBM Wazi for Dev Spaces - License` and click the **Create WaziLicense** button. Expand the `License` section. Review the terms of the license agreement. Accept the license agreement based on the terms and conditions provided.
+    1. Select `IBM Wazi for Dev Spaces` and click the **Create CheCluster** button.
     1. Review the remaining configuration sections and click the **Create** button. This will create a new CheCluster instance of the product.
     
-    You can start using IBM Wazi Developer for Workspaces when the instance has been created and all pods are up and running.
+    You can start using IBM Wazi for Dev Spaces when the instance has been created and all pods are up and running.
     
     ### Configuration
-    - **License**: Configuration settings for the Che installation licensing.
     - **Authentication**: Configuration settings related to the Authentication used by the Che installation.
     - **Database**: Configuration settings related to the database used by the Che installation.
     - **Kubernetes Image Puller**: Kubernetes Image Puller configuration.
@@ -381,7 +408,7 @@ spec:
     
     ### Limitations
     See the [Release Notes and Known Issues](https://access.redhat.com/documentation/en-us/red_hat_codeready_workspaces) for Red Hat CodeReady Workspaces.
-  displayName: IBM Developer for z/OS Enterprise Edition
+  displayName: IBM Wazi for Dev Spaces
   icon:
     - base64data:                                    PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMzIgMzIiPjxkZWZzPjxzdHlsZT4uY2xzLTF7ZmlsbDojZmZmO30uY2xzLTJ7ZmlsbDp1cmwoI2xpbmVhci1ncmFkaWVudCk7fS5jbHMtM3ttYXNrOnVybCgjbWFzayk7fS5jbHMtNHtmaWxsOnVybCgjbGluZWFyLWdyYWRpZW50LTIpO30uY2xzLTV7ZmlsbDojMDYxZjgwO308L3N0eWxlPjxsaW5lYXJHcmFkaWVudCBpZD0ibGluZWFyLWdyYWRpZW50IiB4MT0iMTAwLjI3IiB5MT0iNS4wNyIgeDI9IjEwNC4xMyIgeTI9IjcuMyIgZ3JhZGllbnRUcmFuc2Zvcm09Im1hdHJpeCgtMC41LCAtMS41NiwgMC44NywgLTAuOSwgNzMuNTEsIDE4My45NikiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAiIHN0b3Atb3BhY2l0eT0iMCIvPjxzdG9wIG9mZnNldD0iMC45Ii8+PC9saW5lYXJHcmFkaWVudD48bWFzayBpZD0ibWFzayIgeD0iMCIgeT0iMCIgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBtYXNrVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBjbGFzcz0iY2xzLTEiIGQ9Ik0xNiwzMWEuOS45LDAsMCwxLS41LS4xNGwtMTItN0ExLDEsMCwwLDEsMywyM1Y5YTEsMSwwLDAsMSwuNS0uODZsMTItN2ExLDEsMCwwLDEsMSwwbDEyLDdBMSwxLDAsMCwxLDI5LDlhMSwxLDAsMCwxLS40OS44N2wtMTAsNi0xLTEuNzJMMjYsOSwxNiwzLjE2LDUsOS41N1YyMi40M2wxMSw2LjQxLDExLTYuNDFWMTVoMnY4YTEsMSwwLDAsMS0uNS44NmwtMTIsN0EuOS45LDAsMCwxLDE2LDMxWiIvPjxyZWN0IGNsYXNzPSJjbHMtMiIgeD0iMjYuMjUiIHk9IjE0LjUiIHdpZHRoPSIzLjA1IiBoZWlnaHQ9IjguMDYiLz48L21hc2s+PGxpbmVhckdyYWRpZW50IGlkPSJsaW5lYXItZ3JhZGllbnQtMiIgeTE9IjMyIiB4Mj0iMzIiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBvZmZzZXQ9IjAuMSIgc3RvcC1jb2xvcj0iI2I5OGNmZCIvPjxzdG9wIG9mZnNldD0iMC45IiBzdG9wLWNvbG9yPSIjNDE4YWZjIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHRpdGxlPmFwcC1pY29uLWxpZ2h0LTwvdGl0bGU+PGcgaWQ9IkxheWVyXzMiIGRhdGEtbmFtZT0iTGF5ZXIgMyI+PGcgY2xhc3M9ImNscy0zIj48cmVjdCBjbGFzcz0iY2xzLTQiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIvPjwvZz48cGF0aCBjbGFzcz0iY2xzLTUiIGQ9Ik0xNiwyMGE0LDQsMCwxLDEsNC00QTQsNCwwLDAsMSwxNiwyMFptMC02YTIsMiwwLDEsMCwyLDJBMiwyLDAsMCwwLDE2LDE0WiIvPjwvZz48L3N2Zz4=
       mediatype: image/svg+xml
@@ -655,8 +682,8 @@ spec:
             - apiGroups:
                 - apps
               resourceNames:
-                - wazi-codeready-operator
-                - idzee-codeready-operator
+                - wazi-code-operator
+                - idzee-code-operator
               resources:
                 - deployments/finalizers
               verbs:
@@ -1017,31 +1044,31 @@ spec:
                 - get
                 - list
                 - watch
-          serviceAccountName:                        idzee-codeready-operator
+          serviceAccountName:                        wazi-code-operator
       deployments:
-        - name:                                      idzee-codeready-operator
+        - name:                                      wazi-code-operator
           spec:
             replicas:                                1
             selector:
               matchLabels:
-                app:                                 idzee-codeready-operator
+                app:                                 wazi-code-operator
             strategy:
               type:                                  RollingUpdate
             template:
               metadata:
                 annotations:
-                  cloudpakId:                        ""
-                  cloudpakName:                      ""
-                  cloudpakMetric:                    ""
-                  productID:                         "3fbe9adb503d47a486bf5d138feb8fb9"
-                  productName:                       "IBM Developer for z/OS Enterprise Edition"
-                  productMetric:                     "VU_VALUE_UNIT"
+                  cloudpakId:                        "9d41d2d8126f4200b62ba1acc0dffa2e"
+                  cloudpakName:                      "IBM Wazi for Dev Spaces"
+                  cloudpakMetric:                    "VIRTUAL_PROCESSOR_CORE"
+                  productID:                         "0e775d0d3f354a5ca074a6a4398045f3"
+                  productName:                       "Wazi Code"
+                  productMetric:                     "AUTHORIZED_USER"
                   productChargedContainers:          "All"
-                  productCloudpakRatio:              ""
-                  productVersion:                    "15.0.4"
+                  productCloudpakRatio:              "5:1"
+                  productVersion:                    "2.1.0"
                 labels:
-                  app:                               idzee-codeready-operator
-                  app.kubernetes.io/component:       idzee-codeready-operator
+                  app:                               wazi-code-operator
+                  app.kubernetes.io/component:       wazi-code
                   app.kubernetes.io/instance:        che
                   app.kubernetes.io/managed-by:      olm
                   app.kubernetes.io/name:            che
@@ -1058,7 +1085,7 @@ spec:
                       - name:                        ALLOW_DEVWORKSPACE_ENGINE
                         value:                       "false"
                       - name:                        CHE_FLAVOR
-                        value:                       idzee-codeready
+                        value:                       wazi-devspaces
                       - name:                        CHE_IDENTITY_POSTGRES_SECRET
                         value:                       che-identity-postgres-secret
                       - name:                        CHE_IDENTITY_SECRET
@@ -1070,7 +1097,7 @@ spec:
                       - name:                        CHE_VERSION
                         value:                       2.14.0
                       - name:                        CONSOLE_LINK_DISPLAY_NAME
-                        value:                       IBM Developer for z/OS Enterprise Edition
+                        value:                       IBM Wazi for Dev Spaces
                       - name:                        CONSOLE_LINK_IMAGE
                         value:                       /dashboard/assets/branding/loader.svg
                       - name:                        CONSOLE_LINK_NAME
@@ -1080,7 +1107,7 @@ spec:
                       - name:                        MAX_CONCURRENT_RECONCILES
                         value:                       "1"
                       - name:                        OPERATOR_NAME
-                        value:                       idzee-codeready-operator
+                        value:                       wazi-code-operator
                       - name:                        POD_NAME
                         valueFrom:
                           fieldRef:
@@ -1156,7 +1183,7 @@ spec:
                       - name: RELATED_IMAGE_dashboard
                         value: registry.redhat.io/codeready-workspaces/dashboard-rhel8@sha256:e28e5d2e903d1bf43245b73ee4f430fa4ba870ed09749ef5490e3c38da83271e
                       - name: RELATED_IMAGE_devfile_registry
-                        value: icr.io/wazi-code/ibm-wazi-developer-for-workspaces-dev-file@sha256:47c8bc6edb671247be92fb5239e6233afee370168a324aeacce7b0d99949adfa
+                        value: icr.io/wazi-code/ibm-wazi-for-devspaces-dev-file@sha256:894f23c01de10aca78c8acf33a80b76688441ce73060f1caaddebd6542fa2969
                       - name: RELATED_IMAGE_devworkspace_controller
                         value: registry.redhat.io/devworkspace/devworkspace-rhel8-operator@sha256:e68ec2fe7ac27e59641bdfc7794ae99fdfaa60e5b6d0cc0e3f20ab3f7a31bc11
                       - name: RELATED_IMAGE_gateway_authentication_sidecar
@@ -1182,7 +1209,7 @@ spec:
                       - name: RELATED_IMAGE_keycloak_s390x
                         value: registry.redhat.io/rh-sso-7/sso74-openj9-openshift-rhel8@sha256:046d86f43fe0d22531505f3a7cf3050baa5967e6443ac226d5a8402d589fab13
                       - name: RELATED_IMAGE_plugin_registry
-                        value: icr.io/wazi-code/ibm-wazi-developer-for-workspaces-plugin@sha256:0f814ea0708d2af2c0b47b7ebbcaf5b3406d64056cab2fb2e1290191a8cdecbc
+                        value: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin@sha256:5def707aadbb9d0e048701b34b766bf421c85d0e90a51bc2e7d3b9443b645779
                       - name: RELATED_IMAGE_postgres
                         value: registry.redhat.io/rhel8/postgresql-96@sha256:314747a4a64ac16c33ead6a34479dccf16b9a07abf440ea7eeef7cda4cd19e32
                       - name: RELATED_IMAGE_postgres_13_3
@@ -1195,13 +1222,13 @@ spec:
                         value: registry.redhat.io/codeready-workspaces/traefik-rhel8@sha256:93e8f8eed5b1c723213ab4bc538c04fe0d6e25fd66d26de1f8c632b701fe2eb8
                       - name: RELATED_IMAGE_single_host_gateway_config_sidecar
                         value: registry.redhat.io/codeready-workspaces/configbump-rhel8@sha256:6f920f581cd54575ae032a95a5b7c06a280a44cfb698659b8e5c89adcf60ff6e
-                      - name: RELATED_IMAGE_wazi_codeready_sidecar
-                        image: icr.io/wazi-code/ibm-wazi-developer-for-workspaces-codeready@sha256:f78dfe340e0407f277cd6b8b0cb8803ddd3320a2753b74dc653d333004a12129
+                      - name: RELATED_IMAGE_wazi_code_sidecar
+                        image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:3f10050adbd00eb2fa8cb9ba58503b698079190cd56c5b2d735e409fa1ce8285
                       - name:                        WATCH_NAMESPACE
                         valueFrom:
                           fieldRef:
                             fieldPath:               metadata.annotations['olm.targetNamespaces']
-                    image:                           icr.io/cpopen/ibm-wazi-developer-for-workspaces-operator@sha256:8d7bef2f925b34b3f2abdb1befadbfcf734a40edbc2342163a7c265d65217098
+                    image:                           icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:7715e865bb9ba22783e7743922307dba260b3032106cf361fc87918e0ca2998c
                     imagePullPolicy:                 Always
                     livenessProbe:
                       failureThreshold:              10
@@ -1212,7 +1239,7 @@ spec:
                       periodSeconds:                 10
                       successThreshold:              1
                       timeoutSeconds:                5
-                    name:                            idzee-codeready-operator
+                    name:                            wazi-code-operator
                     ports:
                       - containerPort:               60000
                         name:                        metrics
@@ -1244,7 +1271,7 @@ spec:
                 hostNetwork:                         false
                 hostPID:                             false
                 restartPolicy:                       Always
-                serviceAccountName:                  idzee-codeready-operator
+                serviceAccountName:                  wazi-code-operator
                 terminationGracePeriodSeconds:       20
       permissions:
         - rules:
@@ -1372,7 +1399,7 @@ spec:
             - apiGroups:
                 - apps
               resourceNames:
-                - idzee-codeready-operator
+                - wazi-code-operator
               resources:
                 - deployments/finalizers
               verbs:
@@ -1441,7 +1468,7 @@ spec:
               verbs:
                 - create
                 - patch
-          serviceAccountName:                        idzee-codeready-operator
+          serviceAccountName:                        wazi-code-operator
     strategy:                                        deployment
   installModes:
     - supported:                                     true
@@ -1461,7 +1488,7 @@ spec:
     - java
   links:
     - name:                                          Product Page
-      url:                                           https://www.ibm.com/products/developer-for-zos
+      url:                                           https://www.ibm.com/products/wazi-developer
     - name:                                          Documentation
       url:                                           https://ibm.biz/wazi-crw-doc
     - name:                                          Readme
@@ -1475,12 +1502,12 @@ spec:
   maturity:                                          stable
   provider:
     name:                                            IBM
-  version:                                           2.0.0
+  version:                                           2.1.0
   relatedImages:
   - name: crw-2-rhel8-operator-96693d92d382d97b53396f85073baa33232ec921fbd3971a8e52046193687e31-annotation
-    image: icr.io/cpopen/ibm-wazi-developer-for-workspaces-operator@sha256:8d7bef2f925b34b3f2abdb1befadbfcf734a40edbc2342163a7c265d65217098
+    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:7715e865bb9ba22783e7743922307dba260b3032106cf361fc87918e0ca2998c
   - name: codeready-operator
-    image: icr.io/cpopen/ibm-wazi-developer-for-workspaces-operator@sha256:8d7bef2f925b34b3f2abdb1befadbfcf734a40edbc2342163a7c265d65217098
+    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:7715e865bb9ba22783e7743922307dba260b3032106cf361fc87918e0ca2998c
   - name: che_server
     image: registry.redhat.io/codeready-workspaces/server-rhel8@sha256:3843f4e3271d927cb1955bfa54b144729676988219dc21849a30a06c9aaab215
   - name: che_server_secure_exposer_jwt_proxy_image
@@ -1552,7 +1579,7 @@ spec:
   - name: dashboard
     image: registry.redhat.io/codeready-workspaces/dashboard-rhel8@sha256:e28e5d2e903d1bf43245b73ee4f430fa4ba870ed09749ef5490e3c38da83271e
   - name: devfile_registry
-    image: icr.io/wazi-code/ibm-wazi-developer-for-workspaces-dev-file@sha256:47c8bc6edb671247be92fb5239e6233afee370168a324aeacce7b0d99949adfa
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-dev-file@sha256:894f23c01de10aca78c8acf33a80b76688441ce73060f1caaddebd6542fa2969
   - name: devworkspace_controller
     image: registry.redhat.io/devworkspace/devworkspace-rhel8-operator@sha256:e68ec2fe7ac27e59641bdfc7794ae99fdfaa60e5b6d0cc0e3f20ab3f7a31bc11
   - name: gateway_authentication_sidecar
@@ -1578,7 +1605,7 @@ spec:
   - name: keycloak_s390x
     image: registry.redhat.io/rh-sso-7/sso74-openj9-openshift-rhel8@sha256:046d86f43fe0d22531505f3a7cf3050baa5967e6443ac226d5a8402d589fab13
   - name: plugin_registry
-    image: icr.io/wazi-code/ibm-wazi-developer-for-workspaces-plugin@sha256:0f814ea0708d2af2c0b47b7ebbcaf5b3406d64056cab2fb2e1290191a8cdecbc
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin@sha256:5def707aadbb9d0e048701b34b766bf421c85d0e90a51bc2e7d3b9443b645779
   - name: postgres
     image: registry.redhat.io/rhel8/postgresql-96@sha256:314747a4a64ac16c33ead6a34479dccf16b9a07abf440ea7eeef7cda4cd19e32
   - name: postgres_13_3
@@ -1591,5 +1618,5 @@ spec:
     image: registry.redhat.io/codeready-workspaces/traefik-rhel8@sha256:93e8f8eed5b1c723213ab4bc538c04fe0d6e25fd66d26de1f8c632b701fe2eb8
   - name: single_host_gateway_config_sidecar
     image: registry.redhat.io/codeready-workspaces/configbump-rhel8@sha256:6f920f581cd54575ae032a95a5b7c06a280a44cfb698659b8e5c89adcf60ff6e
-  - name: wazi_codeready_sidecar
-    image: icr.io/wazi-code/ibm-wazi-developer-for-workspaces-codeready@sha256:f78dfe340e0407f277cd6b8b0cb8803ddd3320a2753b74dc653d333004a12129
+  - name: wazi_code_sidecar
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:3f10050adbd00eb2fa8cb9ba58503b698079190cd56c5b2d735e409fa1ce8285

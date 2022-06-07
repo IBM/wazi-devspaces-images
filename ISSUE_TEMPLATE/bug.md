@@ -1,5 +1,5 @@
 ---
-name: Report a Bug against IBM Wazi Developer for Workspaces
+name: Report a Bug against IBM Wazi for Dev Spaces
 about: Create a bug report that describes a problem, regression, or faulty behavior
 ---
 
@@ -8,8 +8,8 @@ about: Create a bug report that describes a problem, regression, or faulty behav
 Before filing a bug check here if this is already a documented or known issue:
 
 - Check the documentation's Known Issues and Troubleshooting pages: <https://ibm.biz/wazi-crw-doc>
-- Check the Open and Closed issues list in this GitHub repository: <https://github.com/ibm/wazi-codeready-workspaces-images/issues>
-- If this is a problem with Red Hat&reg; CodeReady Workspaces then check and file a bug here, please: <https://issues.redhat.com/browse/CRW>
+- Check the Open and Closed issues list in this GitHub repository: <https://github.com/ibm/wazi-devspaces-images/issues>
+- If this is a problem with Red Hat&reg; OpenShift Dev Spaces then check and file a bug here, please: <https://issues.redhat.com/browse/CRW>
 
  -->
 
@@ -21,8 +21,8 @@ Before filing a bug check here if this is already a documented or known issue:
   - [ ] OpenShift Container Platform
   - [ ] Other, please specify:
 - Platform Version:
-- CodeReady Workspaces Version:
-- Wazi Developer Version:
+- Red Hat OpenShift Dev Spaces Version:
+- Wazi for Dev Spaces Version:
 - Logs attached (see [here](https://ibm.github.io/zopeneditor-about/Docs/knownissues.html) how to get them): yes/no
 
 ## Problem Description

@@ -19,7 +19,7 @@ components:
   -
     type: dockerimage
     alias: gradle
-    image: registry.redhat.io/codeready-workspaces/plugin-java11-rhel8:2.14
+    image: registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:2036cbb70aae5f5d507657bd4b820e340ee0bacf3d4b520d80dbd21aad85e13a
     env:
       - name: GRADLE_USER_HOME
         value: /home/jboss/.gradle

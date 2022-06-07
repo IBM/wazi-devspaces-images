@@ -8,6 +8,7 @@
 //
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
+//   IBM Corporation - implementation
 //
 
 package che
@@ -293,9 +294,6 @@ func TestShouldSetUpCorrectlyDevfileRegistryURL(t *testing.T) {
 					Name:      os.Getenv("CHE_FLAVOR"),
 				},
 				Spec: orgv1.CheClusterSpec{
-					License: orgv1.CheClusterSpecLicense{
-						LicenseAccept: true,
-					},
 					Server: orgv1.CheClusterSpecServer{
 						ExternalDevfileRegistry: false,
 					},
@@ -315,9 +313,6 @@ func TestShouldSetUpCorrectlyDevfileRegistryURL(t *testing.T) {
 					Name:      os.Getenv("CHE_FLAVOR"),
 				},
 				Spec: orgv1.CheClusterSpec{
-					License: orgv1.CheClusterSpecLicense{
-						LicenseAccept: true,
-					},
 					Server: orgv1.CheClusterSpecServer{
 						ExternalDevfileRegistry: false,
 						DevfileRegistryUrl:      "https://devfile-registry.external.1",
@@ -341,9 +336,6 @@ func TestShouldSetUpCorrectlyDevfileRegistryURL(t *testing.T) {
 					Name:      os.Getenv("CHE_FLAVOR"),
 				},
 				Spec: orgv1.CheClusterSpec{
-					License: orgv1.CheClusterSpecLicense{
-						LicenseAccept: true,
-					},
 					Server: orgv1.CheClusterSpecServer{
 						ExternalDevfileRegistry: true,
 						DevfileRegistryUrl:      "https://devfile-registry.external.1",
@@ -937,9 +929,6 @@ func InitCheWithSimpleCR() *orgv1.CheCluster {
 			Namespace: namespace,
 		},
 		Spec: orgv1.CheClusterSpec{
-			License: orgv1.CheClusterSpecLicense{
-				LicenseAccept: true,
-			},
 			Server: orgv1.CheClusterSpecServer{
 				CheWorkspaceClusterRole: "cluster-admin",
 			},

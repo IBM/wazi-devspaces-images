@@ -57,17 +57,6 @@ spec:
                 the various components of the Che installation. These generated ConfigMaps
                 must NOT be updated manually.
               properties:
-                license:
-                  description: Configuration settings for the Che installation licensing.
-                  properties:
-                    accept:
-                      description: License acceptance.
-                      type: boolean
-                      enum:
-                        - true
-                  required:
-                    - accept
-                  type: object
                 auth:
                   description: Configuration settings related to the Authentication
                     used by the Che installation.
@@ -1043,8 +1032,6 @@ spec:
                         a default storage class is used.
                       type: string
                   type: object
-              required:
-                - license
               type: object
             status:
               description: CheClusterStatus defines the observed state of Che installation
