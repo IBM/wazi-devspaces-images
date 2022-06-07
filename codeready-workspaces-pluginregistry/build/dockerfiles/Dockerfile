@@ -13,7 +13,7 @@
 
 # Builder: check meta.yamls and create index.json
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi8/python-38
-FROM registry.access.redhat.com/ubi8/python-38:1-63.1626843762 as builder
+FROM registry.access.redhat.com/ubi8/python-38:1-94 as builder
 USER 0
 
 ARG BOOTSTRAP=false
@@ -60,22 +60,22 @@ RUN chmod -R g+rwX /build
 
 # Build registry, copying meta.yamls and index.json from builder
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi8/httpd-24
-FROM registry.access.redhat.com/ubi8/httpd-24:1-143.1626836617 AS registry
+FROM registry.access.redhat.com/ubi8/httpd-24:1-191 AS registry
 USER 0
 
 # Build Arguments
-ARG PRODUCT_VERSION=2.0.0
+ARG PRODUCT_VERSION=2.1.0
 
-ENV PRODUCT="IBM Wazi Developer for Red Hat CodeReady Workspaces" \
+ENV PRODUCT="IBM Wazi for Dev Spaces" \
     COMPANY="IBM" \
     VERSION=$PRODUCT_VERSION \
     RELEASE="1" \
-    SUMMARY="IBM Wazi Developer for Workspaces" \
-    DESCRIPTION="IBM Wazi Developer for Red Hat CodeReady Workspaces - Plugin" \
-    PRODTAG="ibm-wazi-developer-for-workspaces-plugin" \
+    SUMMARY="IBM Wazi for Dev Spaces" \
+    DESCRIPTION="IBM Wazi for Dev Spaces - Plugin" \
+    PRODTAG="ibm-wazi-for-devspaces" \
     CLOUDPAK_ID="9d41d2d8126f4200b62ba1acc0dffa2e" \
     CLOUDPAK_METRIC="VIRTUAL_PROCESSOR_CORE" \
-    PRODUCT_NAME="Code" \
+    PRODUCT_NAME="Wazi Code" \
     PRODUCT_ID="0e775d0d3f354a5ca074a6a4398045f3" \
     PRODUCT_METRIC="AUTHORIZED_USER" \
     PRODUCT_CHARGED_CONTAINERS="All" \
@@ -107,7 +107,7 @@ LABEL name="$PRODUCT" \
 RUN chmod +x /usr/share/container-scripts/httpd/pre-init/40-ssl-certs.sh && \
     /usr/share/container-scripts/httpd/pre-init/40-ssl-certs.sh
 RUN \
-    yum -y -q update && \
+    yum -y -q --nobest update && \
     yum -y -q clean all && rm -rf /var/cache/yum && \
     echo "Installed Packages" && rpm -qa | sort -V && echo "End Of Installed Packages"
 

@@ -8,6 +8,7 @@
 #
 # Contributors:
 #   Red Hat, Inc. - initial API and implementation
+#   IBM Corporation - implementation
 #
 
 apiVersion: operators.coreos.com/v1alpha1
@@ -67,11 +68,6 @@ spec:
         name: ""
         version: v1
       specDescriptors:
-      - description: License agreement https://www.eclipse.org/legal/epl-2.0 must be accepted.
-        displayName: License Acceptance
-        path: license
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:booleanSwitch
       - description: Configuration settings related to the Authentication used by the Che installation.
         displayName: Authentication
         path: auth

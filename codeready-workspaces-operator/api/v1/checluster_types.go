@@ -8,6 +8,7 @@
 //
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
+//   IBM Corporation - implementation
 //
 
 package v1
@@ -35,9 +36,6 @@ import (
 // the various components of the Che installation.
 // These generated ConfigMaps must NOT be updated manually.
 type CheClusterSpec struct {
-	// Configuration settings related to the License used by the Che installation
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="License"
-	License CheClusterSpecLicense `json:"license"`
 	// General configuration settings related to the Che server, the plugin and devfile registries
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Che server"
@@ -71,13 +69,6 @@ type CheClusterSpec struct {
 	// +optional
 	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="Dev Workspace operator"
 	DevWorkspace CheClusterSpecDevWorkspace `json:"devWorkspace"`
-}
-
-// +k8s:openapi-gen=true
-// Configuration settings related to license requirements.
-type CheClusterSpecLicense struct {
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="License Acceptance",xDescriptors="urn:alm:descriptor:com.tectonic.ui:checkbox"
-	LicenseAccept bool `json:"accept"`
 }
 
 // +k8s:openapi-gen=true
@@ -783,6 +774,54 @@ type CheClusterList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []CheCluster `json:"items"`
 }
+
+///
+
+// +k8s:openapi-gen=true
+// Personal z/OS cloud IDE for development and testing - License.
+type WaziLicenseSpec struct {
+	// General configuration settings related to the License
+	// +optional
+	// +operator-sdk:csv:customresourcedefinitions:type=spec,displayName="License"
+	License WaziLicenseSpecLicense `json:"license"`
+}
+
+type WaziLicenseSpecLicense struct {
+	// Accept the license terms and agreement. Default to `false`.
+	// +optional
+	Accept bool `json:"accept"`
+}
+
+// The `WaziLicense` custom resource allows defining and managing a License installation
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +k8s:openapi-gen=true
+// +operator-sdk:csv:customresourcedefinitions:displayName=" Desired configuration of the IBM licensing"
+// +operator-sdk:csv:customresourcedefinitions:order=0
+// +operator-sdk:csv:customresourcedefinitions:resources={{Ingress,v1},{Route,v1},{ConfigMap,v1},{Service,v1},{Secret,v1},{Deployment,apps/v1},{Role,v1},{RoleBinding,v1},{ClusterRole,v1},{ClusterRoleBinding,v1}}
+// +kubebuilder:storageversion
+type WaziLicense struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// Desired configuration of the License installation.
+	// Based on these settings, the  Operator automatically creates and maintains
+	// several ConfigMaps that will contain the appropriate environment variables
+	// the various components of the License installation.
+	// These generated ConfigMaps must NOT be updated manually.
+	Spec WaziLicenseSpec `json:"spec,omitempty"`
+}
+
+//+kubebuilder:object:root=true
+// WaziLicenseList contains a list of WaziLicense
+type WaziLicenseList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []WaziLicense `json:"items"`
+}
+
+///
 
 func init() {
 	SchemeBuilder.Register(&CheCluster{}, &CheClusterList{})

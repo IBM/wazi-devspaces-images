@@ -18,7 +18,7 @@ components:
   -
     type: dockerimage
     alias: python
-    image: registry.redhat.io/codeready-workspaces/plugin-java8-rhel8:2.14
+    image: registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd
     memoryLimit: 512Mi
     mountSources: true
     volumes:

@@ -468,13 +468,13 @@
     "version": "latest"
   },
   {
-    "id": "ibm/wazi-developer/latest",
+    "id": "ibm/wazi-code/latest",
     "description": "Provides COBOL, PL/I, HLASM, and REXX language servers as well as tools for IBM Z development.",
-    "displayName": "Wazi Developer",
+    "displayName": "Wazi Code",
     "links": {
-      "self": "/v3/plugins/ibm/wazi-developer/latest"
+      "self": "/v3/plugins/ibm/wazi-code/latest"
     },
-    "name": "wazi-developer",
+    "name": "wazi-code",
     "publisher": "ibm",
     "type": "VS Code extension",
     "version": "latest"

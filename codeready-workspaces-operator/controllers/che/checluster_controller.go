@@ -8,6 +8,7 @@
 //
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
+//   IBM Corporation - implementation
 //
 
 package che
@@ -16,7 +17,6 @@ import (
 	"context"
 	"strings"
 	"time"
-	"fmt"
 
 	"github.com/eclipse-che/che-operator/pkg/deploy"
 	"github.com/eclipse-che/che-operator/pkg/deploy/dashboard"
@@ -251,13 +251,6 @@ func (r *CheClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	deployContext := &deploy.DeployContext{
 		ClusterAPI: clusterAPI,
 		CheCluster: checluster,
-	}
-	
-	// License Terms
-	licenseValue := checluster.Spec.License.LicenseAccept
-	if licenseValue != true {
-		r.Log.Info("Must accept terms of license")
-		return ctrl.Result{}, fmt.Errorf("License agreement must be accepted.")
 	}
 
 	// Read proxy configuration

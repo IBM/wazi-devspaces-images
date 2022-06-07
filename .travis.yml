@@ -6,10 +6,10 @@ services:
   - docker
 env:
   global:
-  - IMAGE_DEVFILE="icr.io/wazi-code/ibm-wazi-developer-for-workspaces-dev-file"
-  - IMAGE_PLUGIN="icr.io/wazi-code/ibm-wazi-developer-for-workspaces-plugin"
-  - IMAGE_OPERATOR="icr.io/cpopen/ibm-wazi-developer-for-workspaces-operator"
-  - IMAGE_CATALOG="icr.io/cpopen/ibm-wazi-developer-for-workspaces-catalog"
+  - IMAGE_DEVFILE="icr.io/wazi-code/ibm-wazi-for-devspaces-dev-file"
+  - IMAGE_PLUGIN="icr.io/wazi-code/ibm-wazi-for-devspaces-plugin"
+  - IMAGE_OPERATOR="icr.io/cpopen/ibm-wazi-for-devspaces-operator"
+  - IMAGE_CATALOG="icr.io/cpopen/ibm-wazi-for-devspaces-catalog"
   - DOCKERFILE_DEVFILE="./codeready-workspaces-devfileregistry/build/dockerfiles/Dockerfile"
   - DOCKERFILE_PLUGIN="./codeready-workspaces-pluginregistry/build/dockerfiles/Dockerfile"
   - DOCKERFILE_OPERATOR="./codeready-workspaces-operator/Dockerfile"

@@ -13,7 +13,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: wazi-codeready-workspaces-metrics-exporter
+  name: idzee-devspaces-metrics-exporter
   labels:
     app.kubernetes.io/name: che
     app.kubernetes.io/instance: che
@@ -25,7 +25,7 @@ spec:
     scheme: http
   namespaceSelector:
     matchNames:
-    - wazi-codeready-workspaces
+    - idzee-devspaces
   selector:
     matchLabels:
       app.kubernetes.io/component: codeready

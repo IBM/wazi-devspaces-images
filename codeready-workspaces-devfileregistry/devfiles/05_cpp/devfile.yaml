@@ -20,7 +20,7 @@ components:
 -
   type: dockerimage
   alias: cpp-dev
-  image: registry.redhat.io/codeready-workspaces/stacks-cpp-rhel8:2.14
+  image: registry.redhat.io/codeready-workspaces/stacks-cpp-rhel8@sha256:fc621b59be72465ab82cfa293b5b190521eecfed9c353051a7e72592837891c1
   memoryLimit: 512Mi
   mountSources: true
 commands:

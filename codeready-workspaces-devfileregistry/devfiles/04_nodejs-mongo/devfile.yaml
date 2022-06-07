@@ -15,7 +15,7 @@ components:
     id: ms-vscode/node-debug2/latest
   - type: dockerimage
     alias: nodejs
-    image: registry.redhat.io/codeready-workspaces/plugin-java8-rhel8:2.14
+    image: registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd
     env:
       # The values below are used to set up the environment for running the application
       - name: SECRET
@@ -29,7 +29,7 @@ components:
     mountSources: true
   - type: dockerimage
     alias: mongo
-    image: registry.redhat.io/rhscl/mongodb-36-rhel7:1-50
+    image: registry.redhat.io/rhscl/mongodb-36-rhel7@sha256:9f799d356d7d2e442bde9d401b720600fd9059a3d8eefea6f3b2ffa721c0dc73
     memoryLimit: 512Mi
     env:
       - name: MONGODB_USER
