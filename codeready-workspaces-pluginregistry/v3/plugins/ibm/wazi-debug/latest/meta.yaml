@@ -22,7 +22,7 @@ icon: /images/wazi-debug-icon.png
 repository: https://github.com/IBM/zopendebug-about.git
 category: Language
 firstPublicationDate: "2020-10-30"
-latestUpdateDate: "2022-06-17"
+latestUpdateDate: "2022-09-13"
 spec:
   extensions:
   - relative:extension/plugins/ibm/wazi-debug/latest/extensions/zopendebug.vsix

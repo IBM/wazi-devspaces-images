@@ -8,6 +8,7 @@
 //
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
+//   IBM Corporation - implementation
 //
 package server
 
@@ -86,6 +87,7 @@ type CheConfigMap struct {
 	WorkspaceExposure                      string `json:"CHE_INFRA_KUBERNETES_SINGLEHOST_WORKSPACE_EXPOSURE"`
 	SingleHostGatewayConfigMapLabels       string `json:"CHE_INFRA_KUBERNETES_SINGLEHOST_GATEWAY_CONFIGMAP__LABELS"`
 	CheDevWorkspacesEnabled                string `json:"CHE_DEVWORKSPACES_ENABLED"`
+	WorkspaceServiceAccountClusterRoles    string `json:"CHE_INFRA_KUBERNETES_WORKSPACE__SA__CLUSTER__ROLES"`
 }
 
 // GetCheConfigMapData gets env values from CR spec and returns a map with key:value
@@ -252,6 +254,7 @@ func (s *Server) getCheConfigMapData() (cheEnv map[string]string, err error) {
 		WorkspaceExposure:                      workspaceExposure,
 		SingleHostGatewayConfigMapLabels:       singleHostGatewayConfigMapLabels,
 		CheDevWorkspacesEnabled:                strconv.FormatBool(s.deployContext.CheCluster.Spec.DevWorkspace.Enable),
+		WorkspaceServiceAccountClusterRoles:    deploy.GetWaziLicenseClusterRoleName(s.deployContext.CheCluster.Namespace),
 	}
 
 	data.KeycloakURL = keycloakURL

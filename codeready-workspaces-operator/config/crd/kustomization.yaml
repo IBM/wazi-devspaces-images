@@ -16,6 +16,7 @@
 # It should be run by config/default
 resources:
 - bases/org_v1_che_crd.yaml
+- bases/org_v1_ibm_crd.yaml
 # - bases/org.eclipse.che_checlusters.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 

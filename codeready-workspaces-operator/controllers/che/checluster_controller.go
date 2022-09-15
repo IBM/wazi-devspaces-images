@@ -148,7 +148,16 @@ func (r *CheClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		return []ctrl.Request{}
 	}
 
+	var toWaziLicenseRelatedObjRequestMapper handler.MapFunc = func(obj client.Object) []ctrl.Request {
+		isWaziLicenseRelatedObj, reconcileRequest := IsWaziLicenseRelatedObj(r.nonCachedClient, r.namespace, obj)
+		if isWaziLicenseRelatedObj {
+			return []ctrl.Request{reconcileRequest}
+		}
+		return []ctrl.Request{}
+	}
+
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
+
 		// Watch for changes to primary resource CheCluster
 		Watches(&source.Kind{Type: &orgv1.CheCluster{}}, &handler.EnqueueRequestForObject{}).
 		// Watch for changes to secondary resources and requeue the owner CheCluster
@@ -194,6 +203,10 @@ func (r *CheClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		).
 		Watches(&source.Kind{Type: &corev1.ConfigMap{}},
 			handler.EnqueueRequestsFromMapFunc(toEclipseCheRelatedObjRequestMapper),
+			builder.WithPredicates(onAllExceptGenericEventsPredicate),
+		).
+		Watches(&source.Kind{Type: &orgv1.WaziLicense{}},
+			handler.EnqueueRequestsFromMapFunc(toWaziLicenseRelatedObjRequestMapper),
 			builder.WithPredicates(onAllExceptGenericEventsPredicate),
 		)
 
@@ -285,6 +298,20 @@ func (r *CheClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	// Reconcile finalizers before CR is deleted
 	// TODO remove in favor of r.reconcileManager.FinalizeAll(deployContext)
 	r.reconcileFinalizers(deployContext)
+
+	if !tests {
+		// Fetch a WaziLicense instance
+		_, _, lic_err := util.FindWaziLicenseCRInNamespace(r.client, r.namespace)
+
+		if lic_err != nil {
+			// Use Case A: CheCluster request comes in first.
+			//             Halt the reconcile loop for the CheCluster
+			// Use Case B: Wazi License request comes in first.
+			//             Fall through, where the Get CheCluster will halt reconcile
+			r.Log.Error(lic_err, "A Wazi License is required.")
+			return ctrl.Result{}, nil
+		}
+	}
 
 	// Reconcile Dev Workspace Operator
 	done, err := devworkspace.ReconcileDevWorkspace(deployContext)

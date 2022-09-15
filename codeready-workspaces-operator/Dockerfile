@@ -11,7 +11,8 @@
 #
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/rhel8/go-toolset
-FROM registry.redhat.io/rhel8/go-toolset:1.16.12-4 as builder
+# FROM registry.redhat.io/rhel8/go-toolset:1.16.12-4 as builder
+FROM registry.redhat.io/rhel8/go-toolset@sha256:2d56a94f1e83fe0e874f099dd8d03b876186985a7dbeea118e8c725b1b07b9f0 as builder
 ENV GOPATH=/go/
 ARG DEV_WORKSPACE_CONTROLLER_VERSION="v0.9.0"
 ARG DEV_HEADER_REWRITE_TRAEFIK_PLUGIN="v0.1.2"
@@ -46,14 +47,15 @@ COPY pkg/ pkg/
 
 # build operator
 RUN export ARCH="$(uname -m)" && if [[ ${ARCH} == "x86_64" ]]; then export ARCH="amd64"; elif [[ ${ARCH} == "aarch64" ]]; then export ARCH="arm64"; elif [[ ${ARCH} == "s390x" ]]; then export ARCH="s390x"; fi && \
-    if [[ ${TESTS} == "true" ]]; then export MOCK_API=true && go test -mod=vendor -v ./...; fi && \
+    if [[ ${TESTS} == "true" && ${ARCH} == "x86_64" ]]; then export MOCK_API=true && go test -mod=vendor -v ./...; fi && \
     CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} GO111MODULE=on go build -mod=vendor -a -o che-operator main.go
 
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi8-minimal
-FROM registry.redhat.io/ubi8/ubi-minimal:8.5
+# FROM registry.redhat.io/ubi8/ubi-minimal:8.5
+FROM registry.redhat.io/ubi8/ubi-minimal@sha256:3f32ebba0cbf3849a48372d4fc3a4ce70816f248d39eb50da7ea5f15c7f9d120
 
 # Build Arguments
-ARG PRODUCT_VERSION=2.1.0
+ARG PRODUCT_VERSION=2.2.0
 
 ENV PRODUCT="IBM Wazi for Dev Spaces" \
     COMPANY="IBM" \

@@ -10,7 +10,7 @@ plugins:
       url: 'https://github.com/Microsoft/vscode-node-debug'
       revision: v1.41.1
     sidecar:
-      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd"
+      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:d5bc8eba7eb2322de7789ab751c4f9afee7c4b74ea7308f15cdafaf870beb288"
       name: vscode-node-debug
       memoryLimit: 512Mi
       memoryRequest: 20Mi
@@ -26,7 +26,7 @@ plugins:
     preferences:
       debug.node.useV3: false
     sidecar:
-      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd"
+      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:d5bc8eba7eb2322de7789ab751c4f9afee7c4b74ea7308f15cdafaf870beb288"
       name: vscode-node-debug
       memoryLimit: 1Gi
       memoryRequest: 20Mi
@@ -39,7 +39,7 @@ plugins:
       directory: extensions/typescript-language-features
     featured: true
     sidecar:
-      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd"
+      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:d5bc8eba7eb2322de7789ab751c4f9afee7c4b74ea7308f15cdafaf870beb288"
       memoryLimit: 512Mi
       memoryRequest: 20Mi
       cpuLimit: 500m
@@ -108,7 +108,7 @@ plugins:
       revision: 2020.7.94776
     featured: true
     sidecar:
-      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd"
+      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:d5bc8eba7eb2322de7789ab751c4f9afee7c4b74ea7308f15cdafaf870beb288"
       name: vscode-python
       memoryLimit: 1Gi
       memoryRequest: 20Mi
@@ -200,7 +200,7 @@ plugins:
     aliases:
       - redhat/dependency-analytics
     sidecar:
-      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd"
+      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:d5bc8eba7eb2322de7789ab751c4f9afee7c4b74ea7308f15cdafaf870beb288"
       name: dependency-analytics
       memoryLimit: 1Gi
       memoryRequest: 20Mi
@@ -243,7 +243,7 @@ plugins:
       revision: 0.14.0
     featured: true
     sidecar:
-      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd"
+      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:d5bc8eba7eb2322de7789ab751c4f9afee7c4b74ea7308f15cdafaf870beb288"
       name: vscode-yaml
       memoryLimit: 256Mi
       memoryRequest: 20Mi
@@ -298,7 +298,7 @@ plugins:
     preferences:
       java.server.launchMode: Standard
     sidecar:
-      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd"
+      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:d5bc8eba7eb2322de7789ab751c4f9afee7c4b74ea7308f15cdafaf870beb288"
       name: vscode-java
       memoryLimit: 1500Mi
       memoryRequest: 20Mi
@@ -392,7 +392,7 @@ plugins:
       url: 'https://github.com/SonarSource/sonarlint-vscode'
       revision: 1.20.1
     sidecar:
-      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:f0ecc1812888611407c23ede1d3952dfb7b9bd597c336f22995cc4d8d9c23edd"
+      image: "registry.redhat.io/codeready-workspaces/plugin-java8-rhel8@sha256:d5bc8eba7eb2322de7789ab751c4f9afee7c4b74ea7308f15cdafaf870beb288"
       name: vscode-sonarlint
       memoryLimit: 512Mi
       memoryRequest: 20Mi

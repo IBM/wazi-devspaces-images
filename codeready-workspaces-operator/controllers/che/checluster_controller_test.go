@@ -795,10 +795,6 @@ func TestShouldDelegatePermissionsForCheWorkspaces(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Error reconciling: %v", err)
 			}
-			_, err = r.Reconcile(context.TODO(), req)
-			if err != nil {
-				t.Fatalf("Error reconciling: %v", err)
-			}
 
 			if !testCase.clusterRole {
 				viewRole := &rbac.Role{}

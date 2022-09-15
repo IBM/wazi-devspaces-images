@@ -1,0 +1,73 @@
+#
+# Copyright IBM Corporation 2020-2022
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   IBM Corporation - implementation
+#
+
+apiVersion: 1.0.0
+metadata:
+    generateName: wazianalyze-
+projects:
+  - name: zopeneditor-sample
+    source:
+      type: git
+      location: "https://github.com/IBM/zopeneditor-sample.git"
+      branch: analyze-sidecar
+attributes:
+  extensions.ignoreRecommendations: 'true'
+components:
+- type: chePlugin
+  id: ibm/wazi-code/latest
+  alias: wazi-code
+  preferences:
+    zowe.files.temporaryDownloadsFolder.path: /projects
+    zopeneditor.zapp.useDefaultOnlineZappSchema: true
+    zopeneditor.zcodeformat.useDefaultOnlineZCodeFormatSchema: true
+- type: chePlugin
+  id: ibm/wazi-debug/latest
+  alias: wazi-debug
+- type: dockerimage
+  alias: wazi-terminal
+  image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:05209b4edf88f98d25c294b9c957326ff004323671271f29b1ea8ed07f30bd98
+  memoryLimit: 1024Mi
+  volumes:
+    - name: zowe
+      containerPath: /home/wazi/.zowe
+    - name: m2
+      containerPath: /home/wazi/.m2
+  mountSources: true
+- type: dockerimage
+  alias: wazi-analyze
+  image: icr.io/wazi-code/ibm-wazi-for-devspaces-analyze@sha256:036ea5b07e8167af343efff4405639aef6842a4063239e574e104c5d339078fa
+  memoryLimit: 2048Mi
+  volumes:
+    - name: data
+      containerPath: /home/wazi/data
+  mountSources: true
+  endpoints:
+    - attributes:
+        cookiesAuthEnabled: 'false'
+      name: analyze-api-endpoint
+      port: 4680
+    - attributes:
+        cookiesAuthEnabled: 'false'
+      name: analyze-ui-endpoint
+      port: 5000
+    - attributes:
+        public: 'false'
+      name: analyze-weasyserv-endpoint1
+      port: 4080
+    - attributes:
+        public: 'false'
+      name: analyze-weasyserv-endpoint2
+      port: 4081
+    - attributes:
+        public: 'false'
+      name: analyze-swagger-endpoint
+      port: 8000

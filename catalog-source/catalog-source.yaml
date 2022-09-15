@@ -18,17 +18,17 @@ metadata:
   labels:
     name: wazi-codeready-operator-catalog
     app.kubernetes.io/name: wazi-codeready-operator-catalog
-    app.kubernetes.io/instance: ibm-wazi-for-devspaces-2.1.0
-    app.kubernetes.io/version: "2.1.0"
+    app.kubernetes.io/instance: ibm-wazi-for-devspaces-2.2.0
+    app.kubernetes.io/version: "2.2.0"
     app.kubernetes.io/component: wazi-code
     app.kubernetes.io/part-of: wazi
     app.kubernetes.io/managed-by: olm
   annotations:
-    productVersion: "2.1.0"
+    productVersion: "2.2.0"
             
 spec:
   displayName: IBM Wazi Developer Operators
   publisher: IBM
   sourceType: grpc
-  image: icr.io/cpopen/ibm-wazi-for-devspaces-catalog@sha256:93ad2466cb4315310be5766128cef744980ea0c7158ff0dc7356eb51e56e66a4
-  # tag: icr.io/cpopen/ibm-wazi-for-devspaces-catalog:2.1.0
+  image: icr.io/cpopen/ibm-wazi-for-devspaces-catalog@sha256:eec3bd7563daac77b9eb7178035ed610dab6ec15ad0cb7ed648d5735ccd0c907
+  # tag: icr.io/cpopen/ibm-wazi-for-devspaces-catalog:2.2.0

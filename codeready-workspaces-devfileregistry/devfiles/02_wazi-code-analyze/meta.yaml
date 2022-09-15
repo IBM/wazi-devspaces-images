@@ -1,0 +1,16 @@
+#
+# Copyright IBM Corporation 2020-2022
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   IBM Corporation - implementation
+#
+
+displayName: Wazi Code with Analyze
+description: Wazi Analyze 2.2.0, COBOL, PL/I, HLASM, REXX stack for IBM Z Open Editor 2.2.0, IBM Z Open Debug 2.2.0, Zowe Explorer 2.2.1, Zowe CLI 7.4.2, Ansible 5.10.0
+tags: ["COBOL", "PL/I", "PLI", "PL1", "HLASM", "JCL", "IDE", "LSP", "language-server", "z/OS", "zOS", "IBM Z", "Z Software", "Zowe", "Mainframe", "REXX", "Debug", "Ansible"]
+icon: /images/type-analyze.svg

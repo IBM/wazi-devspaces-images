@@ -13,7 +13,8 @@
 
 # Builder: check meta.yamls and create index.json
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi8/python-38
-FROM registry.access.redhat.com/ubi8/python-38:1-94 as builder
+# FROM registry.access.redhat.com/ubi8/python-38:1-94 as builder
+FROM registry.access.redhat.com/ubi8/python-38@sha256:5c44f2258d7e8b36f0d64118004f1e5795cca31fc3310d594948c8aca767b50b as builder
 USER 0
 
 ################# 
@@ -73,11 +74,12 @@ RUN chmod -R g+rwX /build/devfiles
 
 # Build registry, copying meta.yamls and index.json from builder
 # https://access.redhat.com/containers/?tab=tags#/registry.access.redhat.com/ubi8/httpd-24
-FROM registry.access.redhat.com/ubi8/httpd-24:1-191 AS registry
+# FROM registry.access.redhat.com/ubi8/httpd-24:1-191 AS registry
+FROM registry.access.redhat.com/ubi8/httpd-24@sha256:744e0885af1169fbd97b942a69df7f915db47b19a53e01cf9be5c11e2e2ff324 AS registry
 USER 0
 
 # Build Arguments
-ARG PRODUCT_VERSION=2.1.0
+ARG PRODUCT_VERSION=2.2.0
 
 ENV PRODUCT="IBM Wazi for Dev Spaces" \
     COMPANY="IBM" \
@@ -119,10 +121,13 @@ LABEL name="$PRODUCT" \
 # latest httpd container doesn't include ssl cert, so generate one
 RUN chmod +x /usr/share/container-scripts/httpd/pre-init/40-ssl-certs.sh && \
     /usr/share/container-scripts/httpd/pre-init/40-ssl-certs.sh
+COPY ./build/dockerfiles/content_set*.repo /etc/yum.repos.d/
 RUN \
     yum -y -q --nobest update && \
+    yum -y -q install jq && \
     yum -y -q clean all && rm -rf /var/cache/yum && \
-    echo "Installed Packages" && rpm -qa | sort -V && echo "End Of Installed Packages"
+    echo "Installed Packages" && rpm -qa | sort -V && echo "End Of Installed Packages" && \
+    rm -rf /etc/yum.repos.d/content_set*.repo
 
 RUN echo "<FilesMatch "\""^\\.ht"\"">" >> /etc/httpd/conf/httpd.conf && \
     echo "Require all denied" >> /etc/httpd/conf/httpd.conf && \

@@ -8,6 +8,7 @@
 //
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
+//   IBM Corporation - implementation
 //
 package devfileregistry
 
@@ -25,6 +26,7 @@ func (p *DevfileRegistry) GetDevfileRegistryDeploymentSpec() *appsv1.Deployment 
 	registryImagePullPolicy := v1.PullPolicy(util.GetValue(string(p.deployContext.CheCluster.Spec.Server.DevfileRegistryPullPolicy), deploy.DefaultPullPolicyFromDockerImage(registryImage)))
 	probePath := "/devfiles/"
 	devfileImagesEnv := util.GetEnvByRegExp("^.*devfile_registry_image.*$")
+	util.AddWaziLicenseEnv(p.deployContext.ClusterAPI.Client, p.deployContext.CheCluster.Namespace, &devfileImagesEnv)
 
 	resources := v1.ResourceRequirements{
 		Requests: v1.ResourceList{

@@ -8,6 +8,7 @@
 //
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
+//   IBM Corporation - implementation contribution
 //
 
 package deploy
@@ -26,6 +27,7 @@ type ProvisioningStatus struct {
 }
 
 type DeployContext struct {
+	WaziLicense             *orgv1.WaziLicense
 	CheCluster              *orgv1.CheCluster
 	ClusterAPI              ClusterAPI
 	Proxy                   *Proxy

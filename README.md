@@ -1,7 +1,7 @@
-[![Build](https://app.travis-ci.com/IBM/wazi-devspaces-images.svg?branch=main)](https://app.travis-ci.com/IBM/wazi-devspaces-images)
+[![Build](https://app.travis-ci.com/IBM/wazi-devspaces-images.svg?branch=2.2.0.wazi)](https://app.travis-ci.com/IBM/wazi-devspaces-images)
 [![Release](https://img.shields.io/github/release/IBM/wazi-devspaces-images.svg)](../../releases/latest)
 [![License](https://img.shields.io/github/license/IBM/wazi-devspaces-images)](./LICENSE)
-[![Documentation](https://img.shields.io/badge/Documentation-blue?color=1f618d)](https://ibm.biz/wazi-crw-doc)
+[![Documentation](https://img.shields.io/badge/Documentation-blue?color=1f618d)](https://ibm.biz/wazi-ds-doc)
 
 ## What's inside?
 
@@ -18,7 +18,7 @@ This repository contains the registry, operator, bundle, and index images for IB
 
 IBM Wazi for Dev Spaces provides a modern experience for mainframe software developers working with z/OS applications in the cloud. Powered by the open source projects Zowe and Red Hat OpenShift Dev Spaces, IBM Wazi for Dev Spaces offers an easy, streamlined onboarding process to provide mainframe developers with the tools they need. Using container technology, IBM Wazi for Dev Spaces brings the necessary tools to the task at hand. IBM Wazi for Dev Spaces is a component shipped with IBM Developer for z/OS Enterprise Edition (IDzEE).
 
-For more benefits of IBM Wazi for Dev Spaces, see the [IBM Wazi product page](https://www.ibm.com/products/wazi-developer) or [IDzEE product page](https://www.ibm.com/products/developer-for-zos).
+For more benefits of IBM Wazi for Dev Spaces, see the [IBM Wazi product page](https://www.ibm.com/products/z-and-cloud-modernization-stack) or [IDzEE product page](https://www.ibm.com/products/developer-for-zos).
 
 ## Details
 
@@ -32,10 +32,11 @@ IBM Wazi for Dev Spaces provides a custom stack with the all-in-one mainframe de
 - Debug COBOL and PL/I applications using IBM Z Open Debug
 - Use a mainframe development package with a custom plug-in and devfile registry support from the [IBM Wazi Code stack](https://github.com/IBM/wazi-devspaces-images)
 - Leverage the full language support for Ansible and Red Hat Ansible Certified Content for IBM Z to author and execute playbooks to configure z/OS for development. Automate the deployment and configuration of tools and dependencies such as build, test and debug, to quickly build, deploy and run your applications.
+- Use Wazi Analyze to discover the relationships among z/OS application artifacts.
 
 ## Documentation
 
-For details of the features for IBM Wazi for Dev Spaces, see its [official documentation](https://ibm.biz/wazi-crw-doc).
+For details of the features for IBM Wazi for Dev Spaces, see its [official documentation](https://ibm.biz/wazi-ds-doc).
 
 ### Image Information
 
@@ -44,9 +45,17 @@ For details of the features for IBM Wazi for Dev Spaces, see its [official docum
 * `dev-file` Image - This is a customized dev-file registry image. 
 * `plugin` Image - This is a customized plugin registry image. 
 * `codeready` Image - This is a Wazi sidecar image used to provide supporting resources. 
+* `analyze` Image - This is a Wazi Analyze sidecar image used to provide supporting resources. 
 
 | <sub>Registry and Image</sub> | <sub>Version</sub> |
 | :--- | --- |
+||<sub><b>2.2.0</b></sub>|
+|<sub>icr.io/cpopen/ibm-wazi-for-devspaces-catalog@sha256:eec3bd7563daac77b9eb7178035ed610dab6ec15ad0cb7ed648d5735ccd0c907</sub>||
+|<sub>icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:f7ba31141693a5b14317cd38a0d24fc66caee917eb496282093c4712e1fa7912</sub>||
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-dev-file@sha256:ac72c38d9a434de2fc8c39f520b72d1a5a36d41218730fabed59a75cbd871873</sub>||
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-plugin@sha256:6662a8c54fc2124d06971b01a2e179fbd02b770f6b2e7c02f1d7b885caeab143</sub>||
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:05209b4edf88f98d25c294b9c957326ff004323671271f29b1ea8ed07f30bd98</sub>||
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-analyze@sha256:036ea5b07e8167af343efff4405639aef6842a4063239e574e104c5d339078fa</sub>||
 ||<sub><b>2.1.0</b></sub>|
 |<sub>icr.io/cpopen/ibm-wazi-for-devspaces-catalog@sha256:93ad2466cb4315310be5766128cef744980ea0c7158ff0dc7356eb51e56e66a4</sub>||
 |<sub>icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:7715e865bb9ba22783e7743922307dba260b3032106cf361fc87918e0ca2998c</sub>||

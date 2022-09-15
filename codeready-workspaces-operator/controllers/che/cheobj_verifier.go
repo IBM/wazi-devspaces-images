@@ -8,6 +8,7 @@
 //
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
+//   IBM Corporation - implementation
 //
 
 package che
@@ -97,6 +98,44 @@ func IsEclipseCheRelatedObj(cl client.Client, watchNamespace string, obj client.
 	return true, ctrl.Request{
 		NamespacedName: types.NamespacedName{
 			Namespace: checluster.Namespace,
+			Name:      checluster.Name,
+		},
+	}
+}
+
+// IsWaziLicenseRelatedObj indicates if there is an object in a che namespace with the Wazi License:
+func IsWaziLicenseRelatedObj(cl client.Client, watchNamespace string, obj client.Object) (bool, ctrl.Request) {
+	if obj.GetNamespace() == "" {
+		// ignore cluster scope objects
+		return false, ctrl.Request{}
+	}
+
+	// Wazi License Related Object
+	wazilicense, num, _ := util.FindWaziLicenseCRInNamespace(cl, watchNamespace)
+	if num != 1 {
+		if num > 1 {
+			logrus.Warn("More than one wazilicense Custom Resource found.")
+		}
+		return false, ctrl.Request{}
+	}
+
+	if wazilicense.Namespace != obj.GetNamespace() {
+		// ignore object in another namespace
+		return false, ctrl.Request{}
+	}
+
+	checluster, num, err := util.FindCheClusterCRInNamespace(cl, watchNamespace)
+
+	if num != 1 || err != nil {
+		if num > 1 {
+			logrus.Warn("More than one checluster Custom Resource found.")
+		}
+		return false, ctrl.Request{}
+	}
+
+	return true, ctrl.Request{
+		NamespacedName: types.NamespacedName{
+			Namespace: watchNamespace,
 			Name:      checluster.Name,
 		},
 	}

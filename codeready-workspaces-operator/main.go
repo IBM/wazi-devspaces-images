@@ -54,6 +54,7 @@ import (
 
 	orgv1 "github.com/eclipse-che/che-operator/api/v1"
 	checontroller "github.com/eclipse-che/che-operator/controllers/che"
+	wazicontroller "github.com/eclipse-che/che-operator/controllers/wazi"
 	"github.com/eclipse-che/che-operator/pkg/deploy"
 	"github.com/eclipse-che/che-operator/pkg/signal"
 	"github.com/eclipse-che/che-operator/pkg/util"
@@ -78,6 +79,9 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 
 	orgv2alpha1 "github.com/eclipse-che/che-operator/api/v2alpha1"
+
+	licensingoperatorv1 "github.com/IBM/ibm-licensing-operator/api/v1"
+	odlmv1alpha1 "github.com/IBM/operand-deployment-lifecycle-manager/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -149,6 +153,8 @@ func init() {
 		utilruntime.Must(corev1.AddToScheme(scheme))
 		utilruntime.Must(consolev1.AddToScheme(scheme))
 		utilruntime.Must(projectv1.AddToScheme(scheme))
+		utilruntime.Must(odlmv1alpha1.AddToScheme(scheme))
+		utilruntime.Must(licensingoperatorv1.AddToScheme(scheme))
 	}
 }
 
@@ -254,6 +260,13 @@ func main() {
 	nonCachingClient, err := client.New(mgr.GetConfig(), client.Options{Scheme: scheme})
 	if err != nil {
 		setupLog.Error(err, "unable to initialize non cached client")
+		os.Exit(1)
+	}
+
+	waziReconciler := wazicontroller.NewReconciler(mgr.GetClient(), nonCachingClient, discoveryClient, mgr.GetScheme(), watchNamespace)
+
+	if err = waziReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to set up controller", "controller", "WaziLicense")
 		os.Exit(1)
 	}
 

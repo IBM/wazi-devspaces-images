@@ -30,6 +30,7 @@ REGISTRY=${CHE_DEVFILE_IMAGES_REGISTRY_URL}
 ORGANIZATION=${CHE_DEVFILE_IMAGES_REGISTRY_ORGANIZATION}
 TAG=${CHE_DEVFILE_IMAGES_REGISTRY_TAG}
 PUBLIC_URL=${CHE_DEVFILE_REGISTRY_URL}
+LICENSE_USAGE=${WAZI_LICENSE_USAGE}
 
 DEFAULT_DEVFILES_DIR="/var/www/html/devfiles"
 DEVFILES_DIR="${DEVFILES_DIR:-${DEFAULT_DEVFILES_DIR}}"
@@ -48,6 +49,7 @@ IMAGE_REGEX='([[:space:]]*"?)([._:a-zA-Z0-9-]*)/([._a-zA-Z0-9-]*)/([._a-zA-Z0-9-
 function run_main() {
   extract_and_use_related_images_env_variables_with_image_digest_info
 
+  check_wazi_license_usage
   update_container_image_references
 
   if [ -n "$PUBLIC_URL" ]; then
@@ -231,6 +233,19 @@ function update_container_image_references() {
       sed -i -E "s|image:$IMAGE_REGEX|image:\1\2/\3/\4:${TAG}\7|" "$devfile"
     fi
   done
+}
+
+function check_wazi_license_usage() {
+  # If the license usage is IDzEE then we must disable Wazi Analyze
+  if [ "${LICENSE_USAGE,,}" = "idzee" ]; then
+    readarray -t analyze_devfiles < <(find "${DEVFILES_DIR}" -name '*analyze*')
+    for analyze_devfile in "${analyze_devfiles[@]}"; do
+      echo "Removing $analyze_devfile"
+      # Must purge the analyze devfile
+      rm -rf "$analyze_devfile"
+    done
+    cat <<< $(jq 'del(.[] | select(.displayName | contains("Analyze")))' "$INDEX_JSON") > "$INDEX_JSON"
+  fi
 }
 
 # do not execute the main function in unit tests
