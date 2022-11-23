@@ -22,10 +22,10 @@ icon: /images/wazi-code-icon.png
 repository: https://github.com/IBM/zopeneditor-about.git
 category: Language
 firstPublicationDate: "2020-10-30"
-latestUpdateDate: "2022-09-13"
+latestUpdateDate: "2022-11-18"
 spec:
   containers:
-  - image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:05209b4edf88f98d25c294b9c957326ff004323671271f29b1ea8ed07f30bd98
+  - image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:0bf8460efac9db509eb1d0788077caea31cbaf0e5ac2208385403a35ca4757c2
     name: wazi-plugins
     memoryLimit: 2048Mi
     memoryRequest: 256Mi

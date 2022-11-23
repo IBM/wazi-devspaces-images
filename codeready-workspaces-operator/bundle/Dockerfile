@@ -15,7 +15,7 @@ FROM registry.redhat.io/openshift4/ose-operator-registry:v4.10 AS builder
 FROM registry.redhat.io/ubi8/ubi-minimal:8.5
 
 # Build Arguments
-ARG PRODUCT_VERSION=2.2.0
+ARG PRODUCT_VERSION=2.3.0
 
 ENV PRODUCT="IBM Wazi for Dev Spaces" \
     COMPANY="IBM" \

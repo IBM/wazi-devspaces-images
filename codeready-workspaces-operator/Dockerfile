@@ -55,7 +55,7 @@ RUN export ARCH="$(uname -m)" && if [[ ${ARCH} == "x86_64" ]]; then export ARCH=
 FROM registry.redhat.io/ubi8/ubi-minimal@sha256:3f32ebba0cbf3849a48372d4fc3a4ce70816f248d39eb50da7ea5f15c7f9d120
 
 # Build Arguments
-ARG PRODUCT_VERSION=2.2.0
+ARG PRODUCT_VERSION=2.3.0
 
 ENV PRODUCT="IBM Wazi for Dev Spaces" \
     COMPANY="IBM" \

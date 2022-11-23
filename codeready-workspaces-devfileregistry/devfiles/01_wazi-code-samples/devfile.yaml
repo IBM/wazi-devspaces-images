@@ -27,6 +27,7 @@ components:
   alias: wazi-code
   preferences:
     zowe.files.temporaryDownloadsFolder.path: /projects
+    zowe.security.secureCredentialsEnabled: false
     zopeneditor.zapp.useDefaultOnlineZappSchema: true
     zopeneditor.zcodeformat.useDefaultOnlineZCodeFormatSchema: true
 - type: chePlugin
@@ -34,7 +35,7 @@ components:
   alias: wazi-debug
 - type: dockerimage
   alias: wazi-terminal
-  image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:05209b4edf88f98d25c294b9c957326ff004323671271f29b1ea8ed07f30bd98
+  image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:0bf8460efac9db509eb1d0788077caea31cbaf0e5ac2208385403a35ca4757c2
   memoryLimit: 1024Mi
   volumes:
     - name: zowe
@@ -42,3 +43,28 @@ components:
     - name: m2
       containerPath: /home/wazi/.m2
   mountSources: true
+commands:
+  - name: COBOL-1. Initialize local workspace
+    actions:
+      - type: exec
+        component: wazi-terminal
+        command: ansible-playbook -i inventories --extra-vars "host=devtest1" initialize-local-files.yaml
+        workdir: "${CHE_PROJECTS_ROOT}/zopeneditor-sample/ansible"
+  - name: COBOL-2. Setup dbb-zappbuild
+    actions:
+      - type: exec
+        component: wazi-terminal
+        command: ansible-playbook -i inventories --extra-vars "host=devtest1" dbb-prepare-userbuild.yml
+        workdir: "${CHE_PROJECTS_ROOT}/zopeneditor-sample/ansible"
+  - name: COBOL-3. Build the full SAM app on devtest1
+    actions:
+      - type: exec
+        component: wazi-terminal
+        command: ansible-playbook -i inventories --extra-vars "host=devtest1" dbb-sam-build.yml
+        workdir: "${CHE_PROJECTS_ROOT}/zopeneditor-sample/ansible"
+  - name: COBOL-4. Run the SAM1 app on devtest1
+    actions:
+      - type: exec
+        component: wazi-terminal
+        command: ansible-playbook -i inventories --extra-vars "host=devtest1" dbb-sam-run.yml
+        workdir: "${CHE_PROJECTS_ROOT}/zopeneditor-sample/ansible"

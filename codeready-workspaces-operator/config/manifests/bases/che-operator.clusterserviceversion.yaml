@@ -107,7 +107,7 @@ metadata:
     capabilities:                                    Seamless Upgrades
     categories:                                      Developer Tools
     certified:                                       "true"
-    containerImage:                                  icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:f7ba31141693a5b14317cd38a0d24fc66caee917eb496282093c4712e1fa7912
+    containerImage:                                  icr.io/cpopen/ibm-wazi-for-devspaces-operator:latest
     createdAt:                                       "2021-12-23T18:24:30+00:00"
     description:                                     Personal z/OS cloud IDE for development and testing.
     operatorframework.io/suggested-namespace:        wazi-devspaces
@@ -117,8 +117,8 @@ metadata:
     operators.operatorframework.io/project_layout:   go.kubebuilder.io/v3
     repository:                                      https://github.com/IBM/wazi-devspaces-images
     support:                                         IBM
-    olm.skipRange:                                   ">=1.4.0 !=2.0.0 <2.2.0"
-  name:                                              ibm-wazi-for-devspaces.v2.2.0
+    olm.skipRange:                                   ">=1.4.0 !=2.0.0 <2.3.0"
+  name:                                              ibm-wazi-for-devspaces.v2.3.0
   namespace:                                         placeholder
 spec:
   minKubeVersion:                                    1.21.0
@@ -1218,7 +1218,7 @@ spec:
                       - name: RELATED_IMAGE_dashboard
                         value: registry.redhat.io/codeready-workspaces/dashboard-rhel8@sha256:e28e5d2e903d1bf43245b73ee4f430fa4ba870ed09749ef5490e3c38da83271e
                       - name: RELATED_IMAGE_devfile_registry
-                        value: icr.io/wazi-code/ibm-wazi-for-devspaces-dev-file@sha256:ac72c38d9a434de2fc8c39f520b72d1a5a36d41218730fabed59a75cbd871873
+                        value: icr.io/wazi-code/ibm-wazi-for-devspaces-dev-file:latest
                       - name: RELATED_IMAGE_devworkspace_controller
                         value: registry.redhat.io/devworkspace/devworkspace-rhel8-operator@sha256:e68ec2fe7ac27e59641bdfc7794ae99fdfaa60e5b6d0cc0e3f20ab3f7a31bc11
                       - name: RELATED_IMAGE_gateway_authentication_sidecar
@@ -1244,7 +1244,7 @@ spec:
                       - name: RELATED_IMAGE_keycloak_s390x
                         value: registry.redhat.io/rh-sso-7/sso74-openj9-openshift-rhel8@sha256:046d86f43fe0d22531505f3a7cf3050baa5967e6443ac226d5a8402d589fab13
                       - name: RELATED_IMAGE_plugin_registry
-                        value: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin@sha256:6662a8c54fc2124d06971b01a2e179fbd02b770f6b2e7c02f1d7b885caeab143
+                        value: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin:latest
                       - name: RELATED_IMAGE_postgres
                         value: registry.redhat.io/rhel8/postgresql-96@sha256:314747a4a64ac16c33ead6a34479dccf16b9a07abf440ea7eeef7cda4cd19e32
                       - name: RELATED_IMAGE_postgres_13_3
@@ -1258,14 +1258,14 @@ spec:
                       - name: RELATED_IMAGE_single_host_gateway_config_sidecar
                         value: registry.redhat.io/codeready-workspaces/configbump-rhel8@sha256:6f920f581cd54575ae032a95a5b7c06a280a44cfb698659b8e5c89adcf60ff6e
                       - name: RELATED_IMAGE_wazi_code_sidecar_wazi
-                        image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:05209b4edf88f98d25c294b9c957326ff004323671271f29b1ea8ed07f30bd98
+                        image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready:latest
                       - name: RELATED_IMAGE_wazi_code_sidecar_analyze
-                        image: icr.io/wazi-code/ibm-wazi-for-devspaces-analyze@sha256:036ea5b07e8167af343efff4405639aef6842a4063239e574e104c5d339078fa
+                        image: icr.io/wazi-code/ibm-wazi-for-devspaces-analyze:latest
                       - name:                        WATCH_NAMESPACE
                         valueFrom:
                           fieldRef:
                             fieldPath:               metadata.annotations['olm.targetNamespaces']
-                    image:                           icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:f7ba31141693a5b14317cd38a0d24fc66caee917eb496282093c4712e1fa7912
+                    image:                           icr.io/cpopen/ibm-wazi-for-devspaces-operator:latest
                     imagePullPolicy:                 Always
                     livenessProbe:
                       failureThreshold:              10
@@ -1557,12 +1557,12 @@ spec:
   maturity:                                          stable
   provider:
     name:                                            IBM
-  version:                                           2.2.0
+  version:                                           2.3.0
   relatedImages:
   - name: crw-2-rhel8-operator-96693d92d382d97b53396f85073baa33232ec921fbd3971a8e52046193687e31-annotation
-    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:f7ba31141693a5b14317cd38a0d24fc66caee917eb496282093c4712e1fa7912
+    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator:latest
   - name: codeready-operator
-    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:f7ba31141693a5b14317cd38a0d24fc66caee917eb496282093c4712e1fa7912
+    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator:latest
   - name: che_server
     image: registry.redhat.io/codeready-workspaces/server-rhel8@sha256:3843f4e3271d927cb1955bfa54b144729676988219dc21849a30a06c9aaab215
   - name: che_server_secure_exposer_jwt_proxy_image
@@ -1634,7 +1634,7 @@ spec:
   - name: dashboard
     image: registry.redhat.io/codeready-workspaces/dashboard-rhel8@sha256:e28e5d2e903d1bf43245b73ee4f430fa4ba870ed09749ef5490e3c38da83271e
   - name: devfile_registry
-    image: icr.io/wazi-code/ibm-wazi-for-devspaces-dev-file@sha256:ac72c38d9a434de2fc8c39f520b72d1a5a36d41218730fabed59a75cbd871873
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-dev-file:latest
   - name: devworkspace_controller
     image: registry.redhat.io/devworkspace/devworkspace-rhel8-operator@sha256:e68ec2fe7ac27e59641bdfc7794ae99fdfaa60e5b6d0cc0e3f20ab3f7a31bc11
   - name: gateway_authentication_sidecar
@@ -1660,7 +1660,7 @@ spec:
   - name: keycloak_s390x
     image: registry.redhat.io/rh-sso-7/sso74-openj9-openshift-rhel8@sha256:046d86f43fe0d22531505f3a7cf3050baa5967e6443ac226d5a8402d589fab13
   - name: plugin_registry
-    image: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin@sha256:6662a8c54fc2124d06971b01a2e179fbd02b770f6b2e7c02f1d7b885caeab143
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin:latest
   - name: postgres
     image: registry.redhat.io/rhel8/postgresql-96@sha256:314747a4a64ac16c33ead6a34479dccf16b9a07abf440ea7eeef7cda4cd19e32
   - name: postgres_13_3
@@ -1674,6 +1674,6 @@ spec:
   - name: single_host_gateway_config_sidecar
     image: registry.redhat.io/codeready-workspaces/configbump-rhel8@sha256:6f920f581cd54575ae032a95a5b7c06a280a44cfb698659b8e5c89adcf60ff6e
   - name: wazi_code_sidecar_wazi
-    image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:05209b4edf88f98d25c294b9c957326ff004323671271f29b1ea8ed07f30bd98
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready:latest
   - name: wazi_code_sidecar_analyze
-    image: icr.io/wazi-code/ibm-wazi-for-devspaces-analyze@sha256:036ea5b07e8167af343efff4405639aef6842a4063239e574e104c5d339078fa
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-analyze:latest

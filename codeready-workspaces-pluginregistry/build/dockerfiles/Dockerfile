@@ -66,7 +66,7 @@ FROM registry.access.redhat.com/ubi8/httpd-24@sha256:744e0885af1169fbd97b942a69d
 USER 0
 
 # Build Arguments
-ARG PRODUCT_VERSION=2.2.0
+ARG PRODUCT_VERSION=2.3.0
 
 ENV PRODUCT="IBM Wazi for Dev Spaces" \
     COMPANY="IBM" \

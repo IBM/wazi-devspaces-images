@@ -19,6 +19,7 @@ components:
   alias: wazi-code
   preferences:
     zowe.files.temporaryDownloadsFolder.path: /projects
+    zowe.security.secureCredentialsEnabled: false
     zopeneditor.zapp.useDefaultOnlineZappSchema: true
     zopeneditor.zcodeformat.useDefaultOnlineZCodeFormatSchema: true
 - type: chePlugin
@@ -26,7 +27,7 @@ components:
   alias: wazi-debug
 - type: dockerimage
   alias: wazi-terminal
-  image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:05209b4edf88f98d25c294b9c957326ff004323671271f29b1ea8ed07f30bd98
+  image: icr.io/wazi-code/ibm-wazi-for-devspaces-codeready@sha256:0bf8460efac9db509eb1d0788077caea31cbaf0e5ac2208385403a35ca4757c2
   memoryLimit: 1024Mi
   volumes:
     - name: zowe
