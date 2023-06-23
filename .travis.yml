@@ -1,28 +1,37 @@
-language: generic
-sudo: required
+language: shell
 dist: trusty
 group: bluezone
+os:
+  - linux
 services:
   - docker
 env:
   global:
-  - IMAGE_DEVFILE="icr.io/wazi-code/ibm-wazi-for-devspaces-dev-file"
-  - IMAGE_PLUGIN="icr.io/wazi-code/ibm-wazi-for-devspaces-plugin"
-  - IMAGE_OPERATOR="icr.io/cpopen/ibm-wazi-for-devspaces-operator"
-  - IMAGE_CATALOG="icr.io/cpopen/ibm-wazi-for-devspaces-catalog"
-  - DOCKERFILE_DEVFILE="./codeready-workspaces-devfileregistry/build/dockerfiles/Dockerfile"
-  - DOCKERFILE_PLUGIN="./codeready-workspaces-pluginregistry/build/dockerfiles/Dockerfile"
-  - DOCKERFILE_OPERATOR="./codeready-workspaces-operator/Dockerfile"
-  - DOCKERFILE_CATALOG="./codeready-workspaces-operator/bundle/Dockerfile"
+    # General
+    - DS_VERSION=3.0.0
+    - DOCKER_BUILDKIT="1"
+    - BUILDKIT_PROGRESS="plain"
+    - DOCKER_DEFAULT_PLATFORM="linux/amd64"
+    # Images
+    - INDEX_IMAGE="ibm-wazi-for-devspaces-catalog"
+    - INDEX_CONTEXT="./devspaces-operator-bundle"
+    - INDEX_DOCKERFILE="${INDEX_CONTEXT}/wazi.index.Dockerfile"
+    - BUNDLE_IMAGE="ibm-wazi-for-devspaces-operator-bundle"
+    - BUNDLE_CONTEXT="./devspaces-operator-bundle"
+    - BUNDLE_DOCKERFILE="${BUNDLE_CONTEXT}/wazi.bundle.Dockerfile"
+    - OPERATOR_IMAGE="ibm-wazi-for-devspaces-operator"
+    - OPERATOR_CONTEXT="./devspaces-operator"
+    - OPERATOR_DOCKERFILE="${OPERATOR_CONTEXT}/build/dockerfiles/wazi.Dockerfile"
+    - DASHBOARD_IMAGE="ibm-wazi-for-devspaces-dashboard"
+    - DASHBOARD_CONTEXT="./devspaces-dashboard"
+    - DASHBOARD_DOCKERFILE="${DASHBOARD_CONTEXT}/build/dockerfiles/wazi.Dockerfile"
 before_install:
-  - touch ./codeready-workspaces-operator/bundle/bundles.db
-  - curl -L https://api.github.com/repos/che-incubator/header-rewrite-traefik-plugin/zipball --output ./codeready-workspaces-operator/asset-header-rewrite-traefik-plugin.zip
-  - echo $DOCKER_KEY | docker login -u $DOCKER_USER --password-stdin registry.redhat.io
+  # Index Image
+  - touch ${INDEX_CONTEXT}/bundles.db
 install:
-  - docker build -t ${IMAGE_DEVFILE}:travis -f ${DOCKERFILE_DEVFILE} --target "registry" ./codeready-workspaces-devfileregistry
-  - docker build -t ${IMAGE_PLUGIN}:travis -f ${DOCKERFILE_PLUGIN} --target "registry" ./codeready-workspaces-pluginregistry
-  - docker build -t ${IMAGE_OPERATOR}:travis -f ${DOCKERFILE_OPERATOR} ./codeready-workspaces-operator
-  - docker build -t ${IMAGE_CATALOG}:travis -f ${DOCKERFILE_CATALOG} ./codeready-workspaces-operator
-script: echo "Success!"
-notifications:
-  slack: ibm-systems-z:kiD2FZtJUJtUSp57dwHWwNX1
+  - docker build -t ${INDEX_IMAGE}:travis -f ${INDEX_DOCKERFILE} ${INDEX_CONTEXT}
+  - docker build -t ${BUNDLE_IMAGE}:travis -f ${BUNDLE_DOCKERFILE} ${BUNDLE_CONTEXT}
+  - docker build -t ${OPERATOR_IMAGE}:travis -f ${OPERATOR_DOCKERFILE} ${OPERATOR_CONTEXT}
+  - docker build -t ${DASHBOARD_IMAGE}:travis -f ${DASHBOARD_DOCKERFILE} ${DASHBOARD_CONTEXT}
+script: 
+  - echo "Success!"

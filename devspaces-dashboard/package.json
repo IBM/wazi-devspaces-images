@@ -1,0 +1,40 @@
+{
+  "name": "@eclipse-che/dashboard",
+  "version": "7.64.0",
+  "description": "Dashboard for Eclipse Che",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "bugs": {
+    "url": "https://github.com/eclipse/che/issues"
+  },
+  "homepage": "https://github.com/eclipse-che/che-dashboard",
+  "engines": {
+    "yarn": ">=1.20.0",
+    "node": ">=14"
+  },
+  "license": "EPL-2.0",
+  "scripts": {
+    "build": "lerna run build --scope=@eclipse-che/dashboard-*",
+    "build:dev": "lerna run build:dev --scope=@eclipse-che/dashboard-*",
+    "prebuild": "lerna run build --scope=@eclipse-che/common",
+    "prebuild:dev": "yarn prebuild",
+    "frontend:start": "yarn workspace @eclipse-che/dashboard-frontend start",
+    "start": "${PWD}/run/local-run.sh $@",
+    "start:prepare": "${PWD}/run/prepare-local-run.sh",
+    "start:cleanup": "${PWD}/run/revert-local-run.sh",
+    "license:check": "docker run --rm -t -v ${PWD}/:/workspace/project quay.io/che-incubator/dash-licenses@sha256:72290f67f297a31b7b9b343d19f42cc0ecc90e1d36cc9f18473c586a70e4b7eb --check",
+    "license:generate": "docker run --rm -t -v ${PWD}/:/workspace/project quay.io/che-incubator/dash-licenses:next",
+    "test": "lerna run test --stream -- --no-cache $@",
+    "pretest": "yarn run prebuild",
+    "test:coverage": "yarn run test -- --coverage",
+    "format:check": "yarn workspaces run format:check",
+    "format:fix": "lerna run --stream  format:fix",
+    "lint:check": "yarn workspaces run lint:check",
+    "lint:fix": "lerna run --stream lint:fix"
+  },
+  "devDependencies": {
+    "lerna": "^5.0.0"
+  }
+}

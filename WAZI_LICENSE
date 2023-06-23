@@ -22,11 +22,10 @@ LICENSE INFORMATION
 The Programs listed below are licensed under the following License Information terms and conditions in addition to the Program license terms previously agreed to by Client and IBM. If Client does not have previously agreed to license terms in effect for the Program, the International License Agreement for Evaluation of Programs (i125-5543-06) applies.
 
 Program Name (Program Number):
-
-IBM Wazi for Dev Spaces 2.3 (Evaluation)
-IBM Z Open Editor V3.0 (Evaluation)
-IBM Z Open Debug V2.3 (Evaluation)
-IBM RSE API Plug-in for Zowe CLI V3.0 (Evaluation)
+IBM Wazi for Dev Spaces V3.0 (Evaluation)
+IBM Z Open Editor V3.2 (Evaluation)
+IBM Z Open Debug V3.0 (Evaluation)
+IBM RSE API Plug-in for Zowe CLI V3.2 (Evaluation)
 IBM Z Distribution for Zowe (Zowe Explorer) (Evaluation)
 IBM Z Distribution for Zowe (Zowe CLI) (Evaluation)
 
@@ -43,7 +42,7 @@ This Program is supplied only for use with Named Program(s) and/or Service(s) id
 Named Program(s) and/or Service(s):
 IBM Developer for z/OS Enterprise Edition V16.0
 IBM Wazi Developer for Red Hat CodeReady Workspaces V1
-IBM Z and Cloud Modernization Stack 2022
+IBM Z and Cloud Modernization Stack 2023
 IBM Wazi Analyze V2.3
 
 Modifiable Third Party Code
@@ -72,10 +71,10 @@ LICENSE INFORMATION
 The Programs listed below are licensed under the following License Information terms and conditions in addition to the Program license terms previously agreed to by Client and IBM. If Client does not have previously agreed to license terms in effect for the Program, the International Program License Agreement (i125-3301-15) applies.
 
 Program Name (Program Number):
-IBM Wazi for Dev Spaces 2.3 (Component)
-IBM Z Open Editor V3.0 (Component)
-IBM Z Open Debug V2.3 (Component)
-IBM RSE API Plug-in for Zowe CLI V3.0 (Component)
+IBM Wazi for Dev Spaces V3.0 (Component)
+IBM Z Open Editor V3.2 (Component)
+IBM Z Open Debug V3.0 (Component)
+IBM RSE API Plug-in for Zowe CLI V3.2 (Component)
 IBM Z Distribution for Zowe (Zowe Explorer) (Component)
 IBM Z Distribution for Zowe (Zowe CLI) (Component)
 
@@ -88,7 +87,7 @@ This Program is supplied only for use with Named Program(s) and/or Service(s) id
 Named Program(s) and/or Service(s):
 IBM Developer for z/OS Enterprise Edition V16.0
 IBM Wazi Developer for Red Hat CodeReady Workspaces V1
-IBM Z and Cloud Modernization Stack 2022
+IBM Z and Cloud Modernization Stack 2023
 IBM Wazi Analyze V2.3
 
 Modifiable Third Party Code
@@ -112,9 +111,9 @@ Source Components and Sample Materials
 The Program includes components in source code form ("Source Components"), or other materials identified as Sample Materials or both. Licensee may copy and modify Source Components and Sample Materials for internal use only within the limits of the license rights under this Agreement; provided, however, that Licensee may not alter or delete any copyright information or notices contained in the Source Components or Sample Materials. IBM provides the Source Components and Sample Materials without obligation of support and "AS IS", WITH NO WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING THE WARRANTY OF TITLE, NON-INFRINGEMENT OR NON-INTERFERENCE AND THE IMPLIED WARRANTIES AND CONDITIONS OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 
 
-L/N: L-ASHA-AS84XV
-D/N: L-ASHA-AS84XV
-P/N: L-ASHA-AS84XV
+L/N: L-PAMJ-DKG9VD
+D/N: L-PAMJ-DKG9VD
+P/N: L-PAMJ-DKG9VD
 
 IMPORTANT: READ CAREFULLY
 

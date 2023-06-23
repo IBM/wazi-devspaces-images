@@ -1,0 +1,36 @@
+{
+  "title": "IBM Wazi for Dev Spaces ",
+  "name": "IBM Wazi for Dev Spaces",
+  "productVersion": "3.6 @ a9b4f #11 :: Eclipse Che Dashboard 7.64.0 @ 6232",
+  "logoFile": "che-logo.svg",
+  "logoTextFile": "che-logo-text.svg",
+  "links": [
+    {
+      "text": "Raise feature request",
+      "href": "https://issues.redhat.com/secure/CreateIssue.jspa?pid=12321720&issuetype=2"
+    },
+    {
+      "text": "Red Hat Documentation",
+      "href": "https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.6/"
+    },
+    {
+      "text": "IBM Documentation",
+      "href": "https://ibm.biz/wazi-ds-doc"
+    },
+    {
+      "text": "Support",
+      "href": "https://access.redhat.com/products/red-hat-openshift-dev-spaces/"
+    }
+  ],
+  "docs": {
+    "devfile" : "https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.6/html-single/user_guide#customizing-workspace-components",
+    "workspace" : "https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.6/html-single/user_guide#developer-workspaces",
+    "converting": "https://devfile.io/docs/devfile/2.1.0/user-guide/migrating-to-devfile-v2/",
+    "general": "https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.6/",
+    "storageTypes": "https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.6/html-single/administration_guide#configuring-storage",
+    "webSocketTroubleshooting": "https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.6/html-single/user_guide#troubleshooting-network-problems"
+  },
+  "configuration": {
+    "cheCliTool": "dsc"
+  }
+}

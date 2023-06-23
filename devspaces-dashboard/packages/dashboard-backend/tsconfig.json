@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "es6",
+    "lib": ["es6"],
+    "module": "commonjs",
+    "paths": {
+      "@eclipse-che/common": ["../common/src"]
+    },
+    "resolveJsonModule": true,
+    "outDir": "lib",
+    "rootDir": "src"
+  },
+  "exclude": [
+    "node_modules",
+    "lib",
+    "**/__tests__/*",
+  ],
+  "include": ["src", "src/devfileSchemas/**/*.json"],
+  "references": [
+    { "path": "../common" },
+  ]
+}

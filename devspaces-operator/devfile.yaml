@@ -1,0 +1,60 @@
+#
+# Copyright (c) 2019-2021 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+#
+schemaVersion: 2.1.0
+attributes:
+  controller.devfile.io/storage-type: ephemeral
+metadata:
+  name: che-operator
+components:
+  - name: tooling-container
+    container:
+      image: quay.io/devfile/universal-developer-image:ubi8-latest
+      memoryRequest: 2Gi
+      memoryLimit: 16Gi
+      cpuRequest: 2000m
+      cpuLimit: 6000m
+      env:
+        - name: GO111MODULE
+          value: 'on'
+        - name: GOPATH
+          value: /home/user/go
+        - name: GOCACHE
+          value: /tmp/.cache
+commands:
+  - id: go-build
+    exec:
+      label: 1. Build Eclipse Che Operator binary
+      component: tooling-container
+      commandLine: make build
+  - id: go-run
+    exec:
+      label: 2. Run Eclipse Che Operator
+      component: tooling-container
+      commandLine: make run
+  - id: go-debug
+    exec:
+      label: 3. Run and debug Eclipse Che Operator
+      component: tooling-container
+      commandLine: make debug
+  - id: bundle
+    exec:
+      label: 4. Generate OLM bundle for next channel
+      component: tooling-container
+      commandLine: CHANNEL=next make bundle
+  - id: docker-build-push
+    exec:
+      label: 5. Build and push Eclipse Che Operator container image
+      component: tooling-container
+      commandLine: >
+        read -p "ENTER the image registry (for example \"quay.io\"): " IMAGE_REGISTRY_HOST &&
+        read -p "ENTER the image organization (for example \"eclipse\"): " IMAGE_REGISTRY_USER_NAME &&
+        IMAGE_TOOL=podman make docker-build docker-push IMG="${IMAGE_REGISTRY_HOST}/${IMAGE_REGISTRY_USER_NAME}/che-operator:next"

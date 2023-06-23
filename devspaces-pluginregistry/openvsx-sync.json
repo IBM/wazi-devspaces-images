@@ -1,0 +1,159 @@
+[
+    {
+        "id": "donjayamanne.githistory"
+    },
+    {
+        "id": "vscode.github-authentication"
+    },
+    {
+        "id": "github.vscode-pull-request-github"
+    },
+    {
+        "id": "ms-vscode.js-debug"
+    },
+    {
+        "id": "vscode.typescript-language-features"
+    },
+    {
+        "id": "llvm-vs-code-extensions.vscode-clangd"
+    },
+    {
+        "id": "eclipse-cdt.cdt-gdb-vscode"
+    },
+    {
+        "id": "bmewburn.vscode-intelephense-client"
+    },
+    {
+        "id": "ms-python.python",
+        "version":"2023.6.1"
+    },
+    {
+        "id": "ms-toolsai.jupyter",
+        "version": "2023.3.100"
+    },
+    {
+        "id": "ms-toolsai.jupyter-keymap",
+        "version": "1.1.0"
+    },
+    {
+        "id": "ms-toolsai.jupyter-renderers",
+        "version": "1.0.15"
+    },
+    {
+        "id": "ms-toolsai.vscode-jupyter-cell-tags",
+        "version": "0.1.8"
+    },
+    {
+        "id": "ms-toolsai.vscode-jupyter-slideshow",
+        "version": "0.1.5"
+    },
+    {
+        "id": "golang.go"
+    },
+    {
+        "id": "redhat.vscode-yaml",
+        "version": "1.10.1",
+        "download": "https://github.com/redhat-developer/vscode-yaml/releases/download/1.10.1/yaml-1.10.1-19523.vsix"
+    },
+    {
+        "id": "ms-kubernetes-tools.vscode-kubernetes-tools"
+    },
+    {
+        "id": "redhat.java",
+        "version": "1.17.0"
+    },
+    {
+        "id": "vscjava.vscode-java-debug"
+    },
+    {
+        "id": "vscjava.vscode-java-test"
+    },
+    {
+        "id": "redhat.vscode-microprofile"
+    },
+    {
+        "id": "vscode.html-language-features"
+    },
+    {
+        "id": "redhat.vscode-quarkus"
+    },
+    {    
+        "id": "redhat.fabric8-analytics"
+    },
+    {
+        "id": "redhat.project-initializer"
+    },
+    {
+        "id": "redhat.vscode-redhat-account"
+    },
+    {
+        "id": "redhat.vscode-openshift-connector"
+    },
+    {
+        "id": "xdebug.php-debug"
+    },
+    {
+        "id": "redhat.vscode-xml"
+    },
+    {
+        "id": "muhammad-sammy.csharp"
+    },
+    {
+        "id": "sonarsource.sonarlint-vscode"
+    },
+    {
+        "id": "vscode.git-base"
+    },
+    {
+        "id": "vscode.git"
+    },
+    {
+        "id": "dbaeumer.vscode-eslint"
+    },
+    {
+        "id": "redhat.vscode-commons"
+    },
+    {
+        "id": "redhat.vscode-tekton-pipelines"
+    },
+    {
+        "id": "atlassian.atlascode"
+    },
+    {
+        "id": "JFrog.jfrog-vscode-extension"
+    },
+    {
+        "id": "SonatypeCommunity.vscode-iq-plugin"
+    },
+    {
+        "id": "GitLab.gitlab-workflow"
+    },
+    {
+        "id": "timonwong.shellcheck"
+    },
+    {
+        "id": "redhat.ansible",
+        "version": "2.2.69"
+    },
+    {
+        "id": "vscode.npm"
+    },
+    {
+        "id": "esbenp.prettier-vscode"
+    },
+    {
+        "id": "eamodio.gitlens"
+    },
+    {
+        "id": "Zowe.vscode-extension-for-zowe"
+    },
+    {
+        "id": "IBM.zopeneditor"
+    },
+    {
+        "id": "IBM.zopendebug"
+    },
+    {
+        "id": "IBM.zopendebug-profileui"
+    }
+]

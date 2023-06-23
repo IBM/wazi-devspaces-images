@@ -1,0 +1,62 @@
+---
+platforms:
+  # all these keys are optional - see https://osbs.readthedocs.io/en/latest/users.html#image-configuration for more info
+
+  only:
+  - x86_64
+  - s390x
+  - ppc64le
+
+# scratch image requires no compose
+# compose:
+#   inherit: false
+#   pulp_repos: true
+#   signing_intent: release
+
+# instead of docker_api, use imagebuilder for multistage builds
+image_build_method: imagebuilder
+
+# new for 4.5
+# https://osbs.readthedocs.io/en/latest/users.html#replacing-pullspecs
+operator_manifests:
+  manifests_dir: manifests
+  enable_digest_pinning: true
+  enable_repo_replacements: true
+  enable_registry_replacements: true
+  repo_replacements:
+    # - registry: registry-proxy.engineering.redhat.com
+    #   package_mappings:
+    #     devspaces-operator-container: rh-osbs/devspaces-rhel8-operator
+    #     devspaces-rhel8-operator-container: rh-osbs/devspaces-rhel8-operator
+    - registry: registry.redhat.io
+      package_mappings:
+        # devspaces-operator-container: devspaces/devspaces-rhel8-operator
+        devspaces-rhel8-operator-container: devspaces/devspaces-rhel8-operator
+
+        # 00_java11-maven-microprofile-xp3/devfile.yaml
+        jboss-eap-xp3-openjdk11-builder-openshift-rhel8-container: jboss-eap-7/eap-xp3-openjdk11-openshift-rhel8
+        jboss-eap-7-xp3-openjdk11-openshift-rhel8-container: jboss-eap-7/eap-xp3-openjdk11-openshift-rhel8
+        # 00_java11-maven-eap/devfile.yaml
+        jboss-eap-74-openjdk11-builder-openshift-rhel8-container: jboss-eap-7/eap74-openjdk11-openshift-rhel8
+        postgresql-96-container: registry.redhat.io/rhel8/postgresql-96
+        postgresql-13-container: registry.redhat.io/rhel8/postgresql-13
+        rh-mongodb36-container: registry.redhat.io/rhscl/mongodb-36-rhel7
+        ubi8-minimal-container: registry.redhat.io/ubi8/ubi-minimal
+        ubi8-micro-container: registry.redhat.io/ubi8/ubi-micro
+        kube-rbac-proxy-container: openshift4/ose-kube-rbac-proxy
+        golang-github-openshift-oauth-proxy-container: openshift4/ose-oauth-proxy
+        devspaces-configbump-rhel8-container: devspaces/configbump-rhel8
+        devspaces-dashboard-rhel8-container: devspaces/dashboard-rhel8
+        devspaces-devfileregistry-rhel8-container: devspaces/devfileregistry-rhel8
+        devspaces-idea-rhel8-container: devspaces/idea-rhel8
+        devspaces-imagepuller-rhel8-container: devspaces/imagepuller-rhel8
+        devspaces-machineexec-rhel8-container: devspaces/machineexec-rhel8
+        devspaces-pluginregistry-rhel8-container: devspaces/pluginregistry-rhel8
+        devspaces-server-rhel8-container: devspaces/server-rhel8
+        devspaces-traefik-rhel8-container: devspaces/traefik-rhel8
+        devspaces-udi-rhel8-container: devspaces/udi-rhel8
+        # DWO
+        devworkspace-operator-bundle-container: devworkspace/devworkspace-operator-bundle
+        devworkspace-operator-bundle-package: devworkspace/devworkspace-operator-bundle
+        devworkspace-operator-package: devworkspace/devworkspace-operator-bundle
+        devworkspace-operator-container: devworkspace/devworkspace-rhel8-operator

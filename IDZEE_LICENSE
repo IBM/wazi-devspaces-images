@@ -3,7 +3,7 @@ LICENSE INFORMATION
 The Programs listed below are licensed under the following License Information terms and conditions in addition to the Program license terms previously agreed to by Client and IBM. If Client does not have previously agreed to license terms in effect for the Program, the International Program License Agreement (i125-3301-15) applies.
 
 Program Name (Program Number):
-IBM Developer for z/OS Enterprise Edition 16.0 (5755-A05)
+IBM Developer for z/OS Enterprise Edition 16.0.2 (5755-A05)
 
 The following standard terms apply to Licensee's use of the Program.
 
@@ -12,10 +12,16 @@ Supporting Programs
 Licensee is authorized to install and use the Supporting Programs identified below only to support Licensee's use of the Principal Program under this Agreement. The phrase "to support Licensee's use" would only include those uses that are necessary or otherwise directly related to a licensed use of the Principal Program or another Supporting Program. The Supporting Programs may not be used for any other purpose. A Supporting Program may be accompanied by license terms, and those terms, if any, apply to Licensee's use of that Supporting Program. In the event of conflict, the terms in this License Information document supersede the Supporting Program's terms. Licensee must obtain sufficient entitlements to the Program, as a whole, to cover Licensee's installation and use of all of the Supporting Programs, unless separate entitlements are provided within this License Information document. For example, if this Program were licensed on a VPC (Virtual Processor Core) basis and Licensee were to install the Principal Program or a Supporting Program on a 10 VPC machine and another Supporting Program on a second 10 VPC machine, Licensee would be required to obtain 20 VPC entitlements to the Program.
 
 Supporting Programs:
+IBM Developer for z/OS 16.0.2
 IBM DB2 Standard Edition 11.5
-IBM Wazi Developer for VS Code
-IBM Wazi Developer for Workspaces
+IBM Wazi for VS Code
+IBM Wazi for Dev Spaces
 IBM Z Distribution for Zowe
+
+Components Not Used for Establishing Required Entitlements
+
+Licensee may install and use the following Program components, under the license terms, but these components are not used to determine the number of entitlements required for the Program.
+IBM Db2 Standard Edition 11.5
 
 Modifiable Third Party Code
 
@@ -43,7 +49,7 @@ Value Unit
 
 Value Unit (VU) is a unit of measure by which the Program can be licensed. Value Unit entitlements are based on the number of units of a specific designated measure used or managed by the Program. Licensee must obtain sufficient entitlements for the number of Value Units required for Licensee's environment for the designated measure specified in the Value Unit Exhibit (VUE) provided below. Value Unit entitlements are specific to the Program and may not be exchanged, interchanged, or aggregated with Value Unit entitlements of another Program.
 
-The designated measure for the purpose of Value Unit calculation is z/OS-based MSUs (Million Service Units), where required capacity entitlements are the same as the required capacity entitlement for z/OS on the machine(s) where the Program executes.
+The designated measure for the purpose of Value Unit calculation is execution-based MSUs (Million Service Units), where required capacity entitlements are based upon the MSU capacity of the LPAR(s) where the Program executes.
 
 MSUs are defined as one million Central Processing Unit (CPU) service units per hour, the measure of capacity used to describe the computing power of the hardware processors on which S/390 or System z software runs. MSU values are determined by the hardware vendor, IBM, or Software Compatible Vendors (SCVs). For MSU capacity by vendor and machine, see http://www.ibm.com/systems/z/resources/swprice/reference/exhibits/hardware.html.
 
@@ -59,24 +65,19 @@ In addition to the above, the following terms apply to Licensee's use of the Pro
 
 IBM Developer for z/OS
 
-Use Limitation: Unrestricted
-“Unrestricted” means that, notwithstanding the language above, Licensee's right to use the Supporting Program is not limited to use only in support of Licensee's use of the Principal Program. While the other restrictions on Licensee's use of the Supporting Program continue to apply, Licensee may use the Supporting Program for purposes independent of the licensed use of the Principal Program
-
 IBM DB2 Standard Edition
-- Entitlement: No Metric
 - Use Limitations: Use by Principal Program
-
-“No Metric” means this Supporting Program may be installed on as many machines and used by as many persons as is reasonably necessary within the use limitations that apply to this Supporting Program.
 
 "Use by Principal Program" means that the Supporting Program is provided exclusively for use by the Principal Program. Neither Licensee nor any application, program or device is authorized to directly use or access the services of the Supporting Program except Licensee may access the Supporting Program to perform administrative functions for the Supporting Program such as backup, recovery and authorized configuration.
 
 Additional IBM DB2 Standard Edition Details
 
 The Supporting Program may use a maximum of 16 processor cores and 128 GB of memory on each physical or virtual server; however, if the Supporting Program is used on a cluster of servers configured to work together using database partitioning or other permitted clustering technology, the Supporting Program may use a maximum of 16 processor cores and 128 GB of memory across all virtual or physical servers in that cluster.
-L/N:  L-JNIN-CFLS4Y
-D/N:  L-JNIN-CFLS4Y
-P/N:  L-JNIN-CFLS4Y
 
+
+L/N: L-GQML-2DSYUY
+D/N: GI13-5638-01
+P/N: L-GQML-2DSYUY
 
 International Program License Agreement
 
@@ -579,3 +580,4 @@ In Czech Republic: Licensee expressly accepts the terms of this agreement which 
 In Romania: The Licensee expressly accepts, the following standard clauses that may be deemed 'unusual clauses' as per the provisions of article 1203 Romanian Civil Code: clauses 2, 4, 5, 8j. The Licensee hereby acknowledges that it was sufficiently informed of all the provisions of this Agreement, including the clauses mentioned above, it properly analyzed and understood such provisions and had the opportunity to negotiate the terms of each clause.
 
 i125-3301-15 (10-2021)
+
