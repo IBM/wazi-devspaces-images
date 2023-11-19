@@ -24,6 +24,12 @@ const (
 	DefaultDashboardCpuLimit      = "500m"
 	DefaultDashboardCpuRequest    = "100m"
 
+	// Gateway
+	DefaultGatewayMemoryLimit   = "256Mi"
+	DefaultGatewayMemoryRequest = "64Mi"
+	DefaultGatewayCpuLimit      = "500m"
+	DefaultGatewayCpuRequest    = "50m"
+
 	// PluginRegistry
 	DefaultPluginRegistryMemoryLimit                          = "256Mi"
 	DefaultPluginRegistryMemoryLimitEmbeddedOpenVSXRegistry   = "4Gi"
@@ -75,6 +81,7 @@ const (
 	OAuthScmConfiguration                      = "oauth-scm-configuration"
 	AccessToken                                = "access_token"
 	IdToken                                    = "id_token"
+	OpenShiftOAuthScope                        = "user:full"
 
 	// Labels
 	KubernetesComponentLabelKey = "app.kubernetes.io/component"
@@ -99,7 +106,9 @@ const (
 	PerWorkspacePVCStorageStrategy = "per-workspace"
 	EphemeralPVCStorageStrategy    = "ephemeral"
 	CommonPVCStorageStrategy       = "common"
+	DefaultDeploymentStrategy      = "Recreate"
 	DefaultAutoProvision           = true
+	DefaultPersistUserHomeEnabled  = false
 	DefaultWorkspaceJavaOpts       = "-XX:MaxRAM=150m -XX:MaxRAMFraction=2 -XX:+UseParallelGC " +
 		"-XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 " +
 		"-Dsun.zip.disableMemoryMapping=true " +
@@ -123,6 +132,7 @@ const (
 	CheFlavor             = "che"
 	CheEclipseOrg         = "che.eclipse.org"
 	InstallOrUpdateFailed = "InstallOrUpdateFailed"
+	FinalizerSuffix       = "finalizers.che.eclipse.org"
 
 	// DevWorkspace
 	DevWorkspaceServiceAccountName = "devworkspace-controller-serviceaccount"

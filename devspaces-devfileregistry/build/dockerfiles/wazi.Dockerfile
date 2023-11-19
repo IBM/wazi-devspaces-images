@@ -13,7 +13,7 @@
 
 # Builder: check meta.yamls and create index.json
 # https://registry.access.redhat.com/ubi8/python-38
-FROM registry.access.redhat.com/ubi8/python-38@sha256:99493da27c7bad47d34f42a50889f1ba40db718e8dfabaf292f6f21b8607e725 as devfile-builder
+FROM registry.access.redhat.com/ubi8/python-38:latest as devfile-builder
 USER 0
 
 ################# 
@@ -65,7 +65,7 @@ RUN \
 
 # Build registry, copying meta.yamls and index.json from builder
 # https://registry.access.redhat.com/ubi8/httpd-24
-FROM registry.access.redhat.com/ubi8/httpd-24@sha256:9dd49070b544a521a5277337e367711dcbdecc51a23db6d532e3fd7ee00e2d2a AS devfile-registry
+FROM registry.access.redhat.com/ubi8/httpd-24:latest AS devfile-registry
 USER 0
 
 # latest httpd container doesn't include ssl cert, so generate one
@@ -117,7 +117,7 @@ RUN chmod g+rwX /usr/local/bin/entrypoint.sh /usr/local/bin/rhel.entrypoint.sh &
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/local/bin/rhel.entrypoint.sh"]
 
-ARG PRODUCT_VERSION="3.0.0"
+ARG PRODUCT_VERSION="3.0.1"
 ENV \
     SUMMARY="IBM Wazi for Dev Spaces" \
     DESCRIPTION="IBM Wazi for Dev Spaces" \

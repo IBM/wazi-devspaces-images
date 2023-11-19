@@ -10,11 +10,11 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import { api, helpers } from '@eclipse-che/common';
 import axios from 'axios';
-import { helpers, api } from '@eclipse-che/common';
+import { JSONSchema7 } from 'json-schema';
 import devfileApi, { IDevWorkspacesList } from '../devfileApi';
 import { prefix } from './const';
-import { JSONSchema7 } from 'json-schema';
 
 export type Headers = { [key: string]: string };
 
@@ -112,6 +112,21 @@ export async function putDockerConfig(
   }
 }
 
+export async function addPersonalAccessToken(
+  namespace: string,
+  personalAccessToken: api.PersonalAccessToken,
+): Promise<api.PersonalAccessToken> {
+  try {
+    const response = await axios.post(
+      `${prefix}/namespace/${namespace}/personal-access-token`,
+      personalAccessToken,
+    );
+    return response.data;
+  } catch (e) {
+    throw new Error(`Failed to add personal access token. ${helpers.errors.getMessage(e)}`);
+  }
+}
+
 export async function injectKubeConfig(namespace: string, devworkspaceId: string): Promise<void> {
   try {
     await axios.post(
@@ -119,6 +134,16 @@ export async function injectKubeConfig(namespace: string, devworkspaceId: string
     );
   } catch (e) {
     throw new Error(`Failed to inject kubeconfig. ${helpers.errors.getMessage(e)}`);
+  }
+}
+
+export async function podmanLogin(namespace: string, devworkspaceId: string): Promise<void> {
+  try {
+    await axios.post(
+      `${prefix}/namespace/${namespace}/devworkspaceId/${devworkspaceId}/podmanlogin`,
+    );
+  } catch (e) {
+    throw new Error(`Failed to podman login. ${helpers.errors.getMessage(e)}`);
   }
 }
 

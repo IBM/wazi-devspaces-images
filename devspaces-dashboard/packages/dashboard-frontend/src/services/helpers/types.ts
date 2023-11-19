@@ -79,9 +79,9 @@ export function isDevWorkspaceStatus(status: unknown): status is DevWorkspaceSta
 export type CreateWorkspaceTab = 'quick-add' | 'custom-workspace';
 
 export enum LoaderTab {
-  Progress = 0,
-  Logs = 1,
-  Events = 2,
+  Progress = 'Progress',
+  Logs = 'Logs',
+  Events = 'Events',
 }
 
 export enum WorkspaceDetailsTab {
@@ -89,6 +89,7 @@ export enum WorkspaceDetailsTab {
   DEVFILE = 'Devfile',
   DEVWORKSPACE = 'DevWorkspace',
   EVENTS = 'Events',
+  LOGS = 'Logs',
 }
 
 export enum WorkspaceAction {
@@ -100,7 +101,7 @@ export enum WorkspaceAction {
   ADD_PROJECT = 'Add Project',
   ADD_CUSTOM_WORKSPACE = 'Add Workspace',
   RESTART_WORKSPACE = 'Restart Workspace',
-  EDIT_WORKSPACE = 'Edit Workspace',
+  WORKSPACE_DETAILS = 'Workspace Details',
 }
 
-export type UserPreferencesTab = 'container-registries' | 'git-services';
+export type UserPreferencesTab = 'container-registries' | 'git-services' | 'personal-access-tokens';

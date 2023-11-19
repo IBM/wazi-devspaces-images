@@ -38,9 +38,13 @@ if [[ $ALLOWED_REGISTRIES ]] && [[ $ALLOWED_REGISTRIES != " " ]]; then
         for registry in $ALLOWED_REGISTRIES; do
             if [[ $container == "$registry/"* ]]; then
                 check_passed="$registry"
+            elif [[ $container == *"/ansible-creator-ee"* ]]; then
+                check_passed="$container"
             fi
         done
-        if [[ $check_passed != "" ]]; then
+        if [[ $check_passed == "$container" ]]; then
+            echo " = $container PASS"
+        elif [[ $check_passed != "" ]]; then
             echo " + $container PASS - $check_passed allowed"
         else
             echo " - $container FAIL - not in allowed registries: '$ALLOWED_REGISTRIES'"
@@ -60,7 +64,7 @@ if [[ $ALLOWED_TAGS ]] && [[ $ALLOWED_TAGS != " " ]]; then
         for tag in $ALLOWED_TAGS; do
             if [[ $container == *"/devspaces/"*":$tag" ]]; then
                 check_passed="$tag"
-            elif [[ $container == *"/jboss-eap"* ]] || [[ $container == *"/mongodb"* ]]; then
+            elif [[ $container == *"/jboss-eap"* ]] || [[ $container == *"/mongodb"* ]] || [[ $container == *"/ansible-creator-ee"* ]]; then
                 check_passed="$container"
             fi
         done

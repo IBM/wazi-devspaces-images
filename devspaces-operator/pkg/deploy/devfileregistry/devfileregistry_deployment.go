@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2023 Red Hat, Inc.
+// Copyright (c) 2019-2021 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -26,7 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-func (d *DevfileRegistryReconciler) getDevfileRegistryDeploymentSpec(ctx *chetypes.DeployContext) *appsv1.Deployment {
+func (d *DevfileRegistryReconciler) getDevfileRegistryDeploymentSpec(ctx *chetypes.DeployContext) (*appsv1.Deployment, error) {
 	registryType := "devfile"
 	registryImage := defaults.GetDevfileRegistryImage(ctx.CheCluster)
 	registryImagePullPolicy := v1.PullPolicy(utils.GetPullPolicyFromDockerImage(registryImage))
@@ -56,6 +56,8 @@ func (d *DevfileRegistryReconciler) getDevfileRegistryDeploymentSpec(ctx *chetyp
 		probePath)
 
 	deploy.EnsurePodSecurityStandards(deployment, constants.DefaultSecurityContextRunAsUser, constants.DefaultSecurityContextFsGroup)
-	deploy.CustomizeDeployment(deployment, ctx.CheCluster.Spec.Components.DevfileRegistry.Deployment)
-	return deployment
+	if err := deploy.OverrideDeployment(ctx, deployment, ctx.CheCluster.Spec.Components.DevfileRegistry.Deployment); err != nil {
+		return nil, err
+	}
+	return deployment, nil
 }

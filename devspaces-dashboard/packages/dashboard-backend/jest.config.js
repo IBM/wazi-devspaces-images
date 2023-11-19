@@ -19,4 +19,17 @@ module.exports = {
   moduleDirectories: [
     'node_modules',
   ],
+  collectCoverageFrom: [
+    ...base.collectCoverageFrom,
+
+    '!src/localRun/**',
+  ],
+  coverageThreshold: {
+    global: {
+      statements: 81,
+      branches: 78,
+      functions: 79,
+      lines: 81,
+    },
+  },
 };

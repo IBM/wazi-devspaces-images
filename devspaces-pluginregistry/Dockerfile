@@ -11,8 +11,8 @@
 #   IBM Corporation - implementation
 #
 
-# https://registry.access.redhat.com/rhel8/postgresql-13
-FROM rhel8/postgresql-13:1-118.1682303950
+# https://registry.access.redhat.com/rhel8/postgresql-15
+FROM rhel8/postgresql-15:1-20
 USER 0
 WORKDIR /
 
@@ -102,7 +102,8 @@ RUN \
 RUN sed -i /etc/httpd/conf/httpd.conf \
     -e "s,Listen 80,Listen 8080," \
     -e "s,logs/error_log,/dev/stderr," \
-    -e "s,logs/access_log,/dev/stdout," \
+    -e "/<IfModule log_config_module>/a SetEnvIf User-Agent \"^kube-probe/\" dontlog" \
+    -e 's,CustomLog "logs/access_log" combined,CustomLog /dev/stdout combined env=!dontlog,' \
     -e "s,AllowOverride None,AllowOverride All," && \
     chmod a+rwX /etc/httpd/conf /etc/httpd/conf.d /run/httpd /etc/httpd/logs/
 
@@ -127,7 +128,7 @@ RUN \
     echo "======================"
 RUN chmod 777 /var/run/postgresql
 
-ARG DS_BRANCH=devspaces-3.6-rhel-8
+ARG DS_BRANCH=devspaces-3.8-rhel-8
 ENV DS_BRANCH=${DS_BRANCH}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
@@ -144,7 +145,7 @@ LABEL summary="$SUMMARY" \
       io.openshift.tags="$PRODNAME,$COMPNAME" \
       com.redhat.component="$PRODNAME-$COMPNAME-container" \
       name="$PRODNAME/$COMPNAME" \
-      version="3.6" \
+      version="3.8" \
       license="EPLv2" \
       maintainer="Valerii Svydenko <vsvydenk@redhat.com>, Nick Boldt <nboldt@redhat.com>" \
       io.openshift.expose-services="" \

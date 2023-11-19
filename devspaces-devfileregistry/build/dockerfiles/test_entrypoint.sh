@@ -82,7 +82,7 @@ assertFileContentEquals "${DEVFILES_DIR}/external_images.txt" "${expected_extern
 initTest "Should replace image references in devworkspace-che-code-latest.yaml with RELATED_IMAGE env vars"
 
 externalImagesTxt=$(cat <<-END
-registry.redhat.io/devspaces/code-rhel8:3.6
+registry.redhat.io/devspaces/code-rhel8:3.8
 END
 )
 expected_externalImagesTxt=$(cat <<-END
@@ -106,7 +106,7 @@ spec:
   components:
     - name: che-code-injector
       container:
-        image: registry.redhat.io/devspaces/code-rhel8:3.6
+        image: registry.redhat.io/devspaces/code-rhel8:3.8
 END
 )
 

@@ -10,12 +10,12 @@
 #   IBM Corporation - implementation
 #
 
-FROM registry.redhat.io/openshift4/ose-operator-registry@sha256:3ea8ac1e10c22cd5eef9c0bcd36dd0e2427bb7bbd8c5ee7de71fa13a0cc68aab AS builder
-#FROM registry.redhat.io/openshift4/ose-operator-registry:v4.11 AS builder
+FROM registry.redhat.io/openshift4/ose-operator-registry@sha256:ecef9cded6d99990770248529b074b127e2c69bca00e2cccaf09adffeb40c02b AS builder
+#FROM registry.redhat.io/openshift4/ose-operator-registry:v4.13 AS builder
 
-FROM registry.redhat.io/ubi8/ubi-minimal@sha256:621f5245fb3e8597a626163cdf1229e1f8311e07ab71bb1e9332014b51c59f9c
+FROM registry.redhat.io/ubi8/ubi-minimal:latest
 
-ARG PRODUCT_VERSION=3.0.0
+ARG PRODUCT_VERSION=3.0.1
 LABEL operators.operatorframework.io.index.database.v1=/database/index.db
 
 COPY LICENSE /licenses/

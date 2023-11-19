@@ -25,12 +25,11 @@ import * as InfrastructureNamespacesStore from '../../store/InfrastructureNamesp
 import * as PluginsStore from '../../store/Plugins/chePlugins';
 import * as SanityCheckStore from '../../store/SanityCheck';
 import * as DwPluginsStore from '../../store/Plugins/devWorkspacePlugins';
-import * as UserProfileStore from '../../store/UserProfile';
+import * as UserProfileStore from '../../store/User/Profile';
 import * as WorkspacesStore from '../../store/Workspaces';
 import * as EventsStore from '../../store/Events';
 import * as PodsStore from '../../store/Pods';
 import * as DevWorkspacesStore from '../../store/Workspaces/devWorkspaces';
-import * as WorkspacesSettingsStore from '../../store/Workspaces/Settings';
 import { ResourceFetcherService } from '../resource-fetcher';
 import { IssuesReporterService, IssueType, WorkspaceData } from './issuesReporter';
 import { DevWorkspaceClient } from '../workspace-client/devworkspace/devWorkspaceClient';
@@ -41,7 +40,8 @@ import { selectDevWorkspacesResourceVersion } from '../../store/Workspaces/devWo
 import { buildDetailsLocation, buildIdeLoaderLocation } from '../helpers/location';
 import { Workspace } from '../workspace-adapter';
 import { WorkspaceRunningError, WorkspaceStoppedDetector } from './workspaceStoppedDetector';
-import { selectOpenVSXUrl, selectWaziLicenseUsage } from '../../store/ServerConfig/selectors';
+import { selectOpenVSXUrl } from '../../store/ServerConfig/selectors';
+import { selectWaziLicenseUsage } from '../../store/ServerConfig/selectors';
 import { selectEmptyWorkspaceUrl } from '../../store/DevfileRegistries/selectors';
 import { WebsocketClient } from '../dashboard-backend-client/websocketClient';
 import { selectEventsResourceVersion } from '../../store/Events/selectors';
@@ -49,6 +49,7 @@ import { selectPodsResourceVersion } from '../../store/Pods/selectors';
 import { ChannelListener } from '../dashboard-backend-client/websocketClient/messageHandler';
 import { selectApplications } from '../../store/ClusterInfo/selectors';
 import { isAvailableEndpoint } from '../helpers/api-ping';
+import { DEFAULT_REGISTRY } from '../../store/DevfileRegistries';
 
 /**
  * This class executes a few initial instructions
@@ -84,7 +85,6 @@ export default class Bootstrap {
     await Promise.all([
       this.fetchBranding(),
       this.fetchInfrastructureNamespaces(),
-      this.fetchWorkspaceSettings(),
       this.fetchServerConfig(),
       this.fetchClusterInfo(),
     ]);
@@ -189,11 +189,9 @@ export default class Bootstrap {
       return selectDevWorkspacesResourceVersion(state);
     };
 
-    this.websocketClient.subscribeToChannel(
-      api.webSocket.Channel.DEV_WORKSPACE,
-      namespace,
+    this.websocketClient.subscribeToChannel(api.webSocket.Channel.DEV_WORKSPACE, namespace, {
       getResourceVersion,
-    );
+    });
   }
 
   private async watchWebSocketEvents(): Promise<void> {
@@ -218,11 +216,9 @@ export default class Bootstrap {
       return selectEventsResourceVersion(state);
     };
 
-    this.websocketClient.subscribeToChannel(
-      api.webSocket.Channel.EVENT,
-      namespace,
+    this.websocketClient.subscribeToChannel(api.webSocket.Channel.EVENT, namespace, {
       getResourceVersion,
-    );
+    });
   }
 
   private async watchWebSocketPods(): Promise<void> {
@@ -247,11 +243,9 @@ export default class Bootstrap {
       return selectPodsResourceVersion(state);
     };
 
-    this.websocketClient.subscribeToChannel(
-      api.webSocket.Channel.POD,
-      namespace,
+    this.websocketClient.subscribeToChannel(api.webSocket.Channel.POD, namespace, {
       getResourceVersion,
-    );
+    });
   }
 
   private async fetchWorkspaces(): Promise<void> {
@@ -271,19 +265,14 @@ export default class Bootstrap {
 
   private async fetchPlugins(): Promise<void> {
     const { requestPlugins } = PluginsStore.actionCreators;
-    const settings = this.store.getState().workspacesSettings.settings;
-    await requestPlugins(settings.cheWorkspacePluginRegistryUrl || '')(
-      this.store.dispatch,
-      this.store.getState,
-      undefined,
-    );
+    const pluginRegistryURL = this.store.getState().dwServerConfig.config.pluginRegistryURL;
+    await requestPlugins(pluginRegistryURL)(this.store.dispatch, this.store.getState, undefined);
   }
 
   private async fetchDwPlugins(): Promise<void> {
     const { requestDwDefaultEditor } = DwPluginsStore.actionCreators;
-    const settings = this.store.getState().workspacesSettings.settings;
     try {
-      await requestDwDefaultEditor(settings)(this.store.dispatch, this.store.getState, undefined);
+      await requestDwDefaultEditor()(this.store.dispatch, this.store.getState, undefined);
     } catch (e) {
       const message = `Required sources failed when trying to create the workspace: ${e}`;
       const { addBanner } = BannerAlertStore.actionCreators;
@@ -312,21 +301,20 @@ export default class Bootstrap {
         pluginsByUrl[dwEditor.url] = dwEditor.devfile;
       });
       const openVSXUrl = selectOpenVSXUrl(state);
-      const settings = this.store.getState().workspacesSettings.settings;
-      const pluginRegistryUrl = settings['cheWorkspacePluginRegistryUrl'];
-      const pluginRegistryInternalUrl = settings['cheWorkspacePluginRegistryInternalUrl'];
+      const waziLicenseUsage = selectWaziLicenseUsage(state);
+      const pluginRegistryUrl = state.dwServerConfig.config.pluginRegistryURL;
+      const pluginRegistryInternalUrl = state.dwServerConfig.config.pluginRegistryInternalURL;
       const clusterConsole = selectApplications(state).find(
         app => app.id === ApplicationId.CLUSTER_CONSOLE,
       );
-      const waziLicenseUsage = selectWaziLicenseUsage(state);
       const updates = await this.devWorkspaceClient.checkForTemplatesUpdate(
         defaultNamespace,
         pluginsByUrl,
         pluginRegistryUrl,
         pluginRegistryInternalUrl,
         openVSXUrl,
+        waziLicenseUsage,
         clusterConsole,
-        waziLicenseUsage
       );
       if (Object.keys(updates).length > 0) {
         await this.devWorkspaceClient.updateTemplates(defaultNamespace, updates);
@@ -345,17 +333,6 @@ export default class Bootstrap {
     }
   }
 
-  private async fetchWorkspaceSettings(): Promise<che.WorkspaceSettings> {
-    const { requestSettings } = WorkspacesSettingsStore.actionCreators;
-    try {
-      await requestSettings()(this.store.dispatch, this.store.getState, undefined);
-    } catch (e) {
-      console.error(e);
-    }
-
-    return this.store.getState().workspacesSettings.settings;
-  }
-
   private async fetchServerConfig(): Promise<void> {
     const { requestServerConfig } = ServerConfigStore.actionCreators;
     try {
@@ -367,12 +344,40 @@ export default class Bootstrap {
 
   private async fetchRegistriesMetadata(): Promise<void> {
     const { requestRegistriesMetadata } = DevfileRegistriesStore.actionCreators;
-    const settings = this.store.getState().workspacesSettings.settings;
-    await requestRegistriesMetadata(settings.cheWorkspaceDevfileRegistryUrl || '')(
+    const defaultRegistry = DEFAULT_REGISTRY.startsWith('http')
+      ? DEFAULT_REGISTRY
+      : new URL(DEFAULT_REGISTRY, window.location.origin).href;
+    await requestRegistriesMetadata(defaultRegistry, false)(
       this.store.dispatch,
       this.store.getState,
       undefined,
     );
+
+    const serverConfig = this.store.getState().dwServerConfig.config;
+    const devfileRegistry = serverConfig.devfileRegistry;
+    const internalDevfileRegistryUrl = serverConfig.devfileRegistryURL;
+    if (
+      devfileRegistry?.disableInternalRegistry !== undefined &&
+      devfileRegistry?.disableInternalRegistry !== true &&
+      internalDevfileRegistryUrl
+    ) {
+      await requestRegistriesMetadata(internalDevfileRegistryUrl, false)(
+        this.store.dispatch,
+        this.store.getState,
+        undefined,
+      );
+    }
+
+    const externalRegistries = devfileRegistry.externalDevfileRegistries.map(
+      registry => registry?.url,
+    );
+    if (externalRegistries.length > 0) {
+      await requestRegistriesMetadata(externalRegistries.join(' '), true)(
+        this.store.dispatch,
+        this.store.getState,
+        undefined,
+      );
+    }
   }
 
   private async fetchEmptyWorkspace(): Promise<void> {

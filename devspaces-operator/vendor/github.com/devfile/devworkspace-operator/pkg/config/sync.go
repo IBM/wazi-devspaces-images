@@ -284,7 +284,7 @@ func mergeConfig(from, to *controller.OperatorConfiguration) {
 				to.Workspace.ServiceAccount.ServiceAccountName = from.Workspace.ServiceAccount.ServiceAccountName
 			}
 			if from.Workspace.ServiceAccount.DisableCreation != nil {
-				to.Workspace.ServiceAccount.DisableCreation = pointer.BoolPtr(*from.Workspace.ServiceAccount.DisableCreation)
+				to.Workspace.ServiceAccount.DisableCreation = pointer.Bool(*from.Workspace.ServiceAccount.DisableCreation)
 			}
 			if from.Workspace.ServiceAccount.ServiceAccountTokens != nil {
 				to.Workspace.ServiceAccount.ServiceAccountTokens = from.Workspace.ServiceAccount.ServiceAccountTokens
@@ -327,12 +327,49 @@ func mergeConfig(from, to *controller.OperatorConfiguration) {
 				to.Workspace.DefaultStorageSize.PerWorkspace = &perWorkspaceSizeCopy
 			}
 		}
+		if from.Workspace.PersistUserHome != nil {
+			if to.Workspace.PersistUserHome == nil {
+				to.Workspace.PersistUserHome = &controller.PersistentHomeConfig{}
+			}
+			if from.Workspace.PersistUserHome.Enabled != nil {
+				to.Workspace.PersistUserHome.Enabled = from.Workspace.PersistUserHome.Enabled
+			}
+		}
 		if from.Workspace.DefaultTemplate != nil {
 			templateSpecContentCopy := from.Workspace.DefaultTemplate.DeepCopy()
 			to.Workspace.DefaultTemplate = templateSpecContentCopy
 		}
 		if from.Workspace.SchedulerName != "" {
 			to.Workspace.SchedulerName = from.Workspace.SchedulerName
+		}
+		if from.Workspace.ProjectCloneConfig != nil {
+			if to.Workspace.ProjectCloneConfig == nil {
+				to.Workspace.ProjectCloneConfig = &controller.ProjectCloneConfig{}
+			}
+			if from.Workspace.ProjectCloneConfig.Image != "" {
+				to.Workspace.ProjectCloneConfig.Image = from.Workspace.ProjectCloneConfig.Image
+			}
+			if from.Workspace.ProjectCloneConfig.ImagePullPolicy != "" {
+				to.Workspace.ProjectCloneConfig.ImagePullPolicy = from.Workspace.ProjectCloneConfig.ImagePullPolicy
+			}
+			if from.Workspace.ProjectCloneConfig.Resources != nil {
+				if to.Workspace.ProjectCloneConfig.Resources == nil {
+					to.Workspace.ProjectCloneConfig.Resources = &corev1.ResourceRequirements{}
+				}
+				to.Workspace.ProjectCloneConfig.Resources = mergeResources(from.Workspace.ProjectCloneConfig.Resources, to.Workspace.ProjectCloneConfig.Resources)
+			}
+
+			// Overwrite env instead of trying to merge, don't want to bother merging lists when
+			// the default is empty
+			if from.Workspace.ProjectCloneConfig.Env != nil {
+				to.Workspace.ProjectCloneConfig.Env = from.Workspace.ProjectCloneConfig.Env
+			}
+		}
+		if from.Workspace.DefaultContainerResources != nil {
+			if to.Workspace.DefaultContainerResources == nil {
+				to.Workspace.DefaultContainerResources = &corev1.ResourceRequirements{}
+			}
+			to.Workspace.DefaultContainerResources = mergeResources(from.Workspace.DefaultContainerResources, to.Workspace.DefaultContainerResources)
 		}
 	}
 }
@@ -383,6 +420,33 @@ func mergeContainerSecurityContext(base, patch *corev1.SecurityContext) *corev1.
 		return base
 	}
 	return patched
+}
+
+func mergeResources(from, to *corev1.ResourceRequirements) *corev1.ResourceRequirements {
+	result := to.DeepCopy()
+	if from.Limits != nil {
+		if result.Limits == nil {
+			result.Limits = corev1.ResourceList{}
+		}
+		if cpu, ok := from.Limits[corev1.ResourceCPU]; ok {
+			result.Limits[corev1.ResourceCPU] = cpu
+		}
+		if memory, ok := from.Limits[corev1.ResourceMemory]; ok {
+			result.Limits[corev1.ResourceMemory] = memory
+		}
+	}
+	if from.Requests != nil {
+		if result.Requests == nil {
+			result.Requests = corev1.ResourceList{}
+		}
+		if cpu, ok := from.Requests[corev1.ResourceCPU]; ok {
+			result.Requests[corev1.ResourceCPU] = cpu
+		}
+		if memory, ok := from.Requests[corev1.ResourceMemory]; ok {
+			result.Requests[corev1.ResourceMemory] = memory
+		}
+	}
+	return result
 }
 
 func GetCurrentConfigString(currConfig *controller.OperatorConfiguration) string {
@@ -450,6 +514,11 @@ func GetCurrentConfigString(currConfig *controller.OperatorConfiguration) string
 				config = append(config, fmt.Sprintf("workspace.defaultStorageSize.perWorkspace=%s", workspace.DefaultStorageSize.PerWorkspace.String()))
 			}
 		}
+		if workspace.PersistUserHome != nil {
+			if workspace.PersistUserHome.Enabled != nil && *workspace.PersistUserHome.Enabled != *defaultConfig.Workspace.PersistUserHome.Enabled {
+				config = append(config, fmt.Sprintf("workspace.persistUserHome.enabled=%t", *workspace.PersistUserHome.Enabled))
+			}
+		}
 		if !reflect.DeepEqual(workspace.PodSecurityContext, defaultConfig.Workspace.PodSecurityContext) {
 			config = append(config, "workspace.podSecurityContext is set")
 		}
@@ -461,6 +530,23 @@ func GetCurrentConfigString(currConfig *controller.OperatorConfiguration) string
 		}
 		if workspace.SchedulerName != "" {
 			config = append(config, fmt.Sprintf("workspace.schedulerName=%s", workspace.SchedulerName))
+		}
+		if workspace.ProjectCloneConfig != nil {
+			if workspace.ProjectCloneConfig.Image != defaultConfig.Workspace.ProjectCloneConfig.Image {
+				config = append(config, fmt.Sprintf("workspace.projectClone.image=%s", workspace.ProjectCloneConfig.Image))
+			}
+			if workspace.ProjectCloneConfig.ImagePullPolicy != defaultConfig.Workspace.ProjectCloneConfig.ImagePullPolicy {
+				config = append(config, fmt.Sprintf("workspace.projectClone.imagePullPolicy=%s", workspace.ProjectCloneConfig.ImagePullPolicy))
+			}
+			if workspace.ProjectCloneConfig.Env != nil {
+				config = append(config, "workspace.projectClone.env is set")
+			}
+			if !reflect.DeepEqual(workspace.ProjectCloneConfig.Resources, defaultConfig.Workspace.ProjectCloneConfig.Resources) {
+				config = append(config, "workspace.projectClone.resources is set")
+			}
+		}
+		if !reflect.DeepEqual(workspace.DefaultContainerResources, defaultConfig.Workspace.DefaultContainerResources) {
+			config = append(config, "workspace.defaultContainerResources is set")
 		}
 	}
 	if currConfig.EnableExperimentalFeatures != nil && *currConfig.EnableExperimentalFeatures {

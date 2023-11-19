@@ -11,33 +11,27 @@
 #   IBM Corporation - implementation
 #
 
-### Open VSX Server - Builder
-FROM registry.access.redhat.com/ubi8/ubi@sha256:70fc843d4eb70159799e065d2830726b884c93950f8891e263d6328af6141173 as ovsx-server-builder
+# OpenVSX
+FROM ghcr.io/eclipse/openvsx-server:d7fba39 AS openvsx-server
 
-WORKDIR /tmp
+### Open VSX Server - Builder
+FROM registry.access.redhat.com/ubi8/ubi:latest as ovsx-server-builder
+
+ENV \
+    CURRENT_BRANCH="devspaces-3.8-rhel-8"
+
 RUN \
-    GIT_CHE_OPENVSX="https://github.com/che-incubator/che-openvsx" && \
-    YUM_PKGS="java-11-openjdk-devel git jq curl" && \
+    YUM_PKGS="java-17-openjdk-devel git jq unzip curl" && \
     yum install -y --nodocs ${YUM_PKGS} && \
     yum update -q -y && \
-    git clone "${GIT_CHE_OPENVSX}" && \
-    cd che-openvsx/server && \
-    git checkout che-openvsx
-
-# Gradle fails on ppc64le arch
-WORKDIR /tmp/che-openvsx/server
-RUN \
-    ./gradlew --no-daemon --console=plain assemble && \
-    mkdir -pv /openvsx-server && \
-    cp -v scripts/run-server.sh build/libs/openvsx-server.jar /openvsx-server
+    mkdir -pv /openvsx-server
 
 WORKDIR /openvsx-server
+COPY --from=openvsx-server --chown=0:0 /home/openvsx/server /openvsx-server/
 COPY ./openvsx-sync.json /openvsx-server/
 COPY ./build/scripts/download_vsix.sh /tmp
 RUN \
-    jar -xf openvsx-server.jar && \
-    rm -fv openvsx-server.jar && \
-    /tmp/download_vsix.sh && \
+    /tmp/download_vsix.sh -b ${CURRENT_BRANCH} && \
     mv -v /tmp/vsix /openvsx-server
 
 WORKDIR /
@@ -46,11 +40,11 @@ RUN \
     tar -czf openvsx-server.tar.gz /openvsx-server
 
 ### Open VSX Modules - Builder
-FROM registry.access.redhat.com/ubi8/nodejs-16@sha256:e14e0a8be1e337e76227e9433535fb954ab16c5d9a11104d9d441a56b46ab62c as ovsx-lib-builder
+FROM registry.access.redhat.com/ubi8/nodejs-18:latest as ovsx-lib-builder
 USER 0
 
 ENV \
-    ovsx_version=0.5.0 \
+    ovsx_version=0.8.2 \
     npm_config_cache=/tmp/opt/cache
 
 # Install pre-requisites for ovsx (multi-arch support)
@@ -68,7 +62,7 @@ RUN \
         echo "enabled=1" >> ${FEDORA_REPO_FILE}; \
         echo "gpgcheck=0" >> ${FEDORA_REPO_FILE}; \
         echo "skip_if_unavailable=True" >> ${FEDORA_REPO_FILE}; \
-        YUM_PKGS="libsecret-devel"; \
+        YUM_PKGS="libsecret"; \
         yum install -y --nodocs "${YUM_PKGS}"; \
     fi; \ 
     }
@@ -80,7 +74,7 @@ RUN \
     tar -czf ovsx.tar.gz /tmp/opt/ovsx
 
 ### Plugin Generator - Builder
-FROM registry.access.redhat.com/ubi8/nodejs-16@sha256:e14e0a8be1e337e76227e9433535fb954ab16c5d9a11104d9d441a56b46ab62c as plugin-builder
+FROM registry.access.redhat.com/ubi8/nodejs-18:latest as plugin-builder
 USER 0
 
 ENV \
@@ -100,7 +94,7 @@ RUN \
     tar -czf resources.tar.gz ./output/v3/
 
 ### Plugin Registry Image
-FROM registry.redhat.io/rhel8/postgresql-13@sha256:e89a537ef01a2c6714ec194f60cf445e80860924b04b634c5d76960ff6369edb
+FROM registry.redhat.io/rhel8/postgresql-15:latest
 USER 0
 WORKDIR /
 
@@ -142,7 +136,8 @@ RUN \
     sed -i /etc/httpd/conf/httpd.conf \
     -e "s,Listen 80,Listen 8080," \
     -e "s,logs/error_log,/dev/stderr," \
-    -e "s,logs/access_log,/dev/stdout," \
+    -e "/<IfModule log_config_module>/a SetEnvIf User-Agent \"^kube-probe/\" dontlog" \
+    -e 's,CustomLog "logs/access_log" combined,CustomLog /dev/stdout combined env=!dontlog,' \
     -e "s,AllowOverride None,AllowOverride All," && \
     chmod a+rwX /etc/httpd/conf /etc/httpd/conf.d /run/httpd /etc/httpd/logs/ && \
     rm -rf /tmp/rhel.install.sh /openvsx-server.tar.gz /ovsx.tar.gz /resources.tar.gz /build
@@ -168,7 +163,7 @@ RUN \
     echo "======================" && \
     chmod 777 /var/run/postgresql
 
-ARG PRODUCT_VERSION="3.0.0"
+ARG PRODUCT_VERSION="3.0.1"
 ENV \
     SUMMARY="IBM Wazi for Dev Spaces" \
     DESCRIPTION="IBM Wazi for Dev Spaces" \

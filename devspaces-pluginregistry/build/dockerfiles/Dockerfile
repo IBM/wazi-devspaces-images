@@ -11,8 +11,8 @@
 #   IBM Corporation - implementation
 #
 
-# https://registry.access.redhat.com/rhel8/postgresql-13
-FROM registry.redhat.io/rhel8/postgresql-13:1-118.1682303950
+# https://registry.access.redhat.com/rhel8/postgresql-15
+FROM registry.redhat.io/rhel8/postgresql-15:1-20
 USER 0
 WORKDIR /
 
@@ -102,7 +102,8 @@ RUN \
 RUN sed -i /etc/httpd/conf/httpd.conf \
     -e "s,Listen 80,Listen 8080," \
     -e "s,logs/error_log,/dev/stderr," \
-    -e "s,logs/access_log,/dev/stdout," \
+    -e "/<IfModule log_config_module>/a SetEnvIf User-Agent \"^kube-probe/\" dontlog" \
+    -e 's,CustomLog "logs/access_log" combined,CustomLog /dev/stdout combined env=!dontlog,' \
     -e "s,AllowOverride None,AllowOverride All," && \
     chmod a+rwX /etc/httpd/conf /etc/httpd/conf.d /run/httpd /etc/httpd/logs/
 

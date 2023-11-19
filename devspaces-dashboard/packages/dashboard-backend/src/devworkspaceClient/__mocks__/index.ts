@@ -17,7 +17,9 @@ import {
   IDockerConfigApi,
   IEventApi,
   IKubeConfigApi,
-  INamespaceApi,
+  ILogsApi,
+  IPersonalAccessTokenApi,
+  IPodApi,
   IServerConfigApi,
   IUserProfileApi,
 } from '../types';
@@ -41,10 +43,16 @@ export class DevWorkspaceClient implements IDevWorkspaceClient {
   get kubeConfigApi(): IKubeConfigApi {
     throw new Error('Method not implemented.');
   }
-  get namespaceApi(): INamespaceApi {
+  get userProfileApi(): IUserProfileApi {
     throw new Error('Method not implemented.');
   }
-  get userProfileApi(): IUserProfileApi {
+  get logsApi(): ILogsApi {
+    throw new Error('Method not implemented.');
+  }
+  get personalAccessTokenApi(): IPersonalAccessTokenApi {
+    throw new Error('Method not implemented.');
+  }
+  get podApi(): IPodApi {
     throw new Error('Method not implemented.');
   }
 }

@@ -10,14 +10,14 @@
 #   IBM Corporation - implementation
 #
 
-FROM registry.redhat.io/rhel8/go-toolset@sha256:fa192d420348e5b4919187d01c12b6a2ff778b3a9145cb00ea57b359ad1d1a9f as operator-builder
+FROM registry.redhat.io/rhel8/go-toolset:latest as operator-builder
 USER 0
 
 ARG SKIP_TESTS="true"
 
 ENV \
     GOPATH=/go/ \
-    DEV_WORKSPACE_VERSION="v0.13.0" \
+    DEV_WORKSPACE_VERSION="v0.22.0" \
     TRAEFIK_VERSION="v0.1.2"
 
 WORKDIR /devspaces-operator
@@ -51,9 +51,9 @@ RUN \
     CGO_ENABLED=0 GOOS=linux GOARCH=${ARCH} GO111MODULE=on go build -mod=vendor -v -a -o che-operator main.go
 
 
-FROM registry.access.redhat.com/ubi8/ubi-minimal@sha256:621f5245fb3e8597a626163cdf1229e1f8311e07ab71bb1e9332014b51c59f9c
+FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-ARG PRODUCT_VERSION="3.0.0"
+ARG PRODUCT_VERSION="3.0.1"
 
 COPY --from=operator-builder /tmp/devworkspace-operator/templates /tmp/devworkspace-operator/templates
 COPY --from=operator-builder /tmp/header-rewrite-traefik-plugin /tmp/header-rewrite-traefik-plugin

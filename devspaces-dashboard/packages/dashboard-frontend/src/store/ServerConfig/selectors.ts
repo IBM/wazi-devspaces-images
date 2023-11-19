@@ -8,6 +8,7 @@
  *
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
+ *   IBM Corporation - implementation
  */
 
 import { createSelector } from 'reselect';
@@ -21,14 +22,34 @@ export const selectDefaultComponents = createSelector(
   state => state.config.defaults?.components || [],
 );
 
+export const selectDefaultEditor = createSelector(
+  selectState,
+  state => state.config.defaults?.editor || 'che-incubator/che-code/latest',
+);
+
 export const selectDefaultPlugins = createSelector(
   selectState,
   state => state.config.defaults?.plugins || [],
 );
 
+export const selectPluginRegistryUrl = createSelector(
+  selectState,
+  state => state.config.pluginRegistryURL,
+);
+
+export const selectPluginRegistryInternalUrl = createSelector(
+  selectState,
+  state => state.config.pluginRegistryInternalURL,
+);
+
 export const selectOpenVSXUrl = createSelector(
   selectState,
   state => state.config.pluginRegistry?.openVSXURL,
+);
+
+export const selectWaziLicenseUsage = createSelector(
+  selectState,
+  state => state.config.waziLicenseUsage,
 );
 
 export const selectPvcStrategy = createSelector(
@@ -42,8 +63,3 @@ export const selectStartTimeout = createSelector(
 );
 
 export const selectServerConfigError = createSelector(selectState, state => state.error);
-
-export const selectWaziLicenseUsage = createSelector(
-  selectState,
-  state => state.config.waziLicenseUsage,
-);

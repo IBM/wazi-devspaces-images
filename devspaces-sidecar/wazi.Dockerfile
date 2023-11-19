@@ -8,7 +8,7 @@
 #  IBM Corporation - initial API and implementation
 ###############################################################################
 
-FROM registry.redhat.io/devspaces/udi-rhel8@sha256:d18f22ef1aa2e5d1da4e3356ee1fc8fa59f795cdc3ab9d54c666054fbcfecd8f AS core
+FROM registry.redhat.io/devspaces/udi-rhel8:latest AS core
 
 ###########################################
 ###
@@ -16,15 +16,15 @@ FROM registry.redhat.io/devspaces/udi-rhel8@sha256:d18f22ef1aa2e5d1da4e3356ee1fc
 ###
 ###########################################
 
-ARG PRODUCT_VERSION="3.0.0"
+ARG PRODUCT_VERSION="3.0.1"
 USER 0
 
 ENV \
     JAVA_VERSION="17" \
-    SEMERU_VERSION="17.0.7.7_0.38.0-1"
+    SEMERU_VERSION="17.0.8.7_0.40.0-1"
 
 COPY LICENSE PRODUCT_LICENSE /licenses/
-COPY scripts/* *.zip /tmp/
+COPY *.sh *.zip /tmp/
 
 ### *** General *** ###
 RUN \
@@ -34,11 +34,11 @@ RUN \
 ### *** Java (Semeru) *** ###
 RUN \
     ARCH="$(uname -m)" && \
-    SEMERU_JDK="jdk-17.0.7%2B7_openj9-0.38.0" && \
+    SEMERU_JDK="jdk-17.0.8%2B7_openj9-0.40.0" && \
     SEMERU_RPM="https://github.com/ibmruntimes/semeru${JAVA_VERSION}-binaries/releases/download/${SEMERU_JDK}/ibm-semeru-open-${JAVA_VERSION}-jdk-${SEMERU_VERSION}.${ARCH}.rpm" && \
     DNF_PKGS="yum python39-wheel iputils libatomic libzip-tools cargo rust" && \
     YUM_PKGS="${SEMERU_RPM}" && \
-    dnf -y update  --noplugins --nodocs --best --allowerasing && \
+    dnf -y update  --noplugins --nodocs --nobest && \
     dnf -y clean all --enablerepo='*' && dnf -y clean packages && \
     dnf -y clean all && rm -rf /var/cache/yum && \
     dnf -y install --noplugins --nodocs ${DNF_PKGS} && \
@@ -52,10 +52,28 @@ RUN \
 
 RUN \
     ARCH="$(uname -m)" && \
+    YUM_PKGS="git-lfs" && \
     export HELM_INSTALL_DIR="/usr/bin" && \
     export ODO_INSTALL_DIR="$(which odo)" && \
     curl -o- -skL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash && \
-    curl -skL https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/odo/latest/odo-linux-${ARCH} -o ${ODO_INSTALL_DIR}
+    curl -o- -skL https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash && \
+    curl -skL https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/odo/latest/odo-linux-${ARCH} -o ${ODO_INSTALL_DIR} && \
+    yum -y install --nodocs ${YUM_PKGS}
+
+FROM registry.redhat.io/ubi8/python-39:latest AS code-builder
+
+USER 0
+
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1 \
+    CARGO_NET_GIT_FETCH_WITH_CLI=true
+
+RUN \
+    mkdir -pv /tmp/wheels && \
+    curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+    source $HOME/.cargo/env && \
+    python -m pip install --upgrade pip && \
+    python -m pip wheel --wheel-dir=/tmp/wheels cryptography && \
+    python -m pip wheel --find-links=/tmp/wheels --wheel-dir=/tmp/wheels ansible-lint
 
 FROM core AS code
 
@@ -67,11 +85,12 @@ FROM core AS code
 
 ENV \
     ZOWE_CLI_PLUGINS_DIR="/usr/local/lib/node_modules" \
-    ZOWE_CLI_VERSION="7.16.2" \
+    ZOWE_CLI_VERSION="zowe-v2-lts" \
+    # ZOWE_SECRETS_KUBE_CLI_VERSION="latest" \
     RSE_API_VERSION="latest" \
-    ANSIBLE_LINT_VERSION="6.17.0" \
-    ANSIBLE_CRYPT_VERSION="40.0.1" \
     NPM_VERSION="9.*"
+
+COPY --from=code-builder /tmp/wheels/ /tmp/wheels/
 
 ### **** Update pip and npm *** ###
 
@@ -84,11 +103,8 @@ RUN \
 RUN \
     export CRYPTOGRAPHY_DONT_BUILD_RUST=1 CARGO_NET_GIT_FETCH_WITH_CLI=true && \
     ANSIBLE_COLLECTIONS="/usr/share/ansible/collections" && \
-    PIP_PKGS="cryptography==$ANSIBLE_CRYPT_VERSION ansible-lint==$ANSIBLE_LINT_VERSION" && \
-    ANSIBLE_PKGS="ibm.ibm_zos_core ibm.ibm_zosmf ibm.ibm_zos_cics ibm.ibm_zos_ims ibm.ibm_zhmc ibm.ibm_zos_sysauto" && \
-    mkdir -pv /tmp/wheels && \
-    python -m pip wheel --wheel-dir=/tmp/wheels cryptography==${ANSIBLE_CRYPT_VERSION} && \
-    python -m pip wheel --wheel-dir=/tmp/wheels ansible-lint==${ANSIBLE_LINT_VERSION} && \
+    PIP_PKGS="cryptography ansible-lint" && \
+    ANSIBLE_PKGS="ibm.ibm_zos_core ibm.ibm_zosmf ibm.ibm_zos_cics ibm.ibm_zos_ims ibm.ibm_zhmc ibm.ibm_zos_sysauto ibm.operator_collection_sdk" && \
     python -m pip install --no-cache-dir --no-index --find-links=/tmp/wheels ${PIP_PKGS} && \
     python -m pip install --no-cache-dir ansible && \
     ansible-galaxy collection install --no-cache -p ${ANSIBLE_COLLECTIONS} ${ANSIBLE_PKGS}
@@ -97,14 +113,17 @@ RUN \
 RUN \
     --mount=type=secret,id=docker_secret,dst=/run/secrets/docker_secret source /run/secrets/docker_secret && \
     /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" && \
+    # NPM_PKGS=("@zowe/cli@${ZOWE_CLI_VERSION}" "@zowe/secrets-for-kubernetes-for-zowe-cli@${ZOWE_SECRETS_KUBE_CLI_VERSION}" "@ibm/rse-api-for-zowe-cli@${RSE_API_VERSION}") && \
     NPM_PKGS=("@zowe/cli@${ZOWE_CLI_VERSION}" "@ibm/rse-api-for-zowe-cli@${RSE_API_VERSION}") && \
-    NODE_PATH=/usr/local/lib/node_modules && \
+    NODE_PATH=/usr/lib/node_modules && \
     for NPM_PKG in "${NPM_PKGS[@]}"; do \
         echo "Installing ${NPM_PKG} ..."; \
         npm install -g ${NPM_PKG} --ignore-scripts --no-audit --no-fund --no-update-notifier; \
     done && \
+    ls -la $NODE_PATH && \
     npm list -g --depth=0 && \
     zowe plugins install  "$NODE_PATH/@ibm/rse-api-for-zowe-cli" && \
+    # zowe plugins install  "$NODE_PATH/@zowe/secrets-for-kubernetes-for-zowe-cli" && \
     zowe plugins list && \
     rm -rfv "/home/user/.npmrc"
 

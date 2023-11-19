@@ -15,6 +15,7 @@ package wazi
 import (
 	licensequerysrc "github.com/IBM/ibm-licensing-operator/api/v1"
 	"github.com/eclipse-che/che-operator/pkg/common/chetypes"
+	"github.com/eclipse-che/che-operator/pkg/common/constants"
 	"github.com/eclipse-che/che-operator/pkg/deploy"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -28,6 +29,7 @@ const (
 	waziLicensingResourceGroup = "operator.ibm.com"
 	waziLicensingVersion       = "v1"
 	waziLicensingResourceName  = "ibmlicensingquerysources"
+	waziLicensingFinalizer     = "ibmlicensingquerysources" + constants.FinalizerSuffix
 	waziLicensingKind          = "IBMLicensingQuerySource"
 	waziLicensingAPIVersion    = "operator.ibm.com/v1"
 	waziLicensingName          = "ibm-wazi-code-licensing-query-source"
@@ -56,7 +58,7 @@ func (d *LicenseReconciler) Reconcile(ctx *chetypes.DeployContext) (reconcile.Re
 			return reconcile.Result{}, false, err
 		}
 
-		err := AppendFinalizer(ctx, deploy.GetFinalizerName(waziLicensingResourceName))
+		err := AppendFinalizer(ctx, waziLicensingFinalizer)
 		if err != nil {
 			return reconcile.Result{}, false, err
 		}
@@ -69,7 +71,7 @@ func (d *LicenseReconciler) Reconcile(ctx *chetypes.DeployContext) (reconcile.Re
 
 func (d *LicenseReconciler) Finalize(ctx *chetypes.DeployContext) bool {
 	done := true
-	if err := DeleteFinalizer(ctx, deploy.GetFinalizerName(waziLicensingResourceName)); err != nil {
+	if err := DeleteFinalizer(ctx, waziLicensingFinalizer); err != nil {
 		done = false
 		logrus.Errorf("Error deleting finalizer: %v", err)
 	}

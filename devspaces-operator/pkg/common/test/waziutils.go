@@ -14,7 +14,6 @@ package test
 
 import (
 	licensequerysrc "github.com/IBM/ibm-licensing-operator/api/v1"
-	odlmv1alpha1 "github.com/IBM/operand-deployment-lifecycle-manager/api/v1alpha1"
 	chev1 "github.com/eclipse-che/che-operator/api/v1"
 	chev2 "github.com/eclipse-che/che-operator/api/v2"
 	"github.com/eclipse-che/che-operator/pkg/common/chetypes"
@@ -52,35 +51,6 @@ func GetFakeWaziLicense(accept bool, usageType string) *chev2.WaziLicense {
 			License: chev2.WaziLicenseSpecLicense{
 				Accept: accept,
 				Use:    usageType,
-			},
-		},
-	}
-}
-
-func GetOperandRequest(opExists, opStatus bool) *odlmv1alpha1.OperandRequest {
-	if !opExists {
-		return nil
-	}
-	if opExists && !opStatus {
-		return &odlmv1alpha1.OperandRequest{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      testOperandRequestName,
-				Namespace: TestWaziLicenseNamespace,
-			},
-		}
-	}
-	return &odlmv1alpha1.OperandRequest{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      testOperandRequestName,
-			Namespace: TestWaziLicenseNamespace,
-		},
-		Status: odlmv1alpha1.OperandRequestStatus{
-			Members: []odlmv1alpha1.MemberStatus{
-				{Name: sampleSubscriptionName,
-					Phase: odlmv1alpha1.MemberPhase{
-						OperatorPhase: odlmv1alpha1.OperatorPhase("Running"),
-					},
-				},
 			},
 		},
 	}
@@ -125,7 +95,6 @@ func GetWaziDeployContext(waziLicense *chev2.WaziLicense, initObjs []runtime.Obj
 	scheme := scheme.Scheme
 	chev1.SchemeBuilder.AddToScheme(scheme)
 	chev2.SchemeBuilder.AddToScheme(scheme)
-	odlmv1alpha1.SchemeBuilder.AddToScheme(scheme)
 	licensequerysrc.SchemeBuilder.AddToScheme(scheme)
 	corev1.SchemeBuilder.AddToScheme(scheme)
 

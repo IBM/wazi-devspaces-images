@@ -11,7 +11,7 @@
  *   IBM Corporation - implementation
  */
 
-import { V1alpha2DevWorkspace, V220DevfileComponents } from '@devfile/api';
+import { V1alpha2DevWorkspace, V221DevfileComponents } from '@devfile/api';
 import { CoreV1EventList, V1PodList } from '@kubernetes/client-node';
 import * as webSocket from './webSocket';
 
@@ -22,6 +22,27 @@ export type GitOauthProvider =
   | 'gitlab'
   | 'bitbucket'
   | 'azure-devops';
+
+export type GitProvider =
+  | 'github'
+  | 'gitlab'
+  | 'bitbucket-server'
+  | 'azure-devops';
+
+export type PersonalAccessToken = {
+  cheUserId: string;
+  tokenName: string;
+  tokenData: string; // base64 encoded
+  gitProviderEndpoint: string;
+} & (
+  | {
+      gitProvider: Exclude<GitProvider, 'azure-devops'>;
+    }
+  | {
+      gitProvider: Extract<GitProvider, 'azure-devops'>;
+      gitProviderOrganization: string;
+    }
+);
 
 export interface IPatch {
   op: string;
@@ -39,6 +60,10 @@ export interface IWorkspacesDefaultPlugins {
   plugins: string[];
 }
 
+export interface IExternalDevfileRegistry {
+  url: string;
+}
+
 export interface IServerConfig {
   containerBuild: {
     containerBuildConfiguration?: {
@@ -48,9 +73,13 @@ export interface IServerConfig {
   };
   defaults: {
     editor: string | undefined;
-    components: V220DevfileComponents[];
+    components: V221DevfileComponents[];
     plugins: IWorkspacesDefaultPlugins[];
     pvcStrategy: string | undefined;
+  };
+  devfileRegistry: {
+    disableInternalRegistry: boolean;
+    externalDevfileRegistries: IExternalDevfileRegistry[];
   };
   pluginRegistry: {
     openVSXURL: string;
@@ -61,6 +90,10 @@ export interface IServerConfig {
     startTimeout: number;
   };
   cheNamespace: string;
+  pluginRegistryURL: string;
+  pluginRegistryInternalURL: string;
+  devfileRegistryURL: string;
+  devfileRegistryInternalURL: string;
   waziLicenseUsage: string;
 }
 
@@ -71,6 +104,12 @@ export interface IUserProfile {
 
 export type IEventList = CoreV1EventList;
 export type IPodList = V1PodList;
+export type PodLogs = {
+  [containerName: string]: {
+    logs: string;
+    failure: boolean;
+  };
+};
 
 export interface IDevWorkspaceList {
   apiVersion?: string;

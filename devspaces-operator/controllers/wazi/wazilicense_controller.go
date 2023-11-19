@@ -15,7 +15,6 @@ package wazi
 import (
 	"context"
 
-	odlmv1alpha1 "github.com/IBM/operand-deployment-lifecycle-manager/api/v1alpha1"
 	"github.com/devfile/devworkspace-operator/pkg/infrastructure"
 	chev2 "github.com/eclipse-che/che-operator/api/v2"
 	"github.com/eclipse-che/che-operator/pkg/common/chetypes"
@@ -58,7 +57,6 @@ func NewReconciler(
 
 	if infrastructure.IsOpenShift() {
 		reconcileManager.RegisterReconciler(wazi.NewAnnotationsReconciler())
-		reconcileManager.RegisterReconciler(wazi.NewODLMReconciler())
 		reconcileManager.RegisterReconciler(wazi.NewLicenseReconciler())
 	}
 
@@ -77,11 +75,7 @@ func NewReconciler(
 func (r *WaziLicenseReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	controllerBuilder := ctrl.NewControllerManagedBy(mgr).
-		Watches(&source.Kind{Type: &chev2.WaziLicense{}}, &handler.EnqueueRequestForObject{}).
-		Watches(&source.Kind{Type: &odlmv1alpha1.OperandRequest{}}, &handler.EnqueueRequestForOwner{
-			IsController: true,
-			OwnerType:    &chev2.WaziLicense{},
-		})
+		Watches(&source.Kind{Type: &chev2.WaziLicense{}}, &handler.EnqueueRequestForObject{})
 
 	if r.namespace != "" {
 		controllerBuilder = controllerBuilder.WithEventFilter(utils.InNamespaceEventFilter(r.namespace))

@@ -1,4 +1,3 @@
-//
 // Copyright (c) 2019-2021 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
@@ -7,8 +6,9 @@
 // SPDX-License-Identifier: EPL-2.0
 //
 // Contributors:
-//   Red Hat, Inc. - initial API and implementation
 //
+//	Red Hat, Inc. - initial API and implementation
+//	IBM Corporation - implementation
 package imagepuller
 
 import (
@@ -39,6 +39,8 @@ var (
 		"^RELATED_IMAGE_.*_theia.*",
 		"^RELATED_IMAGE_.*_code.*",
 		"^RELATED_IMAGE_.*_idea.*",
+		"^RELATED_IMAGE_.*_udi.*",
+		"^RELATED_IMAGE_wazi.*",
 		"^RELATED_IMAGE_.*_machine(_)?exec(_.*)?_plugin_registry_image.*",
 		"^RELATED_IMAGE_.*_kubernetes(_.*)?_plugin_registry_image.*",
 		"^RELATED_IMAGE_.*_openshift(_.*)?_plugin_registry_image.*",

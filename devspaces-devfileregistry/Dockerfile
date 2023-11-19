@@ -13,7 +13,7 @@
 
 # Builder: check meta.yamls and create index.json
 # https://registry.access.redhat.com/ubi8/python-38
-FROM ubi8/python-38:1-125.1682304659 as builder
+FROM ubi8/python-38:1-129 as builder
 USER 0
 
 ################# 
@@ -85,7 +85,7 @@ RUN ./index.sh > /build/devfiles/index.json && \
 
 # Build registry, copying meta.yamls and index.json from builder
 # https://registry.access.redhat.com/rhel8/httpd-24
-FROM rhel8/httpd-24:1-256.1680797936 AS registry
+FROM rhel8/httpd-24:1-268.1689584944 AS registry
 USER 0
 
 # latest httpd container doesn't include ssl cert, so generate one
@@ -107,12 +107,13 @@ RUN sed -i /etc/httpd/conf.d/ssl.conf \
 RUN sed -i /etc/httpd/conf/httpd.conf \
     -e "s,Listen 80,Listen 8080," \
     -e "s,logs/error_log,/dev/stderr," \
-    -e "s,logs/access_log,/dev/stdout," \
+    -e "/<IfModule log_config_module>/a SetEnvIf User-Agent \"^kube-probe/\" dontlog" \
+    -e 's,CustomLog "logs/access_log" combined,CustomLog /dev/stdout combined env=!dontlog,' \
     -e "s,AllowOverride None,AllowOverride All," && \
     chmod a+rwX /etc/httpd/conf /run/httpd /etc/httpd/logs/
 STOPSIGNAL SIGWINCH
 
-ARG DS_BRANCH=devspaces-3.6-rhel-8
+ARG DS_BRANCH=devspaces-3.8-rhel-8
 ENV DS_BRANCH=${DS_BRANCH}
 
 WORKDIR /var/www/html
@@ -150,7 +151,7 @@ LABEL summary="$SUMMARY" \
       io.openshift.tags="$PRODNAME,$COMPNAME" \
       com.redhat.component="$PRODNAME-$COMPNAME-container" \
       name="$PRODNAME/$COMPNAME" \
-      version="3.6" \
+      version="3.8" \
       license="EPLv2" \
       maintainer="Valerii Svydenko <vsvydenk@redhat.com>, Nick Boldt <nboldt@redhat.com>" \
       io.openshift.expose-services="" \

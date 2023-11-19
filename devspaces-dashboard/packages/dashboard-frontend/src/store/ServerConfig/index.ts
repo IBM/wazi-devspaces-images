@@ -81,6 +81,10 @@ const unloadedState: State = {
       plugins: [],
       pvcStrategy: '',
     },
+    devfileRegistry: {
+      disableInternalRegistry: false,
+      externalDevfileRegistries: [],
+    },
     pluginRegistry: {
       openVSXURL: '',
     },
@@ -90,7 +94,11 @@ const unloadedState: State = {
       startTimeout: 300,
     },
     cheNamespace: '',
-    waziLicenseUsage: ''
+    devfileRegistryURL: '',
+    devfileRegistryInternalURL: '',
+    pluginRegistryURL: '',
+    pluginRegistryInternalURL: '',
+    waziLicenseUsage: '',
   },
   error: undefined,
 };

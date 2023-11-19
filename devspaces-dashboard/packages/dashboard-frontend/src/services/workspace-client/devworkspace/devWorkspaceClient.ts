@@ -15,7 +15,7 @@ import {
   V1alpha2DevWorkspaceSpecTemplateComponents,
   V1alpha2DevWorkspaceTemplateSpec,
   V1alpha2DevWorkspaceTemplateSpecComponents,
-  V220DevfileComponentsItemsContainer,
+  V221DevfileComponentsItemsContainer,
 } from '@devfile/api';
 import { api } from '@eclipse-che/common';
 import { WorkspacesDefaultPlugins } from 'dashboard-frontend/src/store/Plugins/devWorkspacePlugins';
@@ -46,9 +46,10 @@ import {
   devWorkspaceVersion,
 } from './converters';
 import { DevWorkspaceDefaultPluginsHandler } from './DevWorkspaceDefaultPluginsHandler';
+import { DevWorkspacePlugin } from '../../devfileApi/devWorkspace';
 
-const COMPONENT_UPDATE_POLICY = 'che.eclipse.org/components-update-policy';
-const REGISTRY_URL = 'che.eclipse.org/plugin-registry-url';
+export const COMPONENT_UPDATE_POLICY = 'che.eclipse.org/components-update-policy';
+export const REGISTRY_URL = 'che.eclipse.org/plugin-registry-url';
 
 export const DEVWORKSPACE_NEXT_START_ANNOTATION = 'che.eclipse.org/next-start-cfg';
 
@@ -56,9 +57,11 @@ export const DEVWORKSPACE_DEBUG_START_ANNOTATION = 'controller.devfile.io/debug-
 
 export const DEVWORKSPACE_DEVFILE_SOURCE = 'che.eclipse.org/devfile-source';
 
+export const DEVWORKSPACE_DEVFILE = 'che.eclipse.org/devfile';
+
 export const DEVWORKSPACE_METADATA_ANNOTATION = 'dw.metadata.annotations';
 
-export interface ICheEditorOverrideContainer extends V220DevfileComponentsItemsContainer {
+export interface ICheEditorOverrideContainer extends V221DevfileComponentsItemsContainer {
   name: string;
 }
 export interface ICheEditorYaml {
@@ -147,7 +150,9 @@ export class DevWorkspaceClient extends WorkspaceClient {
     devWorkspaceResource: devfileApi.DevWorkspace,
     editorId: string | undefined,
   ): Promise<{ headers: DwApi.Headers; devWorkspace: devfileApi.DevWorkspace }> {
-    devWorkspaceResource.spec.routingClass = 'che';
+    if (!devWorkspaceResource.spec.routingClass) {
+      devWorkspaceResource.spec.routingClass = 'che';
+    }
     devWorkspaceResource.spec.started = false;
     devWorkspaceResource.metadata.namespace = defaultNamespace;
 
@@ -162,14 +167,7 @@ export class DevWorkspaceClient extends WorkspaceClient {
       devWorkspaceResource.metadata.annotations[DEVWORKSPACE_CHE_EDITOR] = editorId;
     }
 
-    // temporarily remove components as they are not created yet
-    const components = devWorkspaceResource.spec.template.components;
-    devWorkspaceResource.spec.template.components = [];
-
     const { headers, devWorkspace } = await DwApi.createWorkspace(devWorkspaceResource);
-
-    // restore components
-    devWorkspace.spec.template.components = components;
 
     return { headers, devWorkspace };
   }
@@ -181,12 +179,11 @@ export class DevWorkspaceClient extends WorkspaceClient {
     pluginRegistryUrl: string | undefined,
     pluginRegistryInternalUrl: string | undefined,
     openVSXUrl: string | undefined,
-    waziLicenseUsage: string,
+    waziLicenseUsage: string | undefined,
     clusterConsole?: {
       url: string;
       title: string;
     },
-
   ): Promise<devfileApi.DevWorkspaceTemplate> {
     devWorkspaceTemplateResource.metadata.namespace = defaultNamespace;
 
@@ -278,7 +275,7 @@ export class DevWorkspaceClient extends WorkspaceClient {
           env.name !== this.clusterConsoleUrlEnvName &&
           env.name !== this.clusterConsoleTitleEnvName &&
           env.name !== this.openVSXUrlEnvName &&
-          env.name !== this.waziLicenseUsageEnvName,
+          env.name != this.waziLicenseUsageEnvName,
       );
       envs.push({
         name: this.dashboardUrlEnvName,
@@ -290,6 +287,7 @@ export class DevWorkspaceClient extends WorkspaceClient {
           value: pluginRegistryUrl,
         });
       }
+
       if (pluginRegistryInternalUrl !== undefined) {
         envs.push({
           name: this.pluginRegistryInternalUrlEnvName,
@@ -314,7 +312,7 @@ export class DevWorkspaceClient extends WorkspaceClient {
           value: openVSXUrl,
         });
       }
-      if (waziLicenseUsage !== undefined) {
+      if (waziLicenseUsage != undefined) {
         envs.push({
           name: this.waziLicenseUsageEnvName,
           value: waziLicenseUsage,
@@ -684,7 +682,7 @@ export class DevWorkspaceClient extends WorkspaceClient {
     }
     const contributions = workspace.spec.contributions.filter(
       contribution => contribution.name !== pluginName,
-    );
+    ) as DevWorkspacePlugin[];
     contributions.push({
       name: pluginName,
       kubernetes: {
@@ -712,11 +710,11 @@ export class DevWorkspaceClient extends WorkspaceClient {
     pluginRegistryUrl: string | undefined,
     pluginRegistryInternalUrl: string | undefined,
     openVSXUrl: string | undefined,
+    waziLicenseUsage: string | undefined,
     clusterConsole?: {
       url: string;
       title: string;
     },
-    waziLicenseUsage?: string | undefined
   ): Promise<{ [templateName: string]: api.IPatch[] }> {
     const templates = await DwtApi.getTemplates(namespace);
     const managedTemplates = templates.filter(

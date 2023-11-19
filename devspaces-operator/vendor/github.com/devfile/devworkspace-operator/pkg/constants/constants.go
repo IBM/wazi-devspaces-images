@@ -37,13 +37,11 @@ var (
 const (
 	DefaultProjectsSourcesRoot = "/projects"
 
+	HomeUserDirectory = "/home/user/"
+
+	HomeVolumeName = "persistentHome"
+
 	ServiceAccount = "devworkspace"
-
-	SidecarDefaultMemoryLimit   = "128M"
-	SidecarDefaultMemoryRequest = "64M"
-
-	SidecarDefaultCpuLimit   = "" // do not provide any value
-	SidecarDefaultCpuRequest = "" // do not provide any value
 
 	PVCStorageSize = "10Gi"
 
@@ -64,12 +62,6 @@ const (
 
 	// PVCCleanupPodCPURequest is the cpu request used for PVC clean up pods
 	PVCCleanupPodCPURequest = "5m"
-
-	// Resource limits/requests for project cloner init container
-	ProjectCloneMemoryLimit   = "1Gi"
-	ProjectCloneMemoryRequest = "128Mi"
-	ProjectCloneCPULimit      = "1000m"
-	ProjectCloneCPURequest    = "100m"
 
 	// Constants describing storage classes supported by the controller
 

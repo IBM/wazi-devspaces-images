@@ -31,6 +31,7 @@ import (
 
 	imagepullerv1alpha1 "github.com/che-incubator/kubernetes-image-puller-operator/api/v1alpha1"
 	devfile "github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -73,10 +74,21 @@ type CheClusterSpec struct {
 // Development environment configuration.
 // +k8s:openapi-gen=true
 type CheClusterDevEnvironments struct {
+	//
+	// GatewayContainer configuration.
+	// +optional
+	GatewayContainer *Container `json:"gatewayContainer,omitempty"`
+	// Project clone container configuration.
+	// +optional
+	ProjectCloneContainer *Container `json:"projectCloneContainer,omitempty"`
 	// Workspaces persistent storage.
 	// +optional
 	// +kubebuilder:default:={pvcStrategy: per-user}
 	Storage WorkspaceStorage `json:"storage,omitempty"`
+	// PersistUserHome defines configuration options for persisting the
+	// user home directory in workspaces.
+	// +optional
+	PersistUserHome *PersistentHomeConfig `json:"persistUserHome,omitempty"`
 	// Default plug-ins applied to DevWorkspaces.
 	// +optional
 	DefaultPlugins []WorkspaceDefaultPlugins `json:"defaultPlugins,omitempty"`
@@ -137,6 +149,15 @@ type CheClusterDevEnvironments struct {
 	// +kubebuilder:validation:Minimum:=1
 	// +kubebuilder:default:=300
 	StartTimeoutSeconds *int32 `json:"startTimeoutSeconds,omitempty"`
+	// DeploymentStrategy defines the deployment strategy to use to replace existing workspace pods
+	// with new ones. The available deployment stragies are `Recreate` and `RollingUpdate`.
+	// With the `Recreate` deployment strategy, the existing workspace pod is killed before the new one is created.
+	// With the `RollingUpdate` deployment strategy, a new workspace pod is created and the existing workspace pod is deleted
+	// only when the new workspace pod is in a ready state.
+	// If not specified, the default `Recreate` deployment strategy is used.
+	// +optional
+	// +kubebuilder:validation:Enum=Recreate;RollingUpdate
+	DeploymentStrategy appsv1.DeploymentStrategyType `json:"deploymentStrategy,omitempty"`
 	// Total number of workspaces, both stopped and running, that a user can keep.
 	// The value, -1, allows users to keep an unlimited number of workspaces.
 	// +kubebuilder:validation:Minimum:=-1
@@ -148,6 +169,9 @@ type CheClusterDevEnvironments struct {
 	// +kubebuilder:validation:Minimum:=-1
 	// +optional
 	MaxNumberOfRunningWorkspacesPerUser *int64 `json:"maxNumberOfRunningWorkspacesPerUser,omitempty"`
+	// User configuration.
+	// +optional
+	User *UserConfiguration `json:"user,omitempty"`
 }
 
 // Che components configuration.
@@ -166,11 +190,6 @@ type CheClusterComponents struct {
 	// Configuration settings related to the devfile registry used by the Che installation.
 	// +optional
 	DevfileRegistry DevfileRegistry `json:"devfileRegistry"`
-	// Configuration settings related to the database used by the Che installation.
-	// Database component is Deprecated. All properties will be ignored.
-	// +optional
-	// +operator-sdk:csv:customresourcedefinitions:type=spec,xDescriptors="urn:alm:descriptor:com.tectonic.ui:hidden"
-	Database Database `json:"database"`
 	// Configuration settings related to the dashboard used by the Che installation.
 	// +optional
 	Dashboard Dashboard `json:"dashboard"`
@@ -211,6 +230,10 @@ type CheClusterSpecNetworking struct {
 	// The secret must have a `app.kubernetes.io/part-of=che.eclipse.org` label.
 	// +optional
 	TlsSecretName string `json:"tlsSecretName,omitempty"`
+	// IngressClassName is the name of an IngressClass cluster resource.
+	// If a class name is defined in both the `IngressClassName` field and the `kubernetes.io/ingress.class` annotation,
+	// `IngressClassName` field takes precedence.
+	IngressClassName string `json:"ingressClassName,omitempty"`
 	// Authentication settings.
 	// +optional
 	// +kubebuilder:default:={gateway: {configLabels: {app: che, component: che-gateway-config}}}
@@ -246,13 +269,13 @@ type CheServer struct {
 	// +optional
 	// +kubebuilder:default:=false
 	Debug *bool `json:"debug,omitempty"`
-	// ClusterRoles assigned to Che ServiceAccount.
-	// The defaults roles are:
-	// - `<che-namespace>-cheworkspaces-namespaces-clusterrole`
-	// - `<che-namespace>-cheworkspaces-clusterrole`
-	// - `<che-namespace>-cheworkspaces-devworkspace-clusterrole`
-	// where the <che-namespace> is the namespace where the CheCluster CRD is created.
+	// Additional ClusterRoles assigned to Che ServiceAccount.
 	// Each role must have a `app.kubernetes.io/part-of=che.eclipse.org` label.
+	// The defaults roles are:
+	// - `<che-namespace>-cheworkspaces-clusterrole`
+	// - `<che-namespace>-cheworkspaces-namespaces-clusterrole`
+	// - `<che-namespace>-cheworkspaces-devworkspace-clusterrole`
+	// where the <che-namespace> is the namespace where the CheCluster CR is created.
 	// The Che Operator must already have all permissions in these ClusterRoles to grant them.
 	// +optional
 	ClusterRoles []string `json:"clusterRoles,omitempty"`
@@ -277,6 +300,20 @@ type Dashboard struct {
 	// Dashboard header message.
 	// +optional
 	HeaderMessage *DashboardHeaderMessage `json:"headerMessage,omitempty"`
+	// Dashboard branding resources.
+	// +optional
+	Branding *Branding `json:"branding,omitempty"`
+}
+
+type Branding struct {
+	// Dashboard logo.
+	// +optional
+	Logo *Icon `json:"logo,omitempty"`
+}
+
+type Icon struct {
+	Data      string `json:"base64data"`
+	MediaType string `json:"mediatype"`
 }
 
 // Configuration settings related to the plug-in registry used by the Che installation.
@@ -308,39 +345,6 @@ type DevfileRegistry struct {
 	// External devfile registries serving sample ready-to-use devfiles.
 	// +optional
 	ExternalDevfileRegistries []ExternalDevfileRegistry `json:"externalDevfileRegistries,omitempty"`
-}
-
-// Database component is Deprecated. All properties will be ignored.
-// Configuration settings related to the database used by the Che installation.
-// +k8s:openapi-gen=true
-type Database struct {
-	// Instructs the Operator to deploy a dedicated database.
-	// By default, a dedicated PostgreSQL database is deployed as part of the Che installation.
-	// When `externalDb` is set as `true`, no dedicated database is deployed by the
-	// Operator and you need to provide connection details about the external database you want to use.
-	// +optional
-	ExternalDb bool `json:"externalDb"`
-	// Deployment override options.
-	// +optional
-	Deployment *Deployment `json:"deployment,omitempty"`
-	// PostgreSQL database hostname that the Che server connects to.
-	// Override this value only when using an external database. See field `externalDb`.
-	// +optional
-	PostgresHostName string `json:"postgresHostName,omitempty"`
-	// PostgreSQL Database port the Che server connects to.
-	// Override this value only when using an external database. See field `externalDb`.
-	// +optional
-	PostgresPort string `json:"postgresPort,omitempty"`
-	// PostgreSQL database name that the Che server uses to connect to the database.
-	// +optional
-	PostgresDb string `json:"postgresDb,omitempty"`
-	// The secret that contains PostgreSQL `user` and `password` that the Che server uses to connect to the database.
-	// The secret must have a `app.kubernetes.io/part-of=che.eclipse.org` label.
-	// +optional
-	CredentialsSecretName string `json:"credentialsSecretName,omitempty"`
-	// PVC settings for PostgreSQL database.
-	// +optional
-	Pvc *PVC `json:"pvc,omitempty"`
 }
 
 // Che server metrics configuration
@@ -411,6 +415,13 @@ type TrustedCerts struct {
 	GitTrustedCertsConfigMapName string `json:"gitTrustedCertsConfigMapName,omitempty"`
 }
 
+type UserConfiguration struct {
+	// Additional ClusterRoles assigned to the user.
+	// The role must have `app.kubernetes.io/part-of=che.eclipse.org` label.
+	// +optional
+	ClusterRoles []string `json:"clusterRoles,omitempty"`
+}
+
 // Configuration settings related to the workspaces persistent storage.
 type WorkspaceStorage struct {
 	// PVC settings when using the `per-user` PVC strategy.
@@ -428,6 +439,14 @@ type WorkspaceStorage struct {
 	// +kubebuilder:default:="per-user"
 	// +kubebuilder:validation:Enum=common;per-user;per-workspace;ephemeral
 	PvcStrategy string `json:"pvcStrategy,omitempty"`
+}
+
+type PersistentHomeConfig struct {
+	// Determines whether the user home directory in workspaces should persist between
+	// workspace shutdown and startup.
+	// Must be used with the 'per-user' or 'per-workspace' PVC strategy in order to take effect.
+	// Disabled by default.
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 type WorkspaceDefaultPlugins struct {
@@ -756,13 +775,6 @@ type CheClusterStatus struct {
 	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="Reason"
 	// +operator-sdk:csv:customresourcedefinitions:type=status,xDescriptors="urn:alm:descriptor:text"
 	Reason string `json:"reason,omitempty"`
-	// The PostgreSQL version of the image in use.
-	// +optional
-	// +operator-sdk:csv:customresourcedefinitions:type=status
-	// +operator-sdk:csv:customresourcedefinitions:type=status,displayName="PostgreSQL version"
-	// +operator-sdk:csv:customresourcedefinitions:type=status,xDescriptors="urn:alm:descriptor:text"
-	// +operator-sdk:csv:customresourcedefinitions:type=status,xDescriptors="urn:alm:descriptor:com.tectonic.ui:hidden"
-	PostgresVersion string `json:"postgresVersion,omitempty"`
 	// The resolved workspace base domain. This is either the copy of the explicitly defined property of the
 	// same name in the spec or, if it is undefined in the spec and we're running on OpenShift, the automatically
 	// resolved basedomain for routes.
@@ -796,7 +808,7 @@ type CheCluster struct {
 	Status CheClusterStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 // The CheClusterList contains a list of CheClusters.
 type CheClusterList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -886,4 +898,10 @@ func (c *CheCluster) IsEmbeddedOpenVSXRegistryConfigured() bool {
 		openVSXURL = *c.Spec.Components.PluginRegistry.OpenVSXURL
 	}
 	return openVSXURL == ""
+}
+
+// IsCheBeingInstalled returns true if the Che version is not set in the status.
+// Basically it means that the Che is being installed since the Che version is set only after the installation.
+func (c *CheCluster) IsCheBeingInstalled() bool {
+	return c.Status.CheVersion == ""
 }

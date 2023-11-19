@@ -41,6 +41,9 @@ for i in $(seq 0 "$((numberOfExtensions - 1))"); do
 
     # publish the file
     ovsx publish "${vsixFilename}"
+
+    # remove the downloaded file
+    rm "${vsixFilename}"
 done;
 
 # disable the personal access token

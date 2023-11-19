@@ -22,7 +22,7 @@ Before filing a bug check here if this is already a documented or known issue:
   - [ ] Other, please specify:
 - Platform Version:
 - Red Hat OpenShift Dev Spaces Version:
-- Wazi for Dev Spaces Version:
+- IBM Wazi for Dev Spaces Version:
 - Logs attached (see [here](https://ibm.github.io/zopeneditor-about/Docs/knownissues.html) how to get them): yes/no
 
 ## Problem Description

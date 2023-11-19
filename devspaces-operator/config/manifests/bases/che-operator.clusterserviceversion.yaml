@@ -88,12 +88,6 @@ spec:
       - description: Configuration of an alternative registry that stores Che images.
         displayName: Container registry
         path: containerRegistry
-      - description: Configuration settings related to the database used by the Che
-          installation. Database component is Deprecated. All properties will be ignored.
-        displayName: Database
-        path: components.database
-        x-descriptors:
-        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: Enables users to work with repositories hosted on Azure DevOps
           Service (dev.azure.com).
         displayName: Azure
@@ -173,12 +167,6 @@ spec:
         path: pluginRegistryURL
         x-descriptors:
         - urn:alm:descriptor:org.w3:link
-      - description: The PostgreSQL version of the image in use.
-        displayName: PostgreSQL version
-        path: postgresVersion
-        x-descriptors:
-        - urn:alm:descriptor:text
-        - urn:alm:descriptor:com.tectonic.ui:hidden
       - description: A brief CamelCase message indicating details about why the Che
           deployment is in the current phase.
         displayName: Reason
@@ -412,7 +400,7 @@ spec:
       version: v1
   description: |
     A collaborative Kubernetes-native development solution that delivers OpenShift workspaces and in-browser IDE for rapid cloud application development.
-    This operator installs PostgreSQL, Plugin and Devfile registries, Dashboard, Gateway and the Eclipse Che server, as well as configures all these services.
+    This operator installs the Plugin and Devfile registries, Dashboard, Gateway and the Eclipse Che server, and configures these services.
     OpenShift OAuth is used directly for authentication. TLS mode is on.
 
     ## How to Install
@@ -424,7 +412,6 @@ spec:
     By default, the operator deploys Eclipse Che with:
     * 10Gi storage
     * Auto-generated passwords
-    * Bundled PostgreSQL
     * Bundled Plugin and Devfile registries
 
     Use `oc edit checluster/eclipse-che -n eclipse-che` to update Eclipse Che default installation options.

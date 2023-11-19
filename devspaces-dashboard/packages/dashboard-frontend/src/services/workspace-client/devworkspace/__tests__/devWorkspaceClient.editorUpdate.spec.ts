@@ -8,6 +8,7 @@
  *
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
+ *   IBM Corporation - implementation
  */
 
 import { container } from '../../../../inversify.config';
@@ -23,6 +24,7 @@ describe('DevWorkspace client editor update', () => {
   const client = container.get(DevWorkspaceClient);
   const pluginRegistryUrl = 'plugin-registry-url';
   const pluginRegistryInternalUrl = 'plugin-registry-internal-url';
+  const waziLicenseUsage = 'wazi-license-usage';
 
   afterEach(() => {
     jest.resetAllMocks();
@@ -49,6 +51,7 @@ describe('DevWorkspace client editor update', () => {
         pluginRegistryUrl,
         pluginRegistryInternalUrl,
         undefined,
+        waziLicenseUsage,
       );
 
       expect(mockPatch.mock.calls).toEqual([
@@ -86,6 +89,7 @@ describe('DevWorkspace client editor update', () => {
         pluginRegistryUrl,
         pluginRegistryInternalUrl,
         undefined,
+        waziLicenseUsage,
       );
 
       expect(mockPatch.mock.calls).toEqual([
@@ -116,6 +120,7 @@ describe('DevWorkspace client editor update', () => {
         pluginRegistryUrl,
         pluginRegistryInternalUrl,
         undefined,
+        waziLicenseUsage,
       );
 
       expect(mockPatch.mock.calls).toEqual([
@@ -153,6 +158,7 @@ describe('DevWorkspace client editor update', () => {
         pluginRegistryUrl,
         pluginRegistryInternalUrl,
         undefined,
+        waziLicenseUsage,
       );
 
       expect(mockPatch.mock.calls).toEqual([

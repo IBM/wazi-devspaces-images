@@ -20,7 +20,6 @@ import (
 	licensequerysrc "github.com/IBM/ibm-licensing-operator/api/v1"
 	test "github.com/eclipse-che/che-operator/pkg/common/test"
 	"github.com/eclipse-che/che-operator/pkg/common/utils"
-	"github.com/eclipse-che/che-operator/pkg/deploy"
 	"github.com/google/go-cmp/cmp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -138,14 +137,14 @@ func TestLicenseFinalize(t *testing.T) {
 	objs = []runtime.Object{licenseQuerySource}
 	ctx = test.GetWaziDeployContext(nil, objs)
 
-	ctx.WaziLicense.Finalizers = append(ctx.WaziLicense.Finalizers, deploy.GetFinalizerName(waziLicensingResourceName))
+	ctx.WaziLicense.Finalizers = append(ctx.WaziLicense.Finalizers, waziLicensingFinalizer)
 	done := licenseReconciler.Finalize(ctx)
 
 	if !done {
 		t.Error("ODLM Finalize fucntion failed")
 	}
 
-	if utils.Contains(ctx.WaziLicense.Finalizers, deploy.GetFinalizerName(waziLicensingResourceName)) {
+	if utils.Contains(ctx.WaziLicense.Finalizers, waziLicensingFinalizer) {
 		t.Error("Finalizer failed to delete finalizer type: waziLicensingResourceName")
 	}
 }

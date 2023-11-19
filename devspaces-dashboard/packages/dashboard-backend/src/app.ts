@@ -21,21 +21,22 @@ import { registerSwagger } from './plugins/swagger';
 import { registerWebSocket } from './plugins/webSocket';
 import { registerClusterConfigRoute } from './routes/api/clusterConfig';
 import { registerClusterInfoRoute } from './routes/api/clusterInfo';
+import { registerDevfileSchemaRoute } from './routes/api/devfileSchema';
+import { registerDevworkspaceResourcesRoute } from './routes/api/devworkspaceResources';
 import { registerDevworkspacesRoutes } from './routes/api/devworkspaces';
 import { registerDevWorkspaceTemplates } from './routes/api/devworkspaceTemplates';
-import { registerWebsocket } from './routes/api/websocket';
 import { registerDockerConfigRoutes } from './routes/api/dockerConfig';
+import { registerEventsRoutes } from './routes/api/events';
 import { registerKubeConfigRoute } from './routes/api/kubeConfig';
-import { registerNamespacesRoute } from './routes/api/namespaces';
+import { registerPodmanLoginRoute } from './routes/api/podmanLogin';
+import { registerPersonalAccessTokenRoutes } from './routes/api/personalAccessToken';
+import { registerPodsRoutes } from './routes/api/pods';
 import { registerServerConfigRoute } from './routes/api/serverConfig';
 import { registerUserProfileRoute } from './routes/api/userProfile';
+import { registerWebsocket } from './routes/api/websocket';
 import { registerYamlResolverRoute } from './routes/api/yamlResolver';
 import { registerFactoryAcceptanceRedirect } from './routes/factoryAcceptanceRedirect';
 import { registerWorkspaceRedirect } from './routes/workspaceRedirect';
-import { registerDevfileSchemaRoute } from './routes/api/devfileSchema';
-import { registerEventsRoutes } from './routes/api/events';
-import { registerPodsRoutes } from './routes/api/pods';
-import { registerDevworkspaceResourcesRoute } from './routes/api/devworkspaceResources';
 
 export default async function buildApp(server: FastifyInstance): Promise<void> {
   const cheHost = process.env.CHE_HOST as string;
@@ -80,10 +81,6 @@ export default async function buildApp(server: FastifyInstance): Promise<void> {
   // swagger and API
   registerSwagger(server);
 
-  if (isLocalRun()) {
-    registerNamespacesRoute(server);
-  }
-
   registerClusterConfigRoute(server);
 
   registerClusterInfoRoute(server);
@@ -100,6 +97,8 @@ export default async function buildApp(server: FastifyInstance): Promise<void> {
 
   registerKubeConfigRoute(server);
 
+  registerPodmanLoginRoute(server);
+
   registerServerConfigRoute(server);
 
   registerUserProfileRoute(server);
@@ -109,4 +108,6 @@ export default async function buildApp(server: FastifyInstance): Promise<void> {
   registerDevfileSchemaRoute(server);
 
   registerDevworkspaceResourcesRoute(server);
+
+  registerPersonalAccessTokenRoutes(server);
 }

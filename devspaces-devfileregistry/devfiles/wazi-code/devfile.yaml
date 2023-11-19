@@ -1,6 +1,6 @@
 schemaVersion: 2.2.0
 metadata:
-  name: wazi-devspaces
+  name: wazi-devspaces-sample
 projects:
   - name: zopeneditor-sample
     zip:
@@ -8,7 +8,7 @@ projects:
 components:
   - name: wazi
     container:
-      image: icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:6832c15f01f91af86cc5824ce2cc6bf3530b1408c5e53da86ef344ae34932d55
+      image: icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:db900a79c010bcea2886183d62f02f9fdca6ab382c0a06c536cba89b6bc0b5cf
       memoryLimit: 3072Mi
       mountSources: true
       volumeMounts:

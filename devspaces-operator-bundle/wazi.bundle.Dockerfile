@@ -12,7 +12,7 @@
 
 FROM scratch
 
-ARG PRODUCT_VERSION="3.0.0"
+ARG PRODUCT_VERSION="3.0.1"
 
 LABEL operators.operatorframework.io.bundle.mediatype.v1=registry+v1
 LABEL operators.operatorframework.io.bundle.manifests.v1=manifests/

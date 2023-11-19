@@ -21,6 +21,7 @@ import (
 	dwr "github.com/devfile/devworkspace-operator/controllers/controller/devworkspacerouting"
 	"github.com/eclipse-che/che-operator/controllers/devworkspace/solver"
 	"github.com/eclipse-che/che-operator/controllers/usernamespace"
+
 	securityv1 "github.com/openshift/api/security/v1"
 
 	"github.com/devfile/devworkspace-operator/pkg/infrastructure"
@@ -33,8 +34,8 @@ import (
 
 	dwoApi "github.com/devfile/devworkspace-operator/apis/controller/v1alpha1"
 	"github.com/eclipse-che/che-operator/controllers/devworkspace"
-
 	"go.uber.org/zap/zapcore"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	"k8s.io/client-go/discovery"
@@ -82,7 +83,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 
 	licensequerysrc "github.com/IBM/ibm-licensing-operator/api/v1"
-	odlmv1alpha1 "github.com/IBM/operand-deployment-lifecycle-manager/api/v1alpha1"
 	chev1 "github.com/eclipse-che/che-operator/api/v1"
 	chev2 "github.com/eclipse-che/che-operator/api/v2"
 	//+kubebuilder:scaffold:imports
@@ -120,7 +120,7 @@ func init() {
 	logger := zap.New(zap.UseFlagOptions(&opts))
 	ctrl.SetLogger(logger)
 
-	if err := devworkspaceinfra.Initialize(); err != nil {
+	if err := infrastructure.Initialize(); err != nil {
 		logger.Error(err, "Unable determine installation platform")
 		os.Exit(1)
 	}
@@ -143,7 +143,7 @@ func init() {
 	utilruntime.Must(operatorsv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(operatorsv1.AddToScheme(scheme))
 
-	if devworkspaceinfra.IsOpenShift() {
+	if infrastructure.IsOpenShift() {
 		utilruntime.Must(routev1.AddToScheme(scheme))
 		utilruntime.Must(oauthv1.AddToScheme(scheme))
 		utilruntime.Must(userv1.AddToScheme(scheme))
@@ -152,7 +152,6 @@ func init() {
 		utilruntime.Must(consolev1.AddToScheme(scheme))
 		utilruntime.Must(projectv1.AddToScheme(scheme))
 		utilruntime.Must(securityv1.Install(scheme))
-		utilruntime.Must(odlmv1alpha1.AddToScheme(scheme))
 		utilruntime.Must(licensequerysrc.AddToScheme(scheme))
 	}
 }
@@ -181,7 +180,7 @@ func printVersion(logger logr.Logger) {
 	logger.Info("Address ", "Probe", probeAddr)
 
 	infra := "Kubernetes"
-	if devworkspaceinfra.IsOpenShift() {
+	if infrastructure.IsOpenShift() {
 		infra = "OpenShift v4.x"
 	}
 	logger.Info("Operator is running on ", "Infrastructure", infra)
@@ -403,7 +402,7 @@ func getCacheFunc() (cache.NewCacheFunc, error) {
 		},
 	}
 
-	if !devworkspaceinfra.IsOpenShift() {
+	if !infrastructure.IsOpenShift() {
 		delete(selectors, routeKey)
 		delete(selectors, oauthKey)
 	}

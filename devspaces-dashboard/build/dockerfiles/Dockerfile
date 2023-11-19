@@ -10,6 +10,8 @@
 
 FROM docker.io/node:16.16.0-alpine3.15 as builder
 
+RUN apk add --update python3 make g++ && rm -rf /var/cache/apk/* 
+
 RUN if ! [ type "yarn" &> /dev/null ]; then \
         apk add yarn --no-cache; \
     fi
@@ -29,7 +31,7 @@ ENV BACKEND=packages/dashboard-backend
 COPY ${BACKEND}/package.json /dashboard/${BACKEND}/
 
 WORKDIR /dashboard
-RUN yarn install --network-timeout 1000000
+RUN yarn install --network-timeout 3600000
 COPY packages/ /dashboard/packages
 RUN yarn build
 

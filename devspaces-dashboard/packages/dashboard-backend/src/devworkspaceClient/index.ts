@@ -16,10 +16,13 @@ import { DevWorkspaceTemplateApiService } from './services/devWorkspaceTemplateA
 import { DockerConfigApiService } from './services/dockerConfigApi';
 import { EventApiService } from './services/eventApi';
 import { KubeConfigApiService } from './services/kubeConfigApi';
-import { NamespaceApiService } from './services/namespaceApi';
-import { PodApiService } from './services/podAPI';
+import { PodmanApiService } from './services/podmanApi';
+import { LogsApiService } from './services/logsApi';
+import { PersonalAccessTokenService } from './services/personalAccessTokenApi';
+import { PodApiService } from './services/podApi';
 import { ServerConfigApiService } from './services/serverConfigApi';
 import { UserProfileApiService } from './services/userProfileApi';
+import { IPodmanApi } from './types/index';
 import {
   IDevWorkspaceApi,
   IDevWorkspaceClient,
@@ -27,7 +30,8 @@ import {
   IDockerConfigApi,
   IEventApi,
   IKubeConfigApi,
-  INamespaceApi,
+  ILogsApi,
+  IPersonalAccessTokenApi,
   IPodApi,
   IServerConfigApi,
   IUserProfileApi,
@@ -70,11 +74,19 @@ export class DevWorkspaceClient implements IDevWorkspaceClient {
     return new KubeConfigApiService(this.kubeConfig);
   }
 
-  get namespaceApi(): INamespaceApi {
-    return new NamespaceApiService(this.kubeConfig);
+  get podmanApi(): IPodmanApi {
+    return new PodmanApiService(this.kubeConfig);
   }
 
   get userProfileApi(): IUserProfileApi {
     return new UserProfileApiService(this.kubeConfig);
+  }
+
+  get logsApi(): ILogsApi {
+    return new LogsApiService(this.kubeConfig);
+  }
+
+  get personalAccessTokenApi(): IPersonalAccessTokenApi {
+    return new PersonalAccessTokenService(this.kubeConfig);
   }
 }

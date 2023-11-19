@@ -43,12 +43,35 @@ var defaultConfig = &v1alpha1.OperatorConfiguration{
 			Common:       &commonStorageSize,
 			PerWorkspace: &perWorkspaceStorageSize,
 		},
+		PersistUserHome: &v1alpha1.PersistentHomeConfig{
+			Enabled: pointer.Bool(false),
+		},
 		IdleTimeout:              "15m",
 		ProgressTimeout:          "5m",
-		CleanupOnStop:            pointer.BoolPtr(false),
+		CleanupOnStop:            pointer.Bool(false),
 		PodSecurityContext:       nil,
 		ContainerSecurityContext: &corev1.SecurityContext{},
 		DefaultTemplate:          nil,
+		ProjectCloneConfig: &v1alpha1.ProjectCloneConfig{
+			Resources: &corev1.ResourceRequirements{
+				Limits: corev1.ResourceList{
+					corev1.ResourceMemory: resource.MustParse("1Gi"),
+					corev1.ResourceCPU:    resource.MustParse("1000m"),
+				},
+				Requests: corev1.ResourceList{
+					corev1.ResourceMemory: resource.MustParse("128Mi"),
+					corev1.ResourceCPU:    resource.MustParse("100m"),
+				},
+			},
+		},
+		DefaultContainerResources: &corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("128Mi"),
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse("64Mi"),
+			},
+		},
 	},
 }
 

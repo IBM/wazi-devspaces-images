@@ -1,3 +1,4 @@
+//
 // Copyright (c) 2019-2021 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
@@ -6,13 +7,15 @@
 // SPDX-License-Identifier: EPL-2.0
 //
 // Contributors:
-//
-//	Red Hat, Inc. - initial API and implementation
+//   Red Hat, Inc. - initial API and implementation
 //	IBM Corporation - implementation
+//
 package devfileregistry
 
 import (
 	"os"
+
+	"github.com/stretchr/testify/assert"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 
@@ -51,7 +54,7 @@ func TestGetDevfileRegistryDeploymentSpec(t *testing.T) {
 			initObjects:   []runtime.Object{},
 			memoryLimit:   constants.DefaultDevfileRegistryMemoryLimit,
 			memoryRequest: constants.DefaultDevfileRegistryMemoryRequest,
-			cpuLimit:      constants.DefaultDevfileRegistryCpuLimit,
+			cpuLimit:      "0", // CPU limit is not set when possible
 			cpuRequest:    constants.DefaultDevfileRegistryCpuRequest,
 			cheCluster: &chev2.CheCluster{
 				ObjectMeta: metav1.ObjectMeta{
@@ -105,7 +108,8 @@ func TestGetDevfileRegistryDeploymentSpec(t *testing.T) {
 			ctx := test.GetDeployContext(testCase.cheCluster, []runtime.Object{})
 
 			devfileregistry := NewDevfileRegistryReconciler()
-			deployment := devfileregistry.getDevfileRegistryDeploymentSpec(ctx)
+			deployment, err := devfileregistry.getDevfileRegistryDeploymentSpec(ctx)
+			assert.NoError(t, err)
 
 			test.CompareResources(deployment,
 				test.TestExpectedResources{

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2020-2021 Red Hat, Inc.
+# Copyright (c) 2021-2023 Red Hat, Inc.
 # This program and the accompanying materials are made
 # available under the terms of the Eclipse Public License 2.0
 # which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -17,10 +17,8 @@ set -e
 # defaults
 CSV_VERSION=2.y.0 # csv 2.y.0
 DS_VERSION=${CSV_VERSION%.*} # tag 2.y
-UBI_TAG=8.6
-POSTGRES_TAG=1
-POSTGRES13_TAG=1 # use 1-26.1638356747 to pin to postgre 13.3, or 1 to use 13.x
-OPENSHIFT_TAG="v4.11"
+UBI_TAG=8.8
+OPENSHIFT_TAG="v4.12"
 
 usage () {
 	echo "Usage:   ${0##*/} -v [DS CSV_VERSION] [-s /path/to/sources] [-t /path/to/generated]"
@@ -28,8 +26,6 @@ usage () {
 	echo "Options:
 	--ds-tag ${DS_VERSION}
 	--ubi-tag ${UBI_TAG}
-	--postgres-tag ${POSTGRES_TAG}
-	--postgres13-tag ${POSTGRES13_TAG}
 	--openshift-tag ${OPENSHIFT_TAG}
 	"
 	exit
@@ -48,8 +44,6 @@ while [[ "$#" -gt 0 ]]; do
 	# optional tag overrides
 	'--ds-tag') DS_VERSION="$2"; shift 1;;
 	'--ubi-tag') UBI_TAG="$2"; shift 1;;
-	'--postgres-tag') POSTGRES_TAG="$2"; shift 1;; # for deprecated 9.6
-	'--postgres13-tag') POSTGRES13_TAG="$2"; shift 1;; # for 13 (@since CRW 2.14)
 	'--openshift-tag') OPENSHIFT_TAG="$2"; shift 1;;
   esac
   shift 1
@@ -71,8 +65,6 @@ UBI_IMAGE="registry.redhat.io/ubi8/ubi-minimal:${UBI_TAG}"
 UDI_VERSION_ZZZ=$(skopeo inspect docker://quay.io/devspaces/udi-rhel8:${DS_VERSION} | yq -r '.RepoTags' | sort -uV | grep "${DS_VERSION}-" | grep -E -v "\.[0-9]{10}" | tr -d '", ' | tail -1) # get 3.5-16, not 3.5-16.1678881134
 UDI_IMAGE_TAG=$(skopeo inspect docker://quay.io/devspaces/udi-rhel8:${UDI_VERSION_ZZZ} | yq -r '.Digest')
 UDI_IMAGE="registry.redhat.io/devspaces/udi-rhel8@${UDI_IMAGE_TAG}"
-POSTGRES_IMAGE="registry.redhat.io/rhel8/postgresql-96:${POSTGRES_TAG}"
-POSTGRES13_IMAGE="registry.redhat.io/rhel8/postgresql-13:${POSTGRES13_TAG}"
 RBAC_PROXY_IMAGE="registry.redhat.io/openshift4/ose-kube-rbac-proxy:${OPENSHIFT_TAG}"
 OAUTH_PROXY_IMAGE="registry.redhat.io/openshift4/ose-oauth-proxy:${OPENSHIFT_TAG}"
 
@@ -115,37 +107,22 @@ done <   <(find bundle config deploy api -type f -print0)
 
 
 # Clean up defaults.
-# https://issues.redhat.com/browse/CRW-4077 / as of Che 7.64.x
-# shellcheck disable=SC2089,SC2090,SC2086
-if [[ -f "${TARGETDIR}"/pkg/deploy/migration/checluster-defaults-cleanupfunc.go ]]; then
-	OLD_DEFAULT_COMPONENTS_3_3='\"[{\\\"name\\\": \\\"universal-developer-image\\\", \\\"container\\\": {\\\"image\\\": \\\"registry.redhat.io/devspaces/udi-rhel8@sha256:aa39ede33bcbda6aa2723d271c79ab8d8fd388c7dfcbc3d4ece745b7e9c84193\\\"}}]\"'
-	OLD_DEFAULT_COMPONENTS_3_4='\"[{\\\"name\\\": \\\"universal-developer-image\\\", \\\"container\\\": {\\\"image\\\": \\\"registry.redhat.io/devspaces/udi-rhel8@sha256:8de469cc9131a42092bd66e0f27a52bbc9b9a449235abf5b900d172a1bd3c985\\\"}}]\"'
-	OLD_DEFAULT_COMPONENTS_3_5='\"[{\\\"name\\\": \\\"universal-developer-image\\\", \\\"container\\\": {\\\"image\\\": \\\"registry.redhat.io/devspaces/udi-rhel8@sha256:99ff1b5c541855e4cf368816c4bcdcdc86d32304023f72c4443213a4032ef05b\\\"}}]\"'
-	OLD_DEFAULT_COMPONENTS=${OLD_DEFAULT_COMPONENTS_3_3},${OLD_DEFAULT_COMPONENTS_3_4},${OLD_DEFAULT_COMPONENTS_3_5}
-	sed -i \
-	"s|defaults.GetDevEnvironmentsDefaultComponents()|defaults.GetDevEnvironmentsDefaultComponents(),$(echo $OLD_DEFAULT_COMPONENTS | tr -d '\n')|g" \
-	"${TARGETDIR}"/pkg/deploy/migration/checluster-defaults-cleanupfunc.go
+# https://issues.redhat.com/browse/CRW-4077
+OLD_DEFAULT_COMPONENTS_3_3='\"[{\\\"name\\\": \\\"universal-developer-image\\\", \\\"container\\\": {\\\"image\\\": \\\"registry.redhat.io/devspaces/udi-rhel8@sha256:aa39ede33bcbda6aa2723d271c79ab8d8fd388c7dfcbc3d4ece745b7e9c84193\\\"}}]\"'
+OLD_DEFAULT_COMPONENTS_3_4='\"[{\\\"name\\\": \\\"universal-developer-image\\\", \\\"container\\\": {\\\"image\\\": \\\"registry.redhat.io/devspaces/udi-rhel8@sha256:8de469cc9131a42092bd66e0f27a52bbc9b9a449235abf5b900d172a1bd3c985\\\"}}]\"'
+OLD_DEFAULT_COMPONENTS_3_5='\"[{\\\"name\\\": \\\"universal-developer-image\\\", \\\"container\\\": {\\\"image\\\": \\\"registry.redhat.io/devspaces/udi-rhel8@sha256:99ff1b5c541855e4cf368816c4bcdcdc86d32304023f72c4443213a4032ef05b\\\"}}]\"'
+OLD_DEFAULT_COMPONENTS=${OLD_DEFAULT_COMPONENTS_3_3},${OLD_DEFAULT_COMPONENTS_3_4},${OLD_DEFAULT_COMPONENTS_3_5}
+sed -i \
+  "s|defaults.GetDevEnvironmentsDefaultComponents()|defaults.GetDevEnvironmentsDefaultComponents(),$(echo $OLD_DEFAULT_COMPONENTS | tr -d '\n')|g" \
+  "${TARGETDIR}"/pkg/deploy/migration/checluster-defaults-cleanupfunc.go
 
-	OLD_HEADER_MESSAGE_TEXT_3_4="\"Microsoft Visual Studio Code - Open Source is the default <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.4/html-single/user_guide/index#selecting-a-workspace-ide'>editor</a> for new workspaces. Eclipse Theia is <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.4/html-single/release_notes_and_known_issues/index#deprecated-functionality-crw-3405'>deprecated</a> and will be removed in a future release.\""
-	OLD_HEADER_MESSAGE_TEXT_3_5="\"Microsoft Visual Studio Code - Open Source is the default <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.5/html-single/user_guide/index#selecting-a-workspace-ide'>editor</a> for new workspaces. Eclipse Theia is <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.5/html-single/release_notes_and_known_issues/index#deprecated-functionalities'>deprecated</a> and will be removed in a future release.\""
-	OLD_HEADER_MESSAGE_TEXTS=${OLD_HEADER_MESSAGE_TEXT_3_4},${OLD_HEADER_MESSAGE_TEXT_3_5}
-	sed -i \
-	"s|defaults.GetDashboardHeaderMessageText()|defaults.GetDashboardHeaderMessageText(),${OLD_HEADER_MESSAGE_TEXTS}|g" \
-	"${TARGETDIR}"/pkg/deploy/migration/checluster-defaults-cleanupfunc.go
-else
-	# shellcheck disable=SC2086
-	while IFS= read -r -d '' d; do
-		sed -r \
-			`# hardcoded test values` \
-			-e 's|"docker.io/eclipse/che-operator:latest": * "che-operator:latest"|"'${DS_RRIO}/${DS_OPERATOR}':latest":  "'${DS_OPERATOR}':latest"|' \
-			-e 's|"eclipse/che-operator:[0-9.]+": *"che-operator:[0-9.]+"|"'${DS_RRIO}'/server-operator-rhel8:2.0": "server-operator-rhel8:2.0"|' \
-			-e 's|"che-operator:[0-9.]+": *"che-operator:[0-9.]+"|"'${DS_RRIO}/${DS_OPERATOR}:${DS_VERSION}'":  "'${DS_OPERATOR}:${DS_VERSION}'"|' \
-		"$d" > "${TARGETDIR}/${d}"
-		if [[ $(diff -u "$d" "${TARGETDIR}/${d}") ]]; then
-			echo "    ${0##*/} :: Converted (sed) ${d}"
-		fi
-	done <   <(find pkg/deploy -type f -name "defaults_test.go" -print0)
-fi
+# this is only needed for 3.4-3.5 to clean up hardcoded values
+OLD_HEADER_MESSAGE_TEXT_3_4="\"Microsoft Visual Studio Code - Open Source is the default <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.4/html-single/user_guide/index#selecting-a-workspace-ide'>editor</a> for new workspaces. Eclipse Theia is <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.4/html-single/release_notes_and_known_issues/index#deprecated-functionality-crw-3405'>deprecated</a> and will be removed in a future release.\""
+OLD_HEADER_MESSAGE_TEXT_3_5="\"Microsoft Visual Studio Code - Open Source is the default <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.5/html-single/user_guide/index#selecting-a-workspace-ide'>editor</a> for new workspaces. Eclipse Theia is <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/3.5/html-single/release_notes_and_known_issues/index#deprecated-functionalities'>deprecated</a> and will be removed in a future release.\""
+OLD_HEADER_MESSAGE_TEXTS=${OLD_HEADER_MESSAGE_TEXT_3_4},${OLD_HEADER_MESSAGE_TEXT_3_5}
+sed -i \
+  "s|defaults.GetDashboardHeaderMessageText()|defaults.GetDashboardHeaderMessageText(),${OLD_HEADER_MESSAGE_TEXTS}|g" \
+  "${TARGETDIR}"/pkg/deploy/migration/checluster-defaults-cleanupfunc.go
 
 # header to reattach to yaml files after yq transform removes it
 COPYRIGHT="#
@@ -234,8 +211,6 @@ declare -A operator_replacements=(
 	["RELATED_IMAGE_single_host_gateway_config_sidecar"]="${DS_CONFIGBUMP_IMAGE}"
 
 	["RELATED_IMAGE_pvc_jobs"]="${UBI_IMAGE}"
-	["RELATED_IMAGE_postgres"]="${POSTGRES_IMAGE}" # deprecated @since 2.13
-	["RELATED_IMAGE_postgres_13_3"]="${POSTGRES13_IMAGE}" # CRW-2180 - new @since 2.13
 
 	# CRW-2303 - @since 2.12 DWO only (but needs to be available even on non-DWO installs)
 	["RELATED_IMAGE_gateway_authentication_sidecar"]="${OAUTH_PROXY_IMAGE}"
@@ -253,7 +228,7 @@ declare -A operator_replacements=(
   # CRW-3662, CRW-3663, CRW-3489 theia removed from from dashboard
     # TODO also remove theia from factory support
     # TODO also remove theia from docs section #selecting-a-workspace-ide & related tables
-  ["CHE_DEFAULT_SPEC_COMPONENTS_DASHBOARD_HEADERMESSAGE_TEXT"]="Microsoft Visual Studio Code - Open Source is the default <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/${DS_VERSION}/html-single/user_guide/index#selecting-a-workspace-ide'>editor</a> for new workspaces. Eclipse Theia is <a href='https://access.redhat.com/documentation/en-us/red_hat_openshift_dev_spaces/${DS_VERSION}/html-single/release_notes_and_known_issues/index#removed-functionalities'>no longer supported</a>."
+  ["CHE_DEFAULT_SPEC_COMPONENTS_DASHBOARD_HEADERMESSAGE_TEXT"]=""
 
   # https://issues.redhat.com/browse/CRW-3312 replace upstream UDI image with downstream one for the current DS version (tag :3.yy)
   # https://issues.redhat.com/browse/CRW-3428 use digest instead of tag in CRD

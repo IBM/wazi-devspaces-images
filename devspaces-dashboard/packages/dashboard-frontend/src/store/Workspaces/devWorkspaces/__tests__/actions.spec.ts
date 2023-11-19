@@ -14,12 +14,14 @@
 
 import { api } from '@eclipse-che/common';
 import { V1Status } from '@kubernetes/client-node';
+import { dump } from 'js-yaml';
 import { AnyAction } from 'redux';
 import { MockStoreEnhanced } from 'redux-mock-store';
 import { ThunkDispatch } from 'redux-thunk';
 import * as testStore from '..';
 import { AppState } from '../../..';
 import { container } from '../../../../inversify.config';
+import { FactoryParams } from '../../../../services/helpers/factoryFlow/buildFactoryParams';
 import { fetchServerConfig } from '../../../../services/dashboard-backend-client/serverConfigApi';
 import { WebsocketClient } from '../../../../services/dashboard-backend-client/websocketClient';
 import devfileApi from '../../../../services/devfileApi';
@@ -29,8 +31,6 @@ import * as ServerConfigStore from '../../../ServerConfig';
 import { DevWorkspaceBuilder } from '../../../__mocks__/devWorkspaceBuilder';
 import { FakeStoreBuilder } from '../../../__mocks__/storeBuilder';
 import { checkRunningWorkspacesLimit } from '../checkRunningWorkspacesLimit';
-import { dump } from 'js-yaml';
-import { FactoryParams } from '../../../../containers/Loader/buildFactoryParams';
 
 jest.mock('../../../../services/dashboard-backend-client/serverConfigApi');
 jest.mock('../../../../services/helpers/delay', () => ({
@@ -99,8 +99,8 @@ describe('DevWorkspace store, actions', () => {
         defaults: {
           editor: 'che-incubator/che-code/latest',
         },
+        pluginRegistryURL: 'https://dummy.registry',
       } as api.IServerConfig)
-      .withWorkspacesSettings({ cheWorkspacePluginRegistryUrl: 'https://dummy.registry' })
       .withDevfileRegistries({
         devfiles: {
           ['https://dummy.registry/plugins/che-incubator/che-code/latest/devfile.yaml']: {
@@ -628,21 +628,39 @@ describe('DevWorkspace store, actions', () => {
   });
 
   describe('createWorkspaceFromDevfile', () => {
-    it('should create REQUEST_DEVWORKSPACE and ADD_DEVWORKSPACE when creating a new workspace from devfile', async () => {
+    it('should create ADD_DEVWORKSPACE when creating a new workspace from devfile', async () => {
       const devWorkspace = new DevWorkspaceBuilder().build();
+      const devWorkspaceTemplate: devfileApi.DevWorkspaceTemplate = {
+        apiVersion: 'v1alpha2',
+        kind: 'DevWorkspaceTemplate',
+        metadata: {
+          name: 'template',
+          namespace: 'user-che',
+          annotations: {},
+        },
+      };
+
+      mockCreateDevWorkspace.mockResolvedValueOnce({ headers: {}, devWorkspace });
+      mockCreateDevWorkspaceTemplate.mockResolvedValueOnce({ headers: {}, devWorkspaceTemplate });
+      mockUpdateDevWorkspace.mockResolvedValueOnce({ headers: {}, devWorkspace });
+      mockOnStart.mockResolvedValueOnce(undefined);
+
       const devfile: devfileApi.Devfile = {
         schemaVersion: '2.1.0',
         metadata: {
-          name: 'test',
-          namespace: 'user-che',
+          name: 'che-dashboard',
+          namespace: 'admin-che',
         },
+        components: [
+          {
+            name: 'tools',
+            container: {
+              image: 'quay.io/devfile/universal-developer-image:ubi8',
+            },
+          },
+        ],
       };
-      const attr: Partial<FactoryParams> = {};
-
-      mockCreateDevWorkspace.mockResolvedValueOnce({ devWorkspace, headers: {} });
-      mockUpdateDevWorkspace.mockResolvedValueOnce({ devWorkspace, headers: {} });
-
-      await store.dispatch(testStore.actionCreators.createWorkspaceFromDevfile(devfile, attr, {}));
+      await store.dispatch(testStore.actionCreators.createWorkspaceFromDevfile(devfile, {}, {}));
 
       const actions = store.getActions();
 
@@ -661,6 +679,35 @@ describe('DevWorkspace store, actions', () => {
         },
       ];
 
+      expect(mockCreateDevWorkspace.mock.calls).toEqual([
+        expect.arrayContaining([
+          {
+            apiVersion: 'workspace.devfile.io/v1alpha2',
+            kind: 'DevWorkspace',
+            metadata: {
+              annotations: {},
+              name: 'che',
+            },
+          },
+        ]),
+      ]);
+      expect(mockCreateDevWorkspaceTemplate.mock.calls).toEqual([
+        expect.arrayContaining([
+          expect.objectContaining({
+            apiVersion: 'workspace.devfile.io/v1alpha2',
+            kind: 'DevWorkspaceTemplate',
+            metadata: {
+              name: 'che-code',
+              annotations: {
+                'che.eclipse.org/components-update-policy': 'managed',
+                'che.eclipse.org/plugin-registry-url':
+                  'https://dummy.registry/plugins/che-incubator/che-code/latest/devfile.yaml',
+              },
+            },
+          }),
+        ]),
+      ]);
+      expect(mockOnStart.mock.calls).toEqual([]);
       expect(actions).toStrictEqual(expectedActions);
     });
 
@@ -809,6 +856,7 @@ describe('DevWorkspace store, actions', () => {
             message: 'The resourceVersion for the provided watch is too old.',
           } as V1Status,
           eventPhase: api.webSocket.EventPhase.ERROR,
+          params: { namespace, resourceVersion: '123' },
         }),
       );
 
@@ -835,7 +883,7 @@ describe('DevWorkspace store, actions', () => {
       expect(subscribeToChannelSpy).toHaveBeenCalledWith(
         api.webSocket.Channel.DEV_WORKSPACE,
         namespace,
-        expect.any(Function),
+        { getResourceVersion: expect.any(Function) },
       );
     });
   });

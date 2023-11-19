@@ -37,14 +37,7 @@ export interface IDockerConfigApi {
   update(namespace: string, dockerCfg: api.IDockerConfig): Promise<api.IDockerConfig>;
 }
 
-export interface INamespaceApi {
-  /**
-   * Returns user namespaces
-   */
-  getNamespaces(token: string): Promise<Array<string>>;
-}
-
-export interface IDevWorkspaceApi extends IWatcherService {
+export interface IDevWorkspaceApi extends IWatcherService<api.webSocket.SubscribeParams> {
   /**
    * Get the DevWorkspace with given namespace in the specified namespace
    */
@@ -78,19 +71,21 @@ export interface IDevWorkspaceApi extends IWatcherService {
   ): Promise<{ devWorkspace: V1alpha2DevWorkspace; headers: Partial<IncomingHttpHeaders> }>;
 }
 
-export interface IEventApi extends IWatcherService {
+export interface IEventApi extends IWatcherService<api.webSocket.SubscribeParams> {
   /**
    * Get list of Events in the given namespace
    */
   listInNamespace(namespace: string): Promise<api.IEventList>;
 }
 
-export interface IPodApi extends IWatcherService {
+export interface IPodApi extends IWatcherService<api.webSocket.SubscribeParams> {
   /**
    * Get list of Pods in the given namespace
    */
   listInNamespace(namespace: string): Promise<api.IPodList>;
 }
+
+export type ILogsApi = IWatcherService<api.webSocket.SubscribeLogsParams>;
 
 export interface IDevWorkspaceTemplateApi {
   listInNamespace(namespace: string): Promise<V1alpha2DevWorkspaceTemplate[]>;
@@ -112,6 +107,10 @@ export type CustomResourceDefinition = k8s.V1CustomResourceDefinition & {
   spec: {
     devEnvironments?: CustomResourceDefinitionSpecDevEnvironments;
     components?: CustomResourceDefinitionSpecComponents;
+  };
+  status: {
+    devfileRegistryURL: string;
+    pluginRegistryURL: string;
   };
 };
 
@@ -146,6 +145,10 @@ export type CustomResourceDefinitionSpecComponents = {
   pluginRegistry?: {
     openVSXURL?: string;
   };
+  devfileRegistry: {
+    disableInternalRegistry?: boolean;
+    externalDevfileRegistries?: api.IExternalDevfileRegistry[];
+  };
 };
 
 export interface IServerConfigApi {
@@ -167,6 +170,14 @@ export interface IServerConfigApi {
    */
   getDefaultPlugins(cheCustomResource: CustomResourceDefinition): api.IWorkspacesDefaultPlugins[];
   /**
+   * Returns the default devfile registry URL.
+   */
+  getDefaultDevfileRegistryUrl(cheCustomResource: CustomResourceDefinition): string;
+  /**
+   * Returns the plugin registry URL.
+   */
+  getDefaultPluginRegistryUrl(cheCustomResource: CustomResourceDefinition): string;
+  /**
    * Returns the default editor to workspace create with. It could be a plugin ID or a URI.
    */
   getDefaultEditor(cheCustomResource: CustomResourceDefinition): string | undefined;
@@ -179,6 +190,16 @@ export interface IServerConfigApi {
    * Returns the openVSX URL.
    */
   getOpenVSXURL(cheCustomResource: CustomResourceDefinition): string;
+  /**
+   * Returns the internal registry disable status.
+   */
+  getInternalRegistryDisableStatus(cheCustomResource: CustomResourceDefinition): boolean;
+  /**
+   * Returns the external devfile registries.
+   */
+  getExternalDevfileRegistries(
+    cheCustomResource: CustomResourceDefinition,
+  ): api.IExternalDevfileRegistry[];
   /**
    * Returns the PVC strategy if it is defined.
    */
@@ -214,7 +235,7 @@ export interface IServerConfigApi {
   getWorkspaceStartTimeout(cheCustomResource: CustomResourceDefinition): number;
 
   /**
-   * Returns Wazi for Dev Spaces license type (wazi,idzee)
+   * Returns Wazi for Dev Spaces license usage
    */
   getWaziLicenseUsage(): string;
 }
@@ -226,6 +247,13 @@ export interface IKubeConfigApi {
   injectKubeConfig(namespace: string, devworkspaceId: string): Promise<void>;
 }
 
+export interface IPodmanApi {
+  /**
+   * Executes the 'podman login' command to the OpenShift internal registry.
+   */
+  podmanLogin(namespace: string, devworkspaceId: string): Promise<void>;
+}
+
 export interface IUserProfileApi {
   /**
    * Returns user profile object that contains username and email.
@@ -233,29 +261,54 @@ export interface IUserProfileApi {
   getUserProfile(namespace: string): Promise<api.IUserProfile | undefined>;
 }
 
+export interface IPersonalAccessTokenApi {
+  /**
+   * Reads all the PAT secrets from the specified namespace.
+   */
+  listInNamespace(namespace: string): Promise<Array<api.PersonalAccessToken>>;
+
+  /**
+   * Creates a PAT secret.
+   */
+  create(
+    namespace: string,
+    personalAccessToken: api.PersonalAccessToken,
+  ): Promise<api.PersonalAccessToken>;
+
+  /**
+   * "Updates" an existing PAT secret.
+   */
+  replace(
+    namespace: string,
+    personalAccessToken: api.PersonalAccessToken,
+  ): Promise<api.PersonalAccessToken>;
+
+  /**
+   * Deletes a PAT secret.
+   */
+  delete(namespace: string, name: string): Promise<void>;
+}
+
 export interface IDevWorkspaceClient {
-  eventApi: IEventApi;
-  devworkspaceApi: IDevWorkspaceApi;
   devWorkspaceTemplateApi: IDevWorkspaceTemplateApi;
+  devworkspaceApi: IDevWorkspaceApi;
   dockerConfigApi: IDockerConfigApi;
-  serverConfigApi: IServerConfigApi;
+  eventApi: IEventApi;
   kubeConfigApi: IKubeConfigApi;
-  namespaceApi: INamespaceApi;
+  logsApi: ILogsApi;
+  personalAccessTokenApi: IPersonalAccessTokenApi;
+  podApi: IPodApi;
+  serverConfigApi: IServerConfigApi;
   userProfileApi: IUserProfileApi;
 }
 
-export interface IWatcherService {
+export interface IWatcherService<T = Record<string, unknown>> {
   /**
    * Listen to objects changes in the given namespace
-   * @param namespace namespace where to listen to Events changes
-   * @param resourceVersion special mark that all changes up to a given resourceVersion have already been sent
    * @param listener callback will be invoked when change happens
+   * @param params optional parameters, e.g. `resourceVersion` to start watching from a specific version
    */
-  watchInNamespace(
-    namespace: string,
-    resourceVersion: string,
-    listener: MessageListener,
-  ): Promise<void>;
+  watchInNamespace(listener: MessageListener, params: T): Promise<void>;
 
   /**
    * Stop watching objects changes in the given namespace

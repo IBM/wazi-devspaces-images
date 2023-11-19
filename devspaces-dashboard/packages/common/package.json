@@ -1,6 +1,6 @@
 {
   "name": "@eclipse-che/common",
-  "version": "7.64.1",
+  "version": "7.72.1",
   "repository": "https://github.com/eclipse-che/che-dashboard",
   "license": "EPL-2.0",
   "private": true,
@@ -13,10 +13,11 @@
     "format:fix": "yarn prettier --config .prettierrc --write src/",
     "lint:check": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}'",
     "lint:fix": "tsc --noEmit && eslint '*/**/*.{js,ts,tsx}' --fix",
-    "test": "jest"
+    "test": "jest",
+    "test:watch": "yarn test --watch"
   },
   "devDependencies": {
-    "@devfile/api": "^2.2.0-alpha-1633545768",
+    "@devfile/api": "^2.2.1-alpha-1667236163",
     "@kubernetes/client-node": "^0.18.0",
     "@types/jest": "^25.2.3",
     "@typescript-eslint/eslint-plugin": "^4.31.2",

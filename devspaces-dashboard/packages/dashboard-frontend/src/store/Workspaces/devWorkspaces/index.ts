@@ -12,10 +12,16 @@
  */
 
 import common, { api, ApplicationId } from '@eclipse-che/common';
+import { dump } from 'js-yaml';
 import { Action, Reducer } from 'redux';
 import { AppThunk } from '../..';
 import { container } from '../../../inversify.config';
-import { injectKubeConfig } from '../../../services/dashboard-backend-client/devWorkspaceApi';
+import { FactoryParams } from '../../../services/helpers/factoryFlow/buildFactoryParams';
+import {
+  injectKubeConfig,
+  podmanLogin,
+} from '../../../services/dashboard-backend-client/devWorkspaceApi';
+import { fetchResources } from '../../../services/dashboard-backend-client/devworkspaceResourcesApi';
 import { WebsocketClient } from '../../../services/dashboard-backend-client/websocketClient';
 import devfileApi, { isDevWorkspace } from '../../../services/devfileApi';
 import { devWorkspaceKind } from '../../../services/devfileApi/devWorkspace';
@@ -28,26 +34,30 @@ import { delay } from '../../../services/helpers/delay';
 import { DisposableCollection } from '../../../services/helpers/disposable';
 import { getNewerResourceVersion } from '../../../services/helpers/resourceVersion';
 import { DevWorkspaceStatus } from '../../../services/helpers/types';
+import OAuthService from '../../../services/oauth';
+import { loadResourcesContent } from '../../../services/registry/resources';
 import { WorkspaceAdapter } from '../../../services/workspace-adapter';
 import {
   DevWorkspaceClient,
   DEVWORKSPACE_NEXT_START_ANNOTATION,
+  COMPONENT_UPDATE_POLICY,
+  REGISTRY_URL,
 } from '../../../services/workspace-client/devworkspace/devWorkspaceClient';
+import { getCustomEditor } from '../../../services/workspace-client/helpers';
+import { selectApplications } from '../../ClusterInfo/selectors';
+import { getEditor } from '../../DevfileRegistries/getEditor';
 import { createObject } from '../../helpers';
 import { selectDefaultNamespace } from '../../InfrastructureNamespaces/selectors';
-import { getCustomEditor } from '../../../services/workspace-client/helpers';
 import { AUTHORIZED, SanityCheckAction } from '../../sanityCheckMiddleware';
 import * as DwServerConfigStore from '../../ServerConfig';
-import { selectOpenVSXUrl, selectWaziLicenseUsage } from '../../ServerConfig/selectors';
-import { fetchResources } from '../../../services/dashboard-backend-client/devworkspaceResourcesApi';
-import { dump } from 'js-yaml';
-import { loadResourcesContent } from '../../../services/registry/resources';
+import {
+  selectOpenVSXUrl,
+  selectPluginRegistryInternalUrl,
+  selectPluginRegistryUrl,
+  selectWaziLicenseUsage,
+} from '../../ServerConfig/selectors';
 import { checkRunningWorkspacesLimit } from './checkRunningWorkspacesLimit';
 import { selectDevWorkspacesResourceVersion } from './selectors';
-import OAuthService from '../../../services/oauth';
-import { FactoryParams } from '../../../containers/Loader/buildFactoryParams';
-import { getEditor } from '../../DevfileRegistries/getEditor';
-import { selectApplications } from '../../ClusterInfo/selectors';
 
 export const onStatusChangeCallbacks = new Map<string, (status: string) => void>();
 
@@ -220,7 +230,7 @@ export const actionCreators: ActionCreators = {
           type: Type.RECEIVE_DEVWORKSPACE_ERROR,
           error: errorMessage,
         });
-        throw errorMessage;
+        throw e;
       }
     },
 
@@ -252,7 +262,7 @@ export const actionCreators: ActionCreators = {
           type: Type.RECEIVE_DEVWORKSPACE_ERROR,
           error: errorMessage,
         });
-        throw errorMessage;
+        throw e;
       }
     },
 
@@ -413,7 +423,7 @@ export const actionCreators: ActionCreators = {
           type: Type.RECEIVE_DEVWORKSPACE_ERROR,
           error: errorMessage,
         });
-        throw errorMessage;
+        throw e;
       }
     },
 
@@ -439,7 +449,7 @@ export const actionCreators: ActionCreators = {
           error: resMessage,
         });
 
-        throw resMessage;
+        throw e;
       }
     },
 
@@ -462,7 +472,7 @@ export const actionCreators: ActionCreators = {
           type: Type.RECEIVE_DEVWORKSPACE_ERROR,
           error: errorMessage,
         });
-        throw errorMessage;
+        throw e;
       }
     },
 
@@ -485,7 +495,7 @@ export const actionCreators: ActionCreators = {
           type: Type.RECEIVE_DEVWORKSPACE_ERROR,
           error: errorMessage,
         });
-        throw errorMessage;
+        throw e;
       }
     },
 
@@ -502,17 +512,13 @@ export const actionCreators: ActionCreators = {
 
       const defaultKubernetesNamespace = selectDefaultNamespace(state);
       const openVSXUrl = selectOpenVSXUrl(state);
+      const pluginRegistryUrl = selectPluginRegistryUrl(state);
+      const pluginRegistryInternalUrl = selectPluginRegistryInternalUrl(state);
       const waziLicenseUsage = selectWaziLicenseUsage(state);
+      const cheEditor = editorId ? editorId : state.dwPlugins.defaultEditorName;
       const defaultNamespace = defaultKubernetesNamespace.name;
       try {
-        const cheEditor = editorId ? editorId : devWorkspaceTemplateResource.metadata.name;
-        const pluginRegistryUrl =
-          state.workspacesSettings.settings['cheWorkspacePluginRegistryUrl'];
-        const pluginRegistryInternalUrl =
-          state.workspacesSettings.settings['cheWorkspacePluginRegistryInternalUrl'];
-
-        /* create a new DevWorkspace (without components) */
-
+        /* create a new DevWorkspace */
         const createResp = await getDevWorkspaceClient().createDevWorkspace(
           defaultNamespace,
           devWorkspaceResource,
@@ -546,7 +552,7 @@ export const actionCreators: ActionCreators = {
           clusterConsole,
         );
 
-        /* update the DevWorkspace with components */
+        /* update the DevWorkspace */
 
         const updateResp = await getDevWorkspaceClient().updateDevWorkspace(
           createResp.devWorkspace,
@@ -576,7 +582,7 @@ export const actionCreators: ActionCreators = {
           type: Type.RECEIVE_DEVWORKSPACE_ERROR,
           error: errorMessage,
         });
-        throw errorMessage;
+        throw e;
       }
     },
 
@@ -593,27 +599,36 @@ export const actionCreators: ActionCreators = {
 
       await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
 
-      const pluginRegistryUrl = state.workspacesSettings.settings['cheWorkspacePluginRegistryUrl'];
+      const pluginRegistryUrl = state.dwServerConfig.config.pluginRegistryURL;
       let devWorkspaceResource: devfileApi.DevWorkspace;
       let devWorkspaceTemplateResource: devfileApi.DevWorkspaceTemplate;
       let editorContent: string | undefined;
+      let editorYamlUrl: string | undefined;
       // do we have an optional editor parameter ?
       const editor = attributes.cheEditor;
       if (editor) {
         const response = await getEditor(editor, dispatch, getState, pluginRegistryUrl);
         if (response.content) {
           editorContent = response.content;
+          editorYamlUrl = response.editorYamlUrl;
         } else {
           throw new Error(response.error);
         }
       } else {
         // do we have the custom editor in `.che/che-editor.yaml` ?
-        editorContent = await getCustomEditor(
-          pluginRegistryUrl,
-          optionalFilesContent,
-          dispatch,
-          getState,
-        );
+        try {
+          editorContent = await getCustomEditor(
+            pluginRegistryUrl,
+            optionalFilesContent,
+            dispatch,
+            getState,
+          );
+          if (!editorContent) {
+            console.warn('No custom editor found');
+          }
+        } catch (e) {
+          console.warn('Failed to get custom editor', e);
+        }
         if (!editorContent) {
           const defaultsEditor = state.dwServerConfig.config.defaults.editor;
           if (!defaultsEditor) {
@@ -622,6 +637,7 @@ export const actionCreators: ActionCreators = {
           const response = await getEditor(defaultsEditor, dispatch, getState, pluginRegistryUrl);
           if (response.content) {
             editorContent = response.content;
+            editorYamlUrl = response.editorYamlUrl;
           } else {
             throw new Error(response.error);
           }
@@ -644,12 +660,23 @@ export const actionCreators: ActionCreators = {
         if (devWorkspaceResource === undefined) {
           throw new Error('Failed to find a DevWorkspace in the fetched resources.');
         }
-
+        if (devWorkspaceResource.metadata) {
+          if (!devWorkspaceResource.metadata.annotations) {
+            devWorkspaceResource.metadata.annotations = {};
+          }
+        }
         devWorkspaceTemplateResource = resources.find(
           resource => resource.kind === 'DevWorkspaceTemplate',
         ) as devfileApi.DevWorkspaceTemplate;
         if (devWorkspaceTemplateResource === undefined) {
           throw new Error('Failed to find a DevWorkspaceTemplate in the fetched resources.');
+        }
+        if (editorYamlUrl && devWorkspaceTemplateResource.metadata) {
+          if (!devWorkspaceTemplateResource.metadata.annotations) {
+            devWorkspaceTemplateResource.metadata.annotations = {};
+          }
+          devWorkspaceTemplateResource.metadata.annotations[COMPONENT_UPDATE_POLICY] = 'managed';
+          devWorkspaceTemplateResource.metadata.annotations[REGISTRY_URL] = editorYamlUrl;
         }
       } catch (e) {
         const errorMessage = common.helpers.errors.getMessage(e);
@@ -657,7 +684,7 @@ export const actionCreators: ActionCreators = {
           type: Type.RECEIVE_DEVWORKSPACE_ERROR,
           error: errorMessage,
         });
-        throw errorMessage;
+        throw e;
       }
 
       await dispatch(
@@ -676,7 +703,7 @@ export const actionCreators: ActionCreators = {
         const { status } = message;
 
         const errorMessage = `WebSocket(DEV_WORKSPACE): status code ${status.code}, reason: ${status.message}`;
-        console.warn(errorMessage);
+        console.debug(errorMessage);
 
         if (status.code !== 200) {
           /* in case of error status trying to fetch all devWorkspaces and re-subscribe to websocket channel */
@@ -693,11 +720,9 @@ export const actionCreators: ActionCreators = {
             const state = getState();
             return selectDevWorkspacesResourceVersion(state);
           };
-          websocketClient.subscribeToChannel(
-            api.webSocket.Channel.DEV_WORKSPACE,
-            namespace,
+          websocketClient.subscribeToChannel(api.webSocket.Channel.DEV_WORKSPACE, namespace, {
             getResourceVersion,
-          );
+          });
         }
         return;
       }
@@ -757,14 +782,16 @@ export const actionCreators: ActionCreators = {
           }
         }
 
-        // inject the kube config
         if (
           phase === DevWorkspaceStatus.RUNNING &&
           phase !== prevPhase &&
           devworkspaceId !== undefined
         ) {
           try {
+            // inject the kube config
             await injectKubeConfig(workspace.metadata.namespace, devworkspaceId);
+            // inject the 'podman login'
+            await podmanLogin(workspace.metadata.namespace, devworkspaceId);
           } catch (e) {
             console.error(e);
           }

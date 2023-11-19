@@ -123,7 +123,7 @@ export const actionCreators: ActionCreators = {
         const { status } = message;
 
         const errorMessage = `WebSocket(POD): status code ${status.code}, reason: ${status.message}`;
-        console.warn(errorMessage);
+        console.debug(errorMessage);
 
         if (status.code !== 200) {
           /* in case of error status trying to fetch all pods and re-subscribe to websocket channel */
@@ -140,11 +140,9 @@ export const actionCreators: ActionCreators = {
             const state = getState();
             return selectPodsResourceVersion(state);
           };
-          websocketClient.subscribeToChannel(
-            api.webSocket.Channel.POD,
-            namespace,
+          websocketClient.subscribeToChannel(api.webSocket.Channel.POD, namespace, {
             getResourceVersion,
-          );
+          });
         }
         return;
       }

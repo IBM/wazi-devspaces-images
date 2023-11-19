@@ -1,9 +1,9 @@
 # github.com/BurntSushi/toml v0.3.1 => github.com/BurntSushi/toml v0.3.1
 ## explicit
 github.com/BurntSushi/toml
-# github.com/IBM/operand-deployment-lifecycle-manager v1.21.3
+# github.com/IBM/ibm-licensing-operator v1.17.1-0.20230906144252-8e544a03f11c
 ## explicit; go 1.20
-github.com/IBM/operand-deployment-lifecycle-manager/api/v1alpha1
+github.com/IBM/ibm-licensing-operator/api/v1
 # github.com/PuerkitoBio/purell v1.1.1 => github.com/PuerkitoBio/purell v1.1.1
 ## explicit
 github.com/PuerkitoBio/purell
@@ -30,15 +30,12 @@ github.com/che-incubator/kubernetes-image-puller-operator/api/v1alpha1
 # github.com/davecgh/go-spew v1.1.1 => github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/deckarep/golang-set v1.7.1
-## explicit
-github.com/deckarep/golang-set
 # github.com/devfile/api/v2 v2.2.1-alpha.0.20230413012049-a6c32fca0dbd
 ## explicit; go 1.18
 github.com/devfile/api/v2/pkg/apis/workspaces/v1alpha2
 github.com/devfile/api/v2/pkg/attributes
 github.com/devfile/api/v2/pkg/devfile
-# github.com/devfile/devworkspace-operator v0.20.0
+# github.com/devfile/devworkspace-operator v0.22.0
 ## explicit; go 1.18
 github.com/devfile/devworkspace-operator/apis/controller/v1alpha1
 github.com/devfile/devworkspace-operator/controllers/controller/devworkspacerouting
@@ -51,7 +48,7 @@ github.com/devfile/devworkspace-operator/pkg/config/proxy
 github.com/devfile/devworkspace-operator/pkg/constants
 github.com/devfile/devworkspace-operator/pkg/infrastructure
 github.com/devfile/devworkspace-operator/pkg/provision/sync
-# github.com/emicklei/go-restful/v3 v3.9.0
+# github.com/emicklei/go-restful/v3 v3.10.1
 ## explicit; go 1.13
 github.com/emicklei/go-restful/v3
 github.com/emicklei/go-restful/v3/log
@@ -117,9 +114,6 @@ github.com/google/gofuzz
 # github.com/google/uuid v1.1.2 => github.com/google/uuid v1.1.2
 ## explicit
 github.com/google/uuid
-# github.com/ibm/ibm-licensing-operator v1.17.0
-## explicit; go 1.17
-github.com/ibm/ibm-licensing-operator/api/v1
 # github.com/imdario/mergo v0.3.13 => github.com/imdario/mergo v0.3.5
 ## explicit
 github.com/imdario/mergo
@@ -150,7 +144,7 @@ github.com/munnerz/goautoneg
 ## explicit
 github.com/onsi/gomega/gstruct/errors
 github.com/onsi/gomega/types
-# github.com/openshift/api v0.0.0-20200930075302-db52bc4ef99f => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad
+# github.com/openshift/api v0.0.0-20221013123533-341d389bd4a7 => github.com/openshift/api v0.0.0-20190924102528-32369d4db2ad
 ## explicit
 github.com/openshift/api/config/v1
 github.com/openshift/api/console/v1
@@ -180,7 +174,7 @@ github.com/pkg/errors
 # github.com/pmezard/go-difflib v1.0.0 => github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus/client_golang v1.14.0 => github.com/prometheus/client_golang v1.11.0
+# github.com/prometheus/client_golang v1.14.0 => github.com/prometheus/client_golang v1.11.1
 ## explicit; go 1.13
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/collectors
@@ -199,7 +193,7 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/sirupsen/logrus v1.8.1 => github.com/sirupsen/logrus v1.4.2
+# github.com/sirupsen/logrus v1.9.3 => github.com/sirupsen/logrus v1.4.2
 ## explicit
 github.com/sirupsen/logrus
 # github.com/spf13/pflag v1.0.5 => github.com/spf13/pflag v1.0.5
@@ -229,10 +223,10 @@ go.uber.org/zap/zapcore
 ## explicit; go 1.11
 golang.org/x/lint
 golang.org/x/lint/golint
-# golang.org/x/mod v0.6.0
+# golang.org/x/mod v0.8.0
 ## explicit; go 1.17
 golang.org/x/mod/semver
-# golang.org/x/net v0.7.0
+# golang.org/x/net v0.17.0
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -247,17 +241,16 @@ golang.org/x/net/trace
 ## explicit; go 1.11
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.5.0
+# golang.org/x/sys v0.13.0
 ## explicit; go 1.17
 golang.org/x/sys/execabs
-golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.5.0
+# golang.org/x/term v0.13.0
 ## explicit; go 1.17
 golang.org/x/term
-# golang.org/x/text v0.7.0
+# golang.org/x/text v0.13.0
 ## explicit; go 1.17
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
@@ -267,7 +260,7 @@ golang.org/x/text/width
 # golang.org/x/time v0.3.0
 ## explicit
 golang.org/x/time/rate
-# golang.org/x/tools v0.2.0
+# golang.org/x/tools v0.6.0
 ## explicit; go 1.18
 golang.org/x/tools/go/analysis
 golang.org/x/tools/go/analysis/passes/inspect
@@ -276,20 +269,20 @@ golang.org/x/tools/go/ast/inspector
 golang.org/x/tools/go/buildutil
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/cgo
-golang.org/x/tools/go/internal/gcimporter
 golang.org/x/tools/go/internal/packagesdriver
-golang.org/x/tools/go/internal/pkgbits
 golang.org/x/tools/go/loader
 golang.org/x/tools/go/packages
 golang.org/x/tools/go/types/objectpath
 golang.org/x/tools/go/types/typeutil
-golang.org/x/tools/internal/analysisinternal
 golang.org/x/tools/internal/event
 golang.org/x/tools/internal/event/core
 golang.org/x/tools/internal/event/keys
 golang.org/x/tools/internal/event/label
+golang.org/x/tools/internal/gcimporter
 golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/packagesinternal
+golang.org/x/tools/internal/pkgbits
+golang.org/x/tools/internal/tokeninternal
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 # golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
@@ -386,7 +379,7 @@ gopkg.in/inf.v0
 # gopkg.in/yaml.v2 v2.4.0 => gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.1 => gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+# gopkg.in/yaml.v3 v3.0.1 => gopkg.in/yaml.v3 v3.0.0-20220521103104-8f96da9f5d5e
 ## explicit
 gopkg.in/yaml.v3
 # honnef.co/go/tools v0.0.1-2020.1.3 => honnef.co/go/tools v0.0.0-20200822191040-81508471876c
@@ -1102,7 +1095,7 @@ sigs.k8s.io/yaml
 # github.com/pmezard/go-difflib => github.com/pmezard/go-difflib v1.0.0
 # github.com/posener/complete => github.com/posener/complete v1.1.1
 # github.com/pquerna/cachecontrol => github.com/pquerna/cachecontrol v0.0.0-20171018203845-0dec1b30a021
-# github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.11.0
+# github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.11.1
 # github.com/prometheus/client_model => github.com/prometheus/client_model v0.2.0
 # github.com/prometheus/common => github.com/prometheus/common v0.26.0
 # github.com/prometheus/procfs => github.com/prometheus/procfs v0.6.0
@@ -1190,7 +1183,7 @@ sigs.k8s.io/yaml
 # gopkg.in/tomb.v1 => gopkg.in/tomb.v1 v1.0.0-20161208151619-d5d1b5820637
 # gopkg.in/tomb.v2 => gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 # gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
-# gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+# gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.0-20220521103104-8f96da9f5d5e
 # grpc-ecosystem/grpc-health-probe => grpc-ecosystem/grpc-health-probe v0.3.2
 # helm.sh/helm/v3 => helm.sh/helm/v3 v3.0.0-20200422233323-0a9a9a88e8af
 # honnef.co/go/tools => honnef.co/go/tools v0.0.0-20200822191040-81508471876c

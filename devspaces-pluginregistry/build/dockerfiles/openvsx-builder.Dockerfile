@@ -7,9 +7,9 @@
 #
 
 # https://registry.access.redhat.com/ubi8/ubi
-FROM registry.access.redhat.com/ubi8/ubi:8.7-1112 as builder
+FROM registry.access.redhat.com/ubi8/ubi:8.8-1032 as builder
 
-RUN yum install java-11-openjdk-devel git jq curl -y --nodocs && \
+RUN yum install java-17-openjdk-devel git jq unzip curl -y --nodocs && \
     yum update -q -y 
 
 RUN cd /tmp && \
@@ -25,9 +25,13 @@ RUN mkdir /openvsx-server && \
 
 RUN cd /openvsx-server && jar -xf openvsx-server.jar && rm openvsx-server.jar
 
-# Pull vsix files from openvsx
+COPY /current_branch /current_branch
 COPY /openvsx-sync.json /openvsx-server/
 COPY /build/scripts/download_vsix.sh /tmp
-RUN /tmp/download_vsix.sh && mv /tmp/vsix /openvsx-server
+RUN \
+    branch=$(cat /current_branch) && \
+    # Pull vsix files from openvsx
+    /tmp/download_vsix.sh -b $branch && mv /tmp/vsix /openvsx-server && \
+    rm /current_branch
 
 RUN tar -czvf openvsx-server.tar.gz openvsx-server \

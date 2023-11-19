@@ -3,7 +3,7 @@ editors:
   - schemaVersion: 2.1.0
     metadata:
       name: che-incubator/che-idea/latest
-      displayName: IntelliJ IDEA Community
+      displayName: IntelliJ IDEA Community (Technology Preview)
       description: Red Hat OpenShift Dev Spaces with JetBrains IntelliJ IDEA Community IDE
       icon: https://resources.jetbrains.com/storage/products/intellij-idea/img/meta/intellij-idea_logo_300x300.png
       attributes:
@@ -29,7 +29,7 @@ editors:
     components:
       - name: idea-rhel8
         container:
-          image: 'registry.redhat.io/devspaces/udi-rhel8@sha256:d18f22ef1aa2e5d1da4e3356ee1fc8fa59f795cdc3ab9d54c666054fbcfecd8f'
+          image: 'registry.redhat.io/devspaces/udi-rhel8:latest'
           env:
             - name: PROJECTOR_ASSEMBLY_DIR
               value: /projector
@@ -91,7 +91,7 @@ editors:
         volume: { }
       - name: idea-rhel8-injector
         container:
-          image: 'registry.redhat.io/devspaces/idea-rhel8:3.6'
+          image: 'registry.redhat.io/devspaces/idea-rhel8@sha256:e878a4d5dd0b7ea2ec20846f2b34c8f11f4df8d3c67a1a0ed2f5835dc744bdc4'
           command: ["/projector/entrypoint-init-container.sh"]
           env:
             - name: PROJECTOR_VOLUME_MOUNT
@@ -134,7 +134,7 @@ editors:
     components:
       - name: che-code-injector
         container:
-          image: 'registry.redhat.io/devspaces/code-rhel8:latest'
+          image: 'registry.redhat.io/devspaces/code-rhel8@sha256:ceb424b356efceaa7b5c3de54d4b1da0b28a4694d171bf9c151e90081c2a6d5d'
           command: ["/entrypoint-init-container.sh"]
           volumeMounts:
             - name: checode
@@ -145,7 +145,7 @@ editors:
           cpuRequest: 30m
       - name: che-code-runtime-description
         container:
-          image: 'registry.redhat.io/devspaces/udi-rhel8@sha256:d18f22ef1aa2e5d1da4e3356ee1fc8fa59f795cdc3ab9d54c666054fbcfecd8f'
+          image: 'registry.redhat.io/devspaces/udi-rhel8:latest'
           memoryLimit: 1024Mi
           memoryRequest: 256Mi
           cpuLimit: 500m
@@ -220,7 +220,7 @@ editors:
     components:
       - name: che-code-injector
         container:
-          image: 'registry.redhat.io/devspaces/code-rhel8:3.6'
+          image: 'registry.redhat.io/devspaces/code-rhel8@sha256:ceb424b356efceaa7b5c3de54d4b1da0b28a4694d171bf9c151e90081c2a6d5d'
           command: ["/entrypoint-init-container.sh"]
           volumeMounts:
             - name: checode
@@ -231,7 +231,7 @@ editors:
           cpuRequest: 30m
       - name: che-code-runtime-description
         container:
-          image: 'registry.redhat.io/devspaces/udi-rhel8@sha256:d18f22ef1aa2e5d1da4e3356ee1fc8fa59f795cdc3ab9d54c666054fbcfecd8f'
+          image: 'registry.redhat.io/devspaces/udi-rhel8:latest'
           memoryLimit: 1024Mi
           memoryRequest: 256Mi
           cpuLimit: 500m

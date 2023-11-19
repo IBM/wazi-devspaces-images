@@ -20,15 +20,16 @@ import { AppState } from '..';
 import { BrandingData } from '../../services/bootstrap/branding.constant';
 import devfileApi from '../../services/devfileApi';
 import { State as BrandingState } from '../Branding';
-import { DevWorkspaceResources, State as DevfileRegistriesState } from '../DevfileRegistries/index';
+import { DevWorkspaceResources, State as DevfileRegistriesState } from '../DevfileRegistries';
 import { RegistryEntry } from '../DockerConfig/types';
 import { ConvertedState, ResolverState, State as FactoryResolverState } from '../FactoryResolver';
+import { IGitOauth } from '../GitOauthConfig/types';
 import { State as InfrastructureNamespaceState } from '../InfrastructureNamespaces';
 import { State as PluginsState } from '../Plugins/chePlugins';
-import { State as UserProfileState } from '../UserProfile';
-import { State as WorkspacesState } from '../Workspaces/index';
+import { State as LogsState } from '../Pods/Logs';
+import { State as UserProfileState } from '../User/Profile';
+import { State as WorkspacesState } from '../Workspaces';
 import mockThunk from './thunk';
-import { IGitOauth } from '../GitOauthConfig/types';
 
 export class FakeStoreBuilder {
   private state: AppState = {
@@ -71,7 +72,15 @@ export class FakeStoreBuilder {
           startTimeout: 300,
         },
         cheNamespace: '',
-        waziLicenseUsage: ''
+        devfileRegistry: {
+          disableInternalRegistry: false,
+          externalDevfileRegistries: [],
+        },
+        devfileRegistryURL: '',
+        devfileRegistryInternalURL: '',
+        pluginRegistryURL: '',
+        pluginRegistryInternalURL: '',
+        waziLicenseUsage: '',
       } as api.IServerConfig,
     },
     clusterInfo: {
@@ -106,10 +115,6 @@ export class FakeStoreBuilder {
       startedWorkspaces: {},
       warnings: {},
     },
-    workspacesSettings: {
-      isLoading: false,
-      settings: {} as che.WorkspaceSettings,
-    },
     branding: {
       isLoading: false,
       data: {},
@@ -127,6 +132,10 @@ export class FakeStoreBuilder {
       devWorkspaceResources: {},
       schema: {},
     } as DevfileRegistriesState,
+    userId: {
+      cheUserId: '',
+      isLoading: false,
+    },
     userProfile: {
       isLoading: false,
       userProfile: {},
@@ -146,12 +155,25 @@ export class FakeStoreBuilder {
       registries: [],
       error: undefined,
     },
+    logs: {
+      logs: {},
+    },
+    personalAccessToken: {
+      isLoading: false,
+      tokens: [],
+    },
   };
 
-  public withDwServerConfig(config: api.IServerConfig): FakeStoreBuilder {
+  constructor(store?: MockStoreEnhanced<AppState, ThunkDispatch<AppState, undefined, AnyAction>>) {
+    if (store) {
+      this.state = store.getState();
+    }
+  }
+
+  public withDwServerConfig(config: Partial<api.IServerConfig>): FakeStoreBuilder {
     this.state.dwServerConfig = {
       isLoading: false,
-      config,
+      config: { ...this.state.dwServerConfig.config, ...config },
     };
     return this;
   }
@@ -289,17 +311,6 @@ export class FakeStoreBuilder {
     return this;
   }
 
-  public withWorkspacesSettings(
-    settings: Partial<che.WorkspaceSettings>,
-    isLoading = false,
-    error?: string,
-  ): FakeStoreBuilder {
-    this.state.workspacesSettings.settings = Object.assign({}, settings as che.WorkspaceSettings);
-    this.state.workspacesSettings.isLoading = isLoading;
-    this.state.workspacesSettings.error = error;
-    return this;
-  }
-
   public withDevWorkspaces(
     options: {
       workspaces?: devfileApi.DevWorkspace[];
@@ -389,12 +400,6 @@ export class FakeStoreBuilder {
     return this;
   }
 
-  public build(): MockStoreEnhanced<AppState, ThunkDispatch<AppState, undefined, AnyAction>> {
-    const middlewares = [mockThunk];
-    const mockStore = createMockStore<AppState>(middlewares);
-    return mockStore(this.state);
-  }
-
   public withSanityCheck(options: {
     authorized?: Promise<boolean>;
     error?: string;
@@ -405,5 +410,33 @@ export class FakeStoreBuilder {
       this.state.sanityCheck.lastFetched = Date.now();
     }
     return this;
+  }
+
+  public withLogs(logs: LogsState['logs']) {
+    this.state.logs.logs = Object.assign({}, logs);
+    return this;
+  }
+
+  public withPersonalAccessTokens(
+    options: { tokens: api.PersonalAccessToken[]; error?: string },
+    isLoading = false,
+  ) {
+    this.state.personalAccessToken.tokens = Object.assign([], options.tokens);
+    this.state.personalAccessToken.error = options.error;
+    this.state.personalAccessToken.isLoading = isLoading;
+    return this;
+  }
+
+  public withCheUserId(options: { cheUserId: string; error?: string }, isLoading = false) {
+    this.state.userId.cheUserId = options.cheUserId;
+    this.state.userId.error = options.error;
+    this.state.userId.isLoading = isLoading;
+    return this;
+  }
+
+  public build(): MockStoreEnhanced<AppState, ThunkDispatch<AppState, undefined, AnyAction>> {
+    const middlewares = [mockThunk];
+    const mockStore = createMockStore<AppState>(middlewares);
+    return mockStore(this.state);
   }
 }

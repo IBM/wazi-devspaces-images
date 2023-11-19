@@ -21,6 +21,11 @@ import { api } from '@eclipse-che/common';
 const tags = ['Server Config'];
 
 export function registerServerConfigRoute(server: FastifyInstance) {
+  const cheNamespace = process.env.CHECLUSTER_CR_NAMESPACE as string;
+  const pluginRegistryInternalURL = process.env.CHE_WORKSPACE_PLUGIN__REGISTRY__INTERNAL__URL || '';
+  const devfileRegistryInternalURL =
+    process.env.CHE_WORKSPACE_DEVFILE__REGISTRY__INTERNAL__URL || '';
+
   server.get(`${baseApiPath}/server-config`, getSchema({ tags }), async function () {
     const token = getServiceAccountToken();
     const { serverConfigApi } = getDevWorkspaceClient(token);
@@ -35,9 +40,13 @@ export function registerServerConfigRoute(server: FastifyInstance) {
     const startTimeout = serverConfigApi.getWorkspaceStartTimeout(cheCustomResource);
     const openVSXURL = serverConfigApi.getOpenVSXURL(cheCustomResource);
     const pvcStrategy = serverConfigApi.getPvcStrategy(cheCustomResource);
+    const pluginRegistryURL = serverConfigApi.getDefaultPluginRegistryUrl(cheCustomResource);
+    const devfileRegistryURL = serverConfigApi.getDefaultDevfileRegistryUrl(cheCustomResource);
+    const externalDevfileRegistries =
+      serverConfigApi.getExternalDevfileRegistries(cheCustomResource);
+    const disableInternalRegistry =
+      serverConfigApi.getInternalRegistryDisableStatus(cheCustomResource);
     const waziLicenseUsage = serverConfigApi.getWaziLicenseUsage();
-
-    const CheClusterCRNamespace = process.env.CHECLUSTER_CR_NAMESPACE as string;
 
     const serverConfig: api.IServerConfig = {
       containerBuild,
@@ -52,11 +61,19 @@ export function registerServerConfigRoute(server: FastifyInstance) {
         runTimeout,
         startTimeout,
       },
+      devfileRegistry: {
+        disableInternalRegistry,
+        externalDevfileRegistries,
+      },
       pluginRegistry: {
         openVSXURL,
       },
-      cheNamespace: CheClusterCRNamespace,
-      waziLicenseUsage: waziLicenseUsage,
+      cheNamespace,
+      pluginRegistryURL,
+      pluginRegistryInternalURL,
+      devfileRegistryURL,
+      devfileRegistryInternalURL,
+      waziLicenseUsage,
     };
 
     return serverConfig;

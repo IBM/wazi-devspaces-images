@@ -29,7 +29,7 @@ import { DEFAULT_REGISTRY } from '../DevfileRegistries';
 import { isOAuthResponse } from '../../services/oauth';
 import { AUTHORIZED, SanityCheckAction } from '../sanityCheckMiddleware';
 import { CHE_EDITOR_YAML_PATH } from '../../services/workspace-client';
-import { FactoryParams } from '../../containers/Loader/buildFactoryParams';
+import { FactoryParams } from '../../services/helpers/factoryFlow/buildFactoryParams';
 
 const WorkspaceClient = container.get(CheWorkspaceClient);
 
@@ -142,10 +142,26 @@ export const actionCreators: ActionCreators = {
             error_code: factoryParams?.errorCode,
           })
         : undefined;
+      const isDevfileRegistryLocation = (location: string): boolean => {
+        const devfileRegistries = [
+          `${window.location.protocol}//${window.location.host}${DEFAULT_REGISTRY}`,
+        ];
+        if (state.dwServerConfig.config.devfileRegistryURL) {
+          devfileRegistries.push(state.dwServerConfig.config.devfileRegistryURL);
+        }
+        const externalDevfileRegistries =
+          state.dwServerConfig.config.devfileRegistry.externalDevfileRegistries.map(
+            externalDevfileRegistriy => externalDevfileRegistriy.url,
+          );
+        if (externalDevfileRegistries.length) {
+          devfileRegistries.push(...externalDevfileRegistries);
+        }
+        return devfileRegistries.some(registry => location.startsWith(registry));
+      };
 
       try {
         let data: FactoryResolver;
-        if (location.includes(DEFAULT_REGISTRY) && location.endsWith('.yaml')) {
+        if (isDevfileRegistryLocation(location)) {
           data = await getYamlResolver(namespace, location);
         } else {
           data = await WorkspaceClient.restApiClient.getFactoryResolver<FactoryResolver>(

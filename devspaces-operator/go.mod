@@ -3,22 +3,21 @@ module github.com/eclipse-che/che-operator
 go 1.20
 
 require (
-	github.com/IBM/operand-deployment-lifecycle-manager v1.21.3
+	github.com/IBM/ibm-licensing-operator v1.17.1-0.20230906144252-8e544a03f11c
 	github.com/che-incubator/kubernetes-image-puller-operator v0.0.0-20210929175054-0128446f5af7
 	github.com/devfile/api/v2 v2.2.1-alpha.0.20230413012049-a6c32fca0dbd
-	github.com/devfile/devworkspace-operator v0.20.0
+	github.com/devfile/devworkspace-operator v0.22.0
 	github.com/go-logr/logr v1.2.3
 	github.com/golang/mock v1.5.0
 	github.com/google/go-cmp v0.5.9
-	github.com/ibm/ibm-licensing-operator v1.17.0
-	github.com/openshift/api v0.0.0-20200930075302-db52bc4ef99f
+	github.com/openshift/api v0.0.0-20221013123533-341d389bd4a7
 	github.com/operator-framework/api v0.10.0
 	github.com/operator-framework/operator-lifecycle-manager v0.18.1
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.24.0
-	golang.org/x/mod v0.6.0
-	golang.org/x/net v0.7.0
+	golang.org/x/mod v0.8.0 // indirect
+	golang.org/x/net v0.17.0
 	k8s.io/api v0.26.1
 	k8s.io/apiextensions-apiserver v0.26.1
 	k8s.io/apimachinery v0.26.1
@@ -34,7 +33,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
+	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
@@ -67,9 +66,9 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220223155221-ee480838109b // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -91,11 +90,10 @@ require (
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/Shopify/logrus-bugsnag v0.0.0-00010101000000-000000000000 // indirect
-	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	go.uber.org/tools v0.0.0-20190618225709-2cfd321de3ee // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
-	golang.org/x/tools v0.2.0 // indirect
+	golang.org/x/tools v0.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	honnef.co/go/tools v0.0.1-2020.1.3 // indirect
 )
@@ -387,7 +385,7 @@ replace (
 	github.com/pmezard/go-difflib => github.com/pmezard/go-difflib v1.0.0
 	github.com/posener/complete => github.com/posener/complete v1.1.1
 	github.com/pquerna/cachecontrol => github.com/pquerna/cachecontrol v0.0.0-20171018203845-0dec1b30a021
-	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.11.1
 	github.com/prometheus/client_model => github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common => github.com/prometheus/common v0.26.0
 	github.com/prometheus/procfs => github.com/prometheus/procfs v0.6.0
@@ -475,7 +473,7 @@ replace (
 	gopkg.in/tomb.v1 => gopkg.in/tomb.v1 v1.0.0-20161208151619-d5d1b5820637
 	gopkg.in/tomb.v2 => gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637
 	gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
-	gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+	gopkg.in/yaml.v3 => gopkg.in/yaml.v3 v3.0.0-20220521103104-8f96da9f5d5e
 	grpc-ecosystem/grpc-health-probe => grpc-ecosystem/grpc-health-probe v0.3.2
 	helm.sh/helm/v3 => helm.sh/helm/v3 v3.0.0-20200422233323-0a9a9a88e8af
 	honnef.co/go/tools => honnef.co/go/tools v0.0.0-20200822191040-81508471876c

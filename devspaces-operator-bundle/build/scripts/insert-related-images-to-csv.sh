@@ -71,8 +71,10 @@ tmpdir=$(mktemp -d); mkdir -p $tmpdir; pushd $tmpdir >/dev/null
     fi
 
     # CRW-3177, CRW-3178 sort uniquely; replace quay refs with RHEC refs
+    # remove quay.io/devspaces/ansible-creator-ee from EXTERNAL_IMAGES CRW-4541
     EXTERNAL_IMAGES=$(cat /tmp/quay.io-devspaces-{devfile,plugin}registry-rhel8-${DS_VERSION}*/var/www/html/*/external_images.txt | \
-      sed -r -e "s#quay.io/devspaces/#registry.redhat.io/devspaces/#g" | sort -uV)
+      sed -r -e '/^quay\.io\/devspaces\/ansible-creator-ee/d' \
+      -e "s#quay.io/devspaces/#registry.redhat.io/devspaces/#g" | sort -uV)
 
     # CRW-3432 fail if we don't get a list of images
     if [[ ! $EXTERNAL_IMAGES ]]; then exit 4; fi
@@ -105,6 +107,7 @@ updateRelatedImageName() {
   imageType="$1"
   shift
   CONTAINERS=("$@")
+
   for updateVal in "${CONTAINERS[@]}"; do
     tagOrDigest=""
     if [[ ${updateVal} == *"@"* ]]; then
@@ -127,7 +130,7 @@ sed -r -i $CSVFILE \
   -e "s@registry.access.redhat.com/ubi8/ubi-minimal@registry.redhat.io/ubi8/ubi-minimal@g" \
   `# CRW-1254 use ubi8/ubi-minimal for airgap mirroring` \
   -e "s@/ubi8-minimal@/ubi8/ubi-minimal@g" \
-  `# replace quay urls with RHEC urls` \
+  `# replace quay urls with RHEC urls except quay.io/devspaces/ansible-creator-ee` \
   -e "s|quay.io/devspaces/(.+)|registry.redhat.io/devspaces/\\1|g"
 
 # echo list of RELATED_IMAGE_ entries after adding them above

@@ -1,4 +1,4 @@
-[![Build](https://app.travis-ci.com/IBM/wazi-devspaces-images.svg?branch=3.0.0.wazi)](https://app.travis-ci.com/IBM/wazi-devspaces-images)
+[![Build](https://app.travis-ci.com/IBM/wazi-devspaces-images.svg?branch=3.0.1.wazi)](https://app.travis-ci.com/IBM/wazi-devspaces-images)
 [![Release](https://img.shields.io/github/release/IBM/wazi-devspaces-images.svg)](../../releases/latest)
 [![License](https://img.shields.io/github/license/IBM/wazi-devspaces-images)](./LICENSE)
 [![Documentation](https://img.shields.io/badge/Documentation-blue?color=1f618d)](https://ibm.biz/wazi-ds-doc)
@@ -48,6 +48,13 @@ For details of the features for IBM Wazi for Dev Spaces, see its [official docum
 
 | <sub>Registry and Image</sub> | <sub>Version</sub> |
 | :--- | --- |
+||<sub><b>3.0.1</b></sub>|
+|<sub>icr.io/cpopen/ibm-wazi-for-devspaces-catalog@sha256:7c7105866bffdccbc9355e4301ff53574de0bb7c532505e676b539b9aad7e571</sub>||
+|<sub>icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:fdb0f760476c76fba149164c51626b0e3518470b5e87da3db3139d4c81880608</sub>||
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-dashboard@sha256:29c31c0d86bd9b7e1ccd0bd3b8f061b85c462423d04385990a8b22faefcce855</sub>||
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-devfile@sha256:4aa84761217f03b1e2375b52e89ba661cdf75754c1061c4261fb4740f297c93b</sub>||
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-plugin@sha256:8b26548fc4edb4a2b01fce9f1fe4016efacfa640bd3a4c33e76c8980280993ac</sub>||
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:db900a79c010bcea2886183d62f02f9fdca6ab382c0a06c536cba89b6bc0b5cf</sub>||
 ||<sub><b>3.0.0</b></sub>|
 |<sub>icr.io/cpopen/ibm-wazi-for-devspaces-catalog@sha256:13ba2dc729012286d5d72b4874cc77d7afb58205ac7b92ccc20dfc385224af0a</sub>||
 |<sub>icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:025f8829fe1b4e401ca2d121785db08f55ea6157c0826d51430714101cc1d9c9</sub>||

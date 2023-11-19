@@ -8,30 +8,14 @@ services:
 env:
   global:
     # General
-    - DS_VERSION=3.0.0
     - DOCKER_BUILDKIT="1"
     - BUILDKIT_PROGRESS="plain"
     - DOCKER_DEFAULT_PLATFORM="linux/amd64"
     # Images
-    - INDEX_IMAGE="ibm-wazi-for-devspaces-catalog"
-    - INDEX_CONTEXT="./devspaces-operator-bundle"
-    - INDEX_DOCKERFILE="${INDEX_CONTEXT}/wazi.index.Dockerfile"
     - BUNDLE_IMAGE="ibm-wazi-for-devspaces-operator-bundle"
     - BUNDLE_CONTEXT="./devspaces-operator-bundle"
     - BUNDLE_DOCKERFILE="${BUNDLE_CONTEXT}/wazi.bundle.Dockerfile"
-    - OPERATOR_IMAGE="ibm-wazi-for-devspaces-operator"
-    - OPERATOR_CONTEXT="./devspaces-operator"
-    - OPERATOR_DOCKERFILE="${OPERATOR_CONTEXT}/build/dockerfiles/wazi.Dockerfile"
-    - DASHBOARD_IMAGE="ibm-wazi-for-devspaces-dashboard"
-    - DASHBOARD_CONTEXT="./devspaces-dashboard"
-    - DASHBOARD_DOCKERFILE="${DASHBOARD_CONTEXT}/build/dockerfiles/wazi.Dockerfile"
-before_install:
-  # Index Image
-  - touch ${INDEX_CONTEXT}/bundles.db
 install:
-  - docker build -t ${INDEX_IMAGE}:travis -f ${INDEX_DOCKERFILE} ${INDEX_CONTEXT}
   - docker build -t ${BUNDLE_IMAGE}:travis -f ${BUNDLE_DOCKERFILE} ${BUNDLE_CONTEXT}
-  - docker build -t ${OPERATOR_IMAGE}:travis -f ${OPERATOR_DOCKERFILE} ${OPERATOR_CONTEXT}
-  - docker build -t ${DASHBOARD_IMAGE}:travis -f ${DASHBOARD_DOCKERFILE} ${DASHBOARD_CONTEXT}
 script: 
   - echo "Success!"

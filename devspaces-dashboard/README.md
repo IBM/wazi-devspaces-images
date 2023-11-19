@@ -10,7 +10,7 @@ Eclipse Che is a next generation Eclipse IDE. This repository is licensed under 
 
 ## Requirements
 
-- Node.js `v14` and later.
+- Node.js `v16` and later.
 - yarn `v1.20.0` or higher.
 
 **Note**:
@@ -29,7 +29,8 @@ docker build . -f build/dockerfiles/Dockerfile -t quay.io/eclipse/che-dashboard:
 
 To run Dashboard against Che Cluster you need access to Kubernetes cluster where it lives.
 So, make sure kubeconfig from $KUBECONFIG (or if unset ~/.kube/config) has the target cluster as current.
-If no - you may need to do oc login (if it's OpenShift) or modify it manually if it's Kubernetes.
+If no - you may need to do `oc login` (if it's OpenShift) or modify it manually if it's Kubernetes.
+
 Then you can proceed to the following steps:
 
 ```sh
@@ -79,6 +80,29 @@ To avoid memory issues and the process being killed, more memory is possible thr
 NODE_OPTIONS="--max_old_space_size=6500" && yarn frontend:start
 ```
 
+### Bundle analyzer
+
+To get visualizations of what’s in your webpack bundle for dashboard-backend:
+```sh
+yarn --cwd  packages/dashboard-backend build --env bundleAnalyzer=true
+```
+
+To get visualizations of what’s in your webpack bundle for dashboard-frontend:
+```sh
+yarn --cwd  packages/dashboard-frontend build --env bundleAnalyzer=true
+```
+
+### Measure build speed
+
+To measure build speed for dashboard-backend:
+```sh
+yarn --cwd  packages/dashboard-backend build:dev --env speedMeasure=true
+```
+
+To measure build speed for dashboard-frontend:
+```sh
+yarn --cwd  packages/dashboard-frontend build:dev --env speedMeasure=true
+```
 
 ### Dependencies IP
 
@@ -157,6 +181,48 @@ attributes:
 To build, run:
 ```
 podman build . -f build/dockerfiles/Dockerfile -t quay.io/eclipse/che-dashboard:next
+```
+
+### Build a new image and apply it to the CheCluster in the current context
+
+Export globally environment variables first:
+```sh
+$ export IMAGE_REGISTRY_USER_NAME=<IMAGE_REGISTRY_USER_NAME> && \
+  export IMAGE_REGISTRY_HOST=<IMAGE_REGISTRY_HOST>
+```
+
+To a new image and apply it to the CheCluster, run:
+```sh
+yarn build-and-patch
+```
+
+### Update dashboard on remote cluster using `skaffold.dev`
+
+To update the dashboard deployment you need access to the Kubernetes cluster (see [Running locally against remote Che Cluster (Node.js v.16)](#running-locally-against-remote-che-cluster-nodejs-v16))
+
+Then proceed with the following steps:
+
+```sh
+# export an environment variable to define a repository you want images to be pushed, e.g.:
+export DEFAULT_REPO="${IMAGE_REGISTRY_HOST}/${IMAGE_REGISTRY_USER_NAME}"
+```
+
+```sh
+# and log in to the repository:
+podman login quay.io
+```
+
+Now you can build the project and get the dashboard on the remote cluster updated:
+
+```sh
+# build the dashboard:
+yarn build
+
+# update the dashboard deployment once:
+skaffold run --cleanup=false --default-repo=$DEFAULT_REPO
+
+# or, run in development mode to watch for changes:
+skaffold dev --cleanup=false --default-repo=$DEFAULT_REPO
 ```
 
 ## Branding
@@ -240,7 +306,6 @@ Currently, Dashboard uses the following che-server API:
 | GET   | /kubernetes/namespace                |
 | POST   | /factory/resolver/                  |
 | POST   | /factory/token/refresh              |
-| GET    | /workspace/settings                 |
 | GET    | /oauth                              |
 | GET    | /oauth/token                        |
 | DELETE | /oauth/token                        |
