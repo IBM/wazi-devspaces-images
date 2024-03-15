@@ -19,6 +19,7 @@ env:
     - BUNDLE_CONTEXT="./devspaces-operator-bundle"
     - BUNDLE_DOCKERFILE="${BUNDLE_CONTEXT}/wazi.bundle.Dockerfile"
 before_install:
+  - echo $DOCKER_KEY | docker login -u $DOCKER_USER --password-stdin registry.redhat.io
   # Index Image
   - touch ${INDEX_CONTEXT}/bundles.db
 install:
