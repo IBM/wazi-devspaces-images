@@ -11,31 +11,38 @@
  */
 
 import * as k8s from '@kubernetes/client-node';
-import { DevWorkspaceApiService } from './services/devWorkspaceApi';
-import { DevWorkspaceTemplateApiService } from './services/devWorkspaceTemplateApi';
-import { DockerConfigApiService } from './services/dockerConfigApi';
-import { EventApiService } from './services/eventApi';
-import { KubeConfigApiService } from './services/kubeConfigApi';
-import { PodmanApiService } from './services/podmanApi';
-import { LogsApiService } from './services/logsApi';
-import { PersonalAccessTokenService } from './services/personalAccessTokenApi';
-import { PodApiService } from './services/podApi';
-import { ServerConfigApiService } from './services/serverConfigApi';
-import { UserProfileApiService } from './services/userProfileApi';
-import { IPodmanApi } from './types/index';
+
+import { DevWorkspaceApiService } from '@/devworkspaceClient/services/devWorkspaceApi';
+import { DevWorkspaceTemplateApiService } from '@/devworkspaceClient/services/devWorkspaceTemplateApi';
+import { DockerConfigApiService } from '@/devworkspaceClient/services/dockerConfigApi';
+import { EventApiService } from '@/devworkspaceClient/services/eventApi';
+import { GettingStartedSamplesApiService } from '@/devworkspaceClient/services/gettingStartedSamplesApi';
+import { GitConfigApiService } from '@/devworkspaceClient/services/gitConfigApi';
+import { KubeConfigApiService } from '@/devworkspaceClient/services/kubeConfigApi';
+import { LogsApiService } from '@/devworkspaceClient/services/logsApi';
+import { PersonalAccessTokenService } from '@/devworkspaceClient/services/personalAccessTokenApi';
+import { PodApiService } from '@/devworkspaceClient/services/podApi';
+import { PodmanApiService } from '@/devworkspaceClient/services/podmanApi';
+import { ServerConfigApiService } from '@/devworkspaceClient/services/serverConfigApi';
+import { SshKeysService } from '@/devworkspaceClient/services/sshKeysApi';
+import { UserProfileApiService } from '@/devworkspaceClient/services/userProfileApi';
 import {
   IDevWorkspaceApi,
   IDevWorkspaceClient,
   IDevWorkspaceTemplateApi,
   IDockerConfigApi,
   IEventApi,
+  IGettingStartedSampleApi,
+  IGitConfigApi,
   IKubeConfigApi,
   ILogsApi,
   IPersonalAccessTokenApi,
   IPodApi,
+  IPodmanApi,
   IServerConfigApi,
+  IShhKeysApi,
   IUserProfileApi,
-} from './types';
+} from '@/devworkspaceClient/types';
 
 export * from './types';
 
@@ -88,5 +95,17 @@ export class DevWorkspaceClient implements IDevWorkspaceClient {
 
   get personalAccessTokenApi(): IPersonalAccessTokenApi {
     return new PersonalAccessTokenService(this.kubeConfig);
+  }
+
+  get gitConfigApi(): IGitConfigApi {
+    return new GitConfigApiService(this.kubeConfig);
+  }
+
+  get gettingStartedSampleApi(): IGettingStartedSampleApi {
+    return new GettingStartedSamplesApiService(this.kubeConfig);
+  }
+
+  get sshKeysApi(): IShhKeysApi {
+    return new SshKeysService(this.kubeConfig);
   }
 }

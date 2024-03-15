@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2021 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -47,6 +47,11 @@ func GetPrivilegedPoliciesRulesForKubernetes() []rbacv1.PolicyRule {
 			APIGroups: []string{"org.eclipse.che"},
 			Resources: []string{"checlusters"},
 			Verbs:     []string{"get", "list", "watch"},
+		},
+		{
+			APIGroups: []string{""},
+			Resources: []string{"configmaps"},
+			Verbs:     []string{"get", "list"},
 		},
 	}
 

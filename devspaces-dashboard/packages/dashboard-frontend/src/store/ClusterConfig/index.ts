@@ -10,14 +10,16 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { Action, Reducer } from 'redux';
 import common, { ClusterConfig } from '@eclipse-che/common';
+import { Action, Reducer } from 'redux';
+
+import { fetchClusterConfig } from '@/services/backend-client/clusterConfigApi';
+import * as BannerAlertStore from '@/store/BannerAlert';
+import { AddBannerAction } from '@/store/BannerAlert';
+import { createObject } from '@/store/helpers';
+import { AUTHORIZED, SanityCheckAction } from '@/store/sanityCheckMiddleware';
+
 import { AppThunk } from '..';
-import { createObject } from '../helpers';
-import * as BannerAlertStore from '../BannerAlert';
-import { fetchClusterConfig } from '../../services/dashboard-backend-client/clusterConfigApi';
-import { AddBannerAction } from '../BannerAlert';
-import { AUTHORIZED, SanityCheckAction } from '../sanityCheckMiddleware';
 
 export interface State {
   isLoading: boolean;
@@ -105,17 +107,17 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case Type.REQUEST_CLUSTER_CONFIG:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         error: undefined,
       });
     case Type.RECEIVE_CLUSTER_CONFIG:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         clusterConfig: action.clusterConfig,
       });
     case Type.RECEIVE_CLUSTER_CONFIG_ERROR:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         error: action.error,
       });

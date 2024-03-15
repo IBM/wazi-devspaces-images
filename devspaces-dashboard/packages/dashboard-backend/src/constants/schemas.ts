@@ -10,8 +10,9 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { dockerConfigExample, devWorkspaceResourcesExample } from './examples';
 import { JSONSchema7 } from 'json-schema';
+
+import { devWorkspaceResourcesExample, dockerConfigExample } from '@/constants/examples';
 
 export const authenticationHeaderSchema: JSONSchema7 = {
   type: 'object',
@@ -125,6 +126,32 @@ export const dockerConfigSchema: JSONSchema7 = {
   },
   examples: [dockerConfigExample],
   required: ['dockerconfig'],
+};
+
+export const gitConfigSchema: JSONSchema7 = {
+  type: 'object',
+  properties: {
+    gitconfig: {
+      type: 'object',
+      properties: {
+        user: {
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+            },
+            email: {
+              type: 'string',
+            },
+          },
+        },
+      },
+    },
+    resourceVersion: {
+      type: 'string',
+    },
+  },
+  required: ['gitconfig'],
 };
 
 export const devfileVersionSchema: JSONSchema7 = {
@@ -274,4 +301,33 @@ export const personalAccessTokenParamsSchema: JSONSchema7 = {
     },
   },
   required: ['namespace', 'tokenName'],
+};
+
+export const sshKeyBodySchema: JSONSchema7 = {
+  type: 'object',
+  properties: {
+    name: {
+      type: 'string',
+    },
+    key: {
+      type: 'string',
+    },
+    keyPub: {
+      type: 'string',
+    },
+  },
+  required: ['name', 'key', 'keyPub'],
+};
+
+export const sshKeyParamsSchema: JSONSchema7 = {
+  type: 'object',
+  properties: {
+    namespace: {
+      type: 'string',
+    },
+    name: {
+      type: 'string',
+    },
+  },
+  required: ['namespace', 'name'],
 };

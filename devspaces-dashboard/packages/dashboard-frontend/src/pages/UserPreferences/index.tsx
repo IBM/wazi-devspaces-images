@@ -14,19 +14,24 @@ import { PageSection, PageSectionVariants, Tab, Tabs, Title } from '@patternfly/
 import { History } from 'history';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import Head from '../../components/Head';
-import { UserPreferencesTab } from '../../services/helpers/types';
-import { ROUTE } from '../../Routes/routes';
-import { AppState } from '../../store';
-import { selectIsLoading } from '../../store/GitOauthConfig/selectors';
-import { actionCreators } from '../../store/GitOauthConfig';
-import ContainerRegistries from './ContainerRegistriesTab';
-import GitServicesTab from './GitServicesTab';
-import PersonalAccessTokens from './PersonalAccessTokens';
+
+import Head from '@/components/Head';
+import ContainerRegistries from '@/pages/UserPreferences/ContainerRegistriesTab';
+import GitConfig from '@/pages/UserPreferences/GitConfig';
+import GitServicesTab from '@/pages/UserPreferences/GitServicesTab';
+import PersonalAccessTokens from '@/pages/UserPreferences/PersonalAccessTokens';
+import SshKeys from '@/pages/UserPreferences/SshKeys';
+import { ROUTE } from '@/Routes/routes';
+import { UserPreferencesTab } from '@/services/helpers/types';
+import { AppState } from '@/store';
+import { actionCreators } from '@/store/GitOauthConfig';
+import { selectIsLoading } from '@/store/GitOauthConfig/selectors';
 
 const CONTAINER_REGISTRIES_TAB: UserPreferencesTab = 'container-registries';
 const GIT_SERVICES_TAB: UserPreferencesTab = 'git-services';
 const PERSONAL_ACCESS_TOKENS_TAB: UserPreferencesTab = 'personal-access-tokens';
+const GITCONFIG_TAB: UserPreferencesTab = 'gitconfig';
+const SSH_KEYS_TAB: UserPreferencesTab = 'ssh-keys';
 
 export type Props = {
   history: History;
@@ -56,8 +61,10 @@ export class UserPreferences extends React.PureComponent<Props, State> {
       if (
         pathname === ROUTE.USER_PREFERENCES &&
         (tab === CONTAINER_REGISTRIES_TAB ||
+          tab === GITCONFIG_TAB ||
           tab === GIT_SERVICES_TAB ||
-          tab === PERSONAL_ACCESS_TOKENS_TAB)
+          tab === PERSONAL_ACCESS_TOKENS_TAB ||
+          tab === SSH_KEYS_TAB)
       ) {
         return searchParam.get('tab') as UserPreferencesTab;
       }
@@ -102,6 +109,12 @@ export class UserPreferences extends React.PureComponent<Props, State> {
           </Tab>
           <Tab eventKey={PERSONAL_ACCESS_TOKENS_TAB} title="Personal Access Tokens">
             <PersonalAccessTokens />
+          </Tab>
+          <Tab eventKey={GITCONFIG_TAB} title="Gitconfig">
+            <GitConfig />
+          </Tab>
+          <Tab eventKey={SSH_KEYS_TAB} title="SSH Keys">
+            <SshKeys />
           </Tab>
         </Tabs>
       </React.Fragment>

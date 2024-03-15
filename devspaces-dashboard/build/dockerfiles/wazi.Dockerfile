@@ -44,7 +44,7 @@ EXPOSE 443
 
 CMD [ "/usr/local/bin/entrypoint.sh" ]
 
-ARG PRODUCT_VERSION="3.0.1"
+ARG PRODUCT_VERSION="4.0.0"
 ENV \
     SUMMARY="IBM Wazi for Dev Spaces" \
     DESCRIPTION="IBM Wazi for Dev Spaces" \

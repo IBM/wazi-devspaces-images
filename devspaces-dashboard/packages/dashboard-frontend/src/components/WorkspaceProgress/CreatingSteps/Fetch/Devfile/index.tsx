@@ -10,34 +10,37 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import common, { helpers } from '@eclipse-che/common';
+import common, { FACTORY_LINK_ATTR, helpers } from '@eclipse-che/common';
 import { AlertVariant } from '@patternfly/react-core';
 import { isEqual } from 'lodash';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+
+import ExpandableWarning from '@/components/ExpandableWarning';
+import { TIMEOUT_TO_RESOLVE_SEC } from '@/components/WorkspaceProgress/const';
+import { buildStepName } from '@/components/WorkspaceProgress/CreatingSteps/Fetch/Devfile/buildStepName';
+import {
+  ProgressStep,
+  ProgressStepProps,
+  ProgressStepState,
+} from '@/components/WorkspaceProgress/ProgressStep';
+import { ProgressStepTitle } from '@/components/WorkspaceProgress/StepTitle';
+import { TimeLimit } from '@/components/WorkspaceProgress/TimeLimit';
 import {
   buildFactoryParams,
   FactoryParams,
-} from '../../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { delay } from '../../../../../services/helpers/delay';
-import { DisposableCollection } from '../../../../../services/helpers/disposable';
-import { getEnvironment, isDevEnvironment } from '../../../../../services/helpers/environment';
-import { AlertItem } from '../../../../../services/helpers/types';
-import OAuthService, { isOAuthResponse } from '../../../../../services/oauth';
-import SessionStorageService, { SessionStorageKey } from '../../../../../services/session-storage';
-import { AppState } from '../../../../../store';
-import * as FactoryResolverStore from '../../../../../store/FactoryResolver';
+  USE_DEFAULT_DEVFILE,
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { AlertItem } from '@/services/helpers/types';
+import OAuthService, { isOAuthResponse } from '@/services/oauth';
+import SessionStorageService, { SessionStorageKey } from '@/services/session-storage';
+import { AppState } from '@/store';
+import * as FactoryResolverStore from '@/store/FactoryResolver';
 import {
   selectFactoryResolver,
   selectFactoryResolverConverted,
-} from '../../../../../store/FactoryResolver/selectors';
-import { selectAllWorkspaces } from '../../../../../store/Workspaces/selectors';
-import ExpandableWarning from '../../../../ExpandableWarning';
-import { MIN_STEP_DURATION_MS, TIMEOUT_TO_RESOLVE_SEC } from '../../../const';
-import { ProgressStep, ProgressStepProps, ProgressStepState } from '../../../ProgressStep';
-import { ProgressStepTitle } from '../../../StepTitle';
-import { TimeLimit } from '../../../TimeLimit';
-import { buildStepName } from './buildStepName';
+} from '@/store/FactoryResolver/selectors';
+import { selectAllWorkspaces } from '@/store/Workspaces/selectors';
 
 export class ApplyingDevfileError extends Error {
   constructor(message: string) {
@@ -69,17 +72,19 @@ export type State = ProgressStepState & {
 };
 
 class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
-  protected readonly name = 'Looking for devfile';
-  protected readonly toDispose = new DisposableCollection();
+  protected readonly name = 'Inspecting repo';
 
   constructor(props: Props) {
     super(props);
 
+    const factoryParams = buildFactoryParams(props.searchParams);
+    const name = `Inspecting repo ${factoryParams.sourceUrl} for a devfile`;
+
     this.state = {
-      factoryParams: buildFactoryParams(props.searchParams),
+      factoryParams,
       shouldResolve: true,
       useDefaultDevfile: false,
-      name: this.name,
+      name,
     };
   }
 
@@ -88,8 +93,6 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
   }
 
   public componentDidUpdate() {
-    this.toDispose.dispose();
-
     this.init();
   }
 
@@ -156,6 +159,9 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
   }
 
   protected handleRestart(alertKey: string): void {
+    const searchParams = new URLSearchParams(this.props.history.location.search);
+    searchParams.delete(USE_DEFAULT_DEVFILE);
+    this.props.history.location.search = searchParams.toString();
     this.props.onHideError(alertKey);
 
     this.setState({
@@ -166,6 +172,9 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
   }
 
   private handleDefaultDevfile(alertKey: string): void {
+    const searchParams = new URLSearchParams(this.props.history.location.search);
+    searchParams.set(USE_DEFAULT_DEVFILE, 'true');
+    this.props.history.location.search = searchParams.toString();
     this.props.onHideError(alertKey);
 
     this.setState({
@@ -182,8 +191,6 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
   }
 
   protected async runStep(): Promise<boolean> {
-    await delay(MIN_STEP_DURATION_MS);
-
     const { factoryParams, shouldResolve, useDefaultDevfile } = this.state;
     const { factoryResolver, factoryResolverConverted } = this.props;
     const { sourceUrl } = factoryParams;
@@ -244,16 +251,16 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
         this.checkNumberOfTries(factoryUrl);
         this.increaseNumberOfTries(factoryUrl);
 
-        // open authentication page
-        const env = getEnvironment();
-        // build redirect URL
-        let redirectHost = window.location.protocol + '//' + window.location.host;
-        if (isDevEnvironment(env)) {
-          redirectHost = env.server;
-        }
-        const redirectUrl = new URL('/f', redirectHost);
-        redirectUrl.searchParams.set('url', factoryUrl);
+        /* open authentication page */
+
+        const redirectUrl = new URL('/f', window.location.origin);
+        redirectUrl.searchParams.set(
+          FACTORY_LINK_ATTR,
+          this.props.history.location.search.replace(/^\?/, ''),
+        );
+
         OAuthService.openOAuthPage(e.attributes.oauth_authentication_url, redirectUrl.toString());
+
         return false;
       }
 
@@ -327,7 +334,7 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
         ),
         actionCallbacks: [
           {
-            title: 'Continue with the default devfile',
+            title: 'Continue with default devfile',
             callback: () => this.handleDefaultDevfile(key),
           },
           {
@@ -351,7 +358,7 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
         ),
         actionCallbacks: [
           {
-            title: 'Continue with the default devfile',
+            title: 'Continue with default devfile',
             callback: () => this.handleDefaultDevfile(key),
           },
           {
@@ -368,6 +375,10 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
       children: helpers.errors.getMessage(error),
       actionCallbacks: [
         {
+          title: 'Continue with default devfile',
+          callback: () => this.handleDefaultDevfile(key),
+        },
+        {
           title: 'Click to try again',
           callback: () => this.handleRestart(key),
         },
@@ -381,7 +392,7 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
   }
 
   render(): React.ReactElement {
-    const { distance } = this.props;
+    const { distance, hasChildren } = this.props;
     const { name, lastError } = this.state;
 
     const isActive = distance === 0;
@@ -393,7 +404,12 @@ class CreatingStepFetchDevfile extends ProgressStep<Props, State> {
         {isActive && (
           <TimeLimit timeLimitSec={TIMEOUT_TO_RESOLVE_SEC} onTimeout={() => this.handleTimeout()} />
         )}
-        <ProgressStepTitle distance={distance} isError={isError} isWarning={isWarning}>
+        <ProgressStepTitle
+          distance={distance}
+          hasChildren={hasChildren}
+          isError={isError}
+          isWarning={isWarning}
+        >
           {name}
         </ProgressStepTitle>
       </React.Fragment>

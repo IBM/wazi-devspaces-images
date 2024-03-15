@@ -15,31 +15,27 @@ import { AlertVariant } from '@patternfly/react-core';
 import { isEqual } from 'lodash';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { delay } from '../../../../services/helpers/delay';
+
+import {
+  ProgressStep,
+  ProgressStepProps,
+  ProgressStepState,
+} from '@/components/WorkspaceProgress/ProgressStep';
+import { ProgressStepTitle } from '@/components/WorkspaceProgress/StepTitle';
 import {
   buildFactoryParams,
   FactoryParams,
-} from '../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { buildIdeLoaderLocation } from '../../../../services/helpers/location';
-import { AlertItem } from '../../../../services/helpers/types';
-import { Workspace } from '../../../../services/workspace-adapter';
-import { AppState } from '../../../../store';
-import { selectDevWorkspaceResources } from '../../../../store/DevfileRegistries/selectors';
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { buildIdeLoaderLocation } from '@/services/helpers/location';
+import { AlertItem } from '@/services/helpers/types';
+import { Workspace } from '@/services/workspace-adapter';
+import { AppState } from '@/store';
+import { selectDevWorkspaceResources } from '@/store/DevfileRegistries/selectors';
 import {
   selectFactoryResolver,
   selectFactoryResolverConverted,
-} from '../../../../store/FactoryResolver/selectors';
-import { selectAllWorkspaces } from '../../../../store/Workspaces/selectors';
-import { MIN_STEP_DURATION_MS } from '../../const';
-import { ProgressStep, ProgressStepProps, ProgressStepState } from '../../ProgressStep';
-import { ProgressStepTitle } from '../../StepTitle';
-
-export class WorkspacesNameConflictError extends Error {
-  constructor(message: string | undefined) {
-    super(message);
-    this.name = 'RunningWorkspacesExceededError';
-  }
-}
+} from '@/store/FactoryResolver/selectors';
+import { selectAllWorkspaces } from '@/store/Workspaces/selectors';
 
 export type Props = MappedProps &
   ProgressStepProps & {
@@ -53,7 +49,7 @@ export type State = ProgressStepState & {
 };
 
 class CreatingStepCheckExistingWorkspaces extends ProgressStep<Props, State> {
-  protected readonly name = 'Checking existing workspaces';
+  protected readonly name = 'Checking if a workspace with the same name exists';
 
   constructor(props: Props) {
     super(props);
@@ -71,8 +67,6 @@ class CreatingStepCheckExistingWorkspaces extends ProgressStep<Props, State> {
   }
 
   public componentDidUpdate() {
-    this.toDispose.dispose();
-
     this.init();
   }
 
@@ -140,8 +134,6 @@ class CreatingStepCheckExistingWorkspaces extends ProgressStep<Props, State> {
   }
 
   protected async runStep(): Promise<boolean> {
-    await delay(MIN_STEP_DURATION_MS);
-
     const { devWorkspaceResources, factoryResolver, factoryResolverConverted } = this.props;
     const { factoryParams, shouldCreate } = this.state;
 
@@ -217,7 +209,7 @@ class CreatingStepCheckExistingWorkspaces extends ProgressStep<Props, State> {
   }
 
   render(): React.ReactElement {
-    const { distance } = this.props;
+    const { distance, hasChildren } = this.props;
     const { name, lastError } = this.state;
 
     const isError = lastError !== undefined;
@@ -225,7 +217,12 @@ class CreatingStepCheckExistingWorkspaces extends ProgressStep<Props, State> {
 
     return (
       <React.Fragment>
-        <ProgressStepTitle distance={distance} isError={isError} isWarning={isWarning}>
+        <ProgressStepTitle
+          distance={distance}
+          hasChildren={hasChildren}
+          isError={isError}
+          isWarning={isWarning}
+        >
           {name}
         </ProgressStepTitle>
       </React.Fragment>

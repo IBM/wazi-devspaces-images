@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2021 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -11,8 +11,8 @@
 //
 
 // Package v1 contains API Schema definitions for the org.eclipse.che v1 API group
-//+kubebuilder:object:generate=true
-//+groupName=org.eclipse.che
+// +kubebuilder:object:generate=true
+// +groupName=org.eclipse.che
 package v1
 
 import (

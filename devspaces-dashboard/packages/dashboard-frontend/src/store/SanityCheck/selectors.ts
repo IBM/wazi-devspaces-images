@@ -11,6 +11,7 @@
  */
 
 import { createSelector } from 'reselect';
+
 import { AppState } from '..';
 
 const selectState = (state: AppState) => state.sanityCheck;
@@ -26,4 +27,4 @@ export const selectAsyncIsAuthorized = createSelector(
   },
 );
 
-export const selectSanityCheckError = createSelector(selectState, state => state.error);
+export const selectSanityCheckError = createSelector(selectState, state => state.error || '');

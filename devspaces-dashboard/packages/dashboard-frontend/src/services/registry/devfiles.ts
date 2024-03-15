@@ -10,15 +10,24 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { isDevfileMetaData } from './types';
+import common from '@eclipse-che/common';
+
+import { fetchData } from '@/services/registry/fetchData';
+import { isDevfileMetaData } from '@/services/registry/types';
+import SessionStorageService, { SessionStorageKey } from '@/services/session-storage';
 
 const EXPIRATION_TIME_FOR_STORED_METADATA = 60 * 60 * 1000; // expiration time in milliseconds
 
-import { fetchData } from './fetchData';
-import SessionStorageService, { SessionStorageKey } from '../session-storage';
+export class DevfileMetaDataIsNotArrayError extends Error {
+  public location: string;
+
+  constructor(location: string) {
+    super('Returned value is not array.');
+    this.location = location;
+  }
+}
 
 function createURL(url: string, baseUrl: string): URL {
-  // Remove it after fixing all source links https://github.com/eclipse/che/issues/19140
   if (/^\/(\w+)/.test(url)) {
     return new URL(`.${url}`, baseUrl);
   }
@@ -26,12 +35,27 @@ function createURL(url: string, baseUrl: string): URL {
   return new URL(url, baseUrl);
 }
 
-function resolveIconUrl(metadata: che.DevfileMetaData, baseUrl: string): string {
-  if (!metadata.icon || metadata.icon.startsWith('http')) {
-    return metadata.icon;
+function resolveIconUrl(
+  metadata: che.DevfileMetaData,
+  baseUrl: string,
+): string | { base64data: string; mediatype: string } {
+  if (typeof metadata.icon === 'string') {
+    if (!metadata.icon || metadata.icon.startsWith('http')) {
+      return metadata.icon;
+    }
+
+    return createURL(metadata.icon, baseUrl).href;
   }
 
-  return createURL(metadata.icon, baseUrl).href;
+  return metadata.icon;
+}
+
+export function convertIconToSrc(icon: che.DevfileMetaData['icon']): string {
+  if (typeof icon === 'string') {
+    return icon;
+  }
+
+  return 'data:' + icon.mediatype + ';base64,' + icon.base64data;
 }
 
 export function resolveTags(
@@ -65,6 +89,12 @@ export function resolveLinks(
       delete metadata.links.self;
     }
   }
+
+  if (metadata.url) {
+    metadata.links = { v2: metadata.url };
+    delete metadata.url;
+  }
+
   const resolvedLinks = {};
   const linkNames = Object.keys(metadata.links);
   linkNames.map(linkName => {
@@ -86,48 +116,72 @@ export function updateObjectLinks(object: any, baseUrl): any {
   return object;
 }
 
-export function getRegistryIndexUrl(registryUrl: string, isExternal: boolean): URL {
+export function getRegistryIndexLocations(registryUrl: string, isExternal: boolean): Array<string> {
+  registryUrl = registryUrl[registryUrl.length - 1] === '/' ? registryUrl : registryUrl + '/';
+  const registryIndexLocations: Array<string> = [];
   if (isExternal) {
-    if (new URL(registryUrl).host === 'registry.devfile.io') {
-      return new URL('index', registryUrl);
+    const indexUrl = new URL('index', registryUrl);
+    registryIndexLocations.push(indexUrl.href);
+
+    const deprecatedIndexUrl = new URL('devfiles/index.json', registryUrl);
+    registryIndexLocations.push(deprecatedIndexUrl.href);
+  } else {
+    if (registryUrl.endsWith('/getting-started-sample/')) {
+      const indexUrl = new URL(registryUrl.slice(0, -1));
+      registryIndexLocations.push(indexUrl.href);
+    } else {
+      const indexUrl = new URL('devfiles/index.json', registryUrl);
+      registryIndexLocations.push(indexUrl.href);
     }
   }
-  return new URL('devfiles/index.json', registryUrl);
+
+  return registryIndexLocations;
 }
 
 export async function fetchRegistryMetadata(
   registryUrl: string,
   isExternal: boolean,
 ): Promise<che.DevfileMetaData[]> {
-  registryUrl = registryUrl[registryUrl.length - 1] === '/' ? registryUrl : registryUrl + '/';
-
   try {
-    const registryIndexUrl = getRegistryIndexUrl(registryUrl, isExternal);
+    const registryIndexLocations = getRegistryIndexLocations(registryUrl, isExternal);
     if (isExternal) {
-      const devfileMetaDataArr = getExternalRegistryMetadataFromStorage(registryIndexUrl.href);
+      const devfileMetaDataArr = getExternalRegistryMetadataFromStorage(registryIndexLocations[0]);
       if (devfileMetaDataArr !== undefined) {
         return devfileMetaDataArr;
       }
     }
-    const data = await fetchData(registryIndexUrl.href);
-    const devfileMetaDataArr: che.DevfileMetaData[] = isExternal
-      ? []
-      : (data as che.DevfileMetaData[]);
 
-    if (isExternal) {
-      if (!Array.isArray(data)) {
-        throw new Error('Returns type is not array.');
-      }
-      data.forEach(val => {
-        if (isDevfileMetaData(val)) {
-          devfileMetaDataArr.push(val);
+    const devfileMetaDataArr: che.DevfileMetaData[] = [];
+    for (const [index, location] of registryIndexLocations.entries()) {
+      try {
+        const data = await fetchData(location);
+        if (Array.isArray(data)) {
+          data.forEach(metadata => {
+            if (metadata.url) {
+              if (!metadata.links) {
+                metadata.links = {};
+              }
+              metadata.links.v2 = metadata.url;
+              delete metadata.url;
+            }
+            if (isDevfileMetaData(metadata)) {
+              devfileMetaDataArr.push(metadata);
+            } else {
+              console.warn(
+                `Returns type from registry URL: ${registryUrl} is not DevfileMetaData.`,
+                metadata,
+              );
+            }
+          });
+          break;
         } else {
-          console.warn(
-            `Returns type from registry URL: ${registryUrl} is not DevfileMetaData.`,
-            val,
-          );
+          throw new DevfileMetaDataIsNotArrayError(location);
         }
-      });
+      } catch (e) {
+        if (index === registryIndexLocations.length - 1) {
+          throw e;
+        }
+      }
     }
 
     const val = devfileMetaDataArr.map(meta => {
@@ -137,12 +191,13 @@ export async function fetchRegistryMetadata(
       return meta;
     });
     if (isExternal) {
-      setExternalRegistryMetadataToStorage(registryIndexUrl.href, val);
+      setExternalRegistryMetadataToStorage(registryIndexLocations[0], val);
     }
     return val;
   } catch (error) {
     const errorMessage =
-      `Failed to fetch devfiles metadata from registry URL: ${registryUrl}, reason: ` + error;
+      `Failed to fetch devfiles metadata from registry URL: ${registryUrl}, reason: ` +
+      common.helpers.errors.getMessage(error);
     console.error(errorMessage);
     throw errorMessage;
   }

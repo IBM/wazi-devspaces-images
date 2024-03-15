@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2022 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -12,11 +12,6 @@
 
 package constants
 
-import (
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/utils/pointer"
-)
-
 const (
 	// Dashboard
 	DefaultDashboardMemoryLimit   = "256Mi"
@@ -25,10 +20,13 @@ const (
 	DefaultDashboardCpuRequest    = "100m"
 
 	// Gateway
-	DefaultGatewayMemoryLimit   = "256Mi"
-	DefaultGatewayMemoryRequest = "64Mi"
-	DefaultGatewayCpuLimit      = "500m"
-	DefaultGatewayCpuRequest    = "50m"
+	DefaultGatewayMemoryLimit            = "256Mi"
+	DefaultGatewayMemoryRequest          = "64Mi"
+	DefaultGatewayCpuLimit               = "500m"
+	DefaultGatewayCpuRequest             = "50m"
+	DefaultTraefikLogLevel               = "INFO"
+	DefaultKubeRbacProxyLogLevel         = int32(0)
+	DefaultOAuthProxyCookieExpireSeconds = int32(86400)
 
 	// PluginRegistry
 	DefaultPluginRegistryMemoryLimit                          = "256Mi"
@@ -68,6 +66,7 @@ const (
 	BitBucketOAuthConfigMountPath              = "/che-conf/oauth/bitbucket"
 	BitBucketOAuthConfigPrivateKeyFileName     = "private.key"
 	BitBucketOAuthConfigConsumerKeyFileName    = "consumer.key"
+	GitHubOAuth                                = "github"
 	GitHubOAuthConfigMountPath                 = "/che-conf/oauth/github"
 	GitHubOAuthConfigClientIdFileName          = "id"
 	GitHubOAuthConfigClientSecretFileName      = "secret"
@@ -143,15 +142,5 @@ var (
 	DefaultSingleHostGatewayConfigMapLabels = map[string]string{
 		"app":       "che",
 		"component": "che-gateway-config",
-	}
-
-	DefaultWorkspaceContainerSecurityContext = corev1.SecurityContext{
-		Capabilities: &corev1.Capabilities{
-			Add: []corev1.Capability{
-				"SETGID",
-				"SETUID",
-			},
-		},
-		AllowPrivilegeEscalation: pointer.BoolPtr(true),
 	}
 )

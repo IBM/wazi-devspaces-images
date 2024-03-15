@@ -16,13 +16,15 @@ import { createMemoryHistory, History } from 'history';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Store } from 'redux';
+
+import getComponentRenderer from '@/services/__mocks__/getComponentRenderer';
+import devfileApi from '@/services/devfileApi';
+import { LoaderTab } from '@/services/helpers/types';
+import { constructWorkspace, Workspace } from '@/services/workspace-adapter';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
+import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+
 import { LoaderPage, Props } from '..';
-import devfileApi from '../../../services/devfileApi';
-import { LoaderTab } from '../../../services/helpers/types';
-import { constructWorkspace, Workspace } from '../../../services/workspace-adapter';
-import getComponentRenderer from '../../../services/__mocks__/getComponentRenderer';
-import { DevWorkspaceBuilder } from '../../../store/__mocks__/devWorkspaceBuilder';
-import { FakeStoreBuilder } from '../../../store/__mocks__/storeBuilder';
 
 jest.mock('react-tooltip', () => {
   return function DummyTooltip(): React.ReactElement {
@@ -34,7 +36,7 @@ jest.mock('../../../components/WorkspaceProgress');
 jest.mock('../../../components/WorkspaceLogs');
 jest.mock('../../../components/WorkspaceEvents');
 
-const { createSnapshot, renderComponent } = getComponentRenderer(getComponent);
+const { renderComponent } = getComponentRenderer(getComponent);
 
 const mockOnTabChange = jest.fn();
 
@@ -68,25 +70,6 @@ describe('Loader page', () => {
     jest.clearAllMocks();
   });
 
-  test('snapshot, creating workspace flow', () => {
-    const emptyStore = new FakeStoreBuilder().build();
-    const snapshot = createSnapshot(emptyStore, {
-      history,
-      tabParam,
-      workspace: undefined,
-    });
-    expect(snapshot.toJSON()).toMatchSnapshot();
-  });
-
-  test('snapshot, starting workspace flow', () => {
-    const snapshot = createSnapshot(store, {
-      history,
-      tabParam,
-      workspace,
-    });
-    expect(snapshot.toJSON()).toMatchSnapshot();
-  });
-
   it('should handle tab click', () => {
     renderComponent(store, {
       history,
@@ -94,7 +77,7 @@ describe('Loader page', () => {
       workspace,
     });
 
-    const tabButtonLogs = screen.getByRole('button', { name: 'Logs' });
+    const tabButtonLogs = screen.getByRole('tab', { name: 'Logs' });
     userEvent.click(tabButtonLogs);
 
     expect(mockOnTabChange).toHaveBeenCalledWith(LoaderTab.Logs);

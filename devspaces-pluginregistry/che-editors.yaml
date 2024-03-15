@@ -91,7 +91,7 @@ editors:
         volume: { }
       - name: idea-rhel8-injector
         container:
-          image: 'registry.redhat.io/devspaces/idea-rhel8@sha256:e878a4d5dd0b7ea2ec20846f2b34c8f11f4df8d3c67a1a0ed2f5835dc744bdc4'
+          image: 'registry.redhat.io/devspaces/idea-rhel8@sha256:cfba12084bc50a4026ca7995c96d6eaa406fae3763494250d2df6f9558fe93b9'
           command: ["/projector/entrypoint-init-container.sh"]
           env:
             - name: PROJECTOR_VOLUME_MOUNT
@@ -134,7 +134,7 @@ editors:
     components:
       - name: che-code-injector
         container:
-          image: 'registry.redhat.io/devspaces/code-rhel8@sha256:ceb424b356efceaa7b5c3de54d4b1da0b28a4694d171bf9c151e90081c2a6d5d'
+          image: 'registry.redhat.io/devspaces/code-rhel8@sha256:2ce9d9134addd68611f9bc6504f52e2680e76ca282f5b163d441e50b5a2eebe8'
           command: ["/entrypoint-init-container.sh"]
           volumeMounts:
             - name: checode
@@ -163,25 +163,25 @@ editors:
               targetPort: 3100
               exposure: public
               secure: true
-              protocol: http
+              protocol: https
             - name: code-redirect-1
               targetPort: 13131
               exposure: public
-              protocol: http
+              protocol: https
               attributes:
                 discoverable: false
                 urlRewriteSupported: false
             - name: code-redirect-2
               targetPort: 13132
               exposure: public
-              protocol: http
+              protocol: https
               attributes:
                 discoverable: false
                 urlRewriteSupported: false
             - name: code-redirect-3
               targetPort: 13133
               exposure: public
-              protocol: http
+              protocol: https
               attributes:
                 discoverable: false
                 urlRewriteSupported: false
@@ -220,7 +220,7 @@ editors:
     components:
       - name: che-code-injector
         container:
-          image: 'registry.redhat.io/devspaces/code-rhel8@sha256:ceb424b356efceaa7b5c3de54d4b1da0b28a4694d171bf9c151e90081c2a6d5d'
+          image: 'registry.redhat.io/devspaces/code-rhel8@sha256:2ce9d9134addd68611f9bc6504f52e2680e76ca282f5b163d441e50b5a2eebe8'
           command: ["/entrypoint-init-container.sh"]
           volumeMounts:
             - name: checode
@@ -249,25 +249,25 @@ editors:
               targetPort: 3100
               exposure: public
               secure: true
-              protocol: http
+              protocol: https
             - name: code-redirect-1
               targetPort: 13131
               exposure: public
-              protocol: http
+              protocol: https
               attributes:
                 discoverable: false
                 urlRewriteSupported: false
             - name: code-redirect-2
               targetPort: 13132
               exposure: public
-              protocol: http
+              protocol: https
               attributes:
                 discoverable: false
                 urlRewriteSupported: false
             - name: code-redirect-3
               targetPort: 13133
               exposure: public
-              protocol: http
+              protocol: https
               attributes:
                 discoverable: false
                 urlRewriteSupported: false

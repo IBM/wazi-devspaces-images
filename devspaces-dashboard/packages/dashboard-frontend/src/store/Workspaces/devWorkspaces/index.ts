@@ -14,50 +14,53 @@
 import common, { api, ApplicationId } from '@eclipse-che/common';
 import { dump } from 'js-yaml';
 import { Action, Reducer } from 'redux';
-import { AppThunk } from '../..';
-import { container } from '../../../inversify.config';
-import { FactoryParams } from '../../../services/helpers/factoryFlow/buildFactoryParams';
-import {
-  injectKubeConfig,
-  podmanLogin,
-} from '../../../services/dashboard-backend-client/devWorkspaceApi';
-import { fetchResources } from '../../../services/dashboard-backend-client/devworkspaceResourcesApi';
-import { WebsocketClient } from '../../../services/dashboard-backend-client/websocketClient';
-import devfileApi, { isDevWorkspace } from '../../../services/devfileApi';
-import { devWorkspaceKind } from '../../../services/devfileApi/devWorkspace';
+
+import { container } from '@/inversify.config';
+import * as DwApi from '@/services/backend-client/devWorkspaceApi';
+import { injectKubeConfig, podmanLogin } from '@/services/backend-client/devWorkspaceApi';
+import { fetchResources } from '@/services/backend-client/devworkspaceResourcesApi';
+import * as DwtApi from '@/services/backend-client/devWorkspaceTemplateApi';
+import { WebsocketClient } from '@/services/backend-client/websocketClient';
+import devfileApi, { isDevWorkspace } from '@/services/devfileApi';
+import { devWorkspaceKind } from '@/services/devfileApi/devWorkspace';
 import {
   DEVWORKSPACE_CHE_EDITOR,
   DEVWORKSPACE_UPDATING_TIMESTAMP_ANNOTATION,
-} from '../../../services/devfileApi/devWorkspace/metadata';
-import { getDefer, IDeferred } from '../../../services/helpers/deferred';
-import { delay } from '../../../services/helpers/delay';
-import { DisposableCollection } from '../../../services/helpers/disposable';
-import { getNewerResourceVersion } from '../../../services/helpers/resourceVersion';
-import { DevWorkspaceStatus } from '../../../services/helpers/types';
-import OAuthService from '../../../services/oauth';
-import { loadResourcesContent } from '../../../services/registry/resources';
-import { WorkspaceAdapter } from '../../../services/workspace-adapter';
+} from '@/services/devfileApi/devWorkspace/metadata';
+import { getDefer, IDeferred } from '@/services/helpers/deferred';
+import { delay } from '@/services/helpers/delay';
+import { DisposableCollection } from '@/services/helpers/disposable';
+import { FactoryParams } from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { getNewerResourceVersion } from '@/services/helpers/resourceVersion';
+import { DevWorkspaceStatus } from '@/services/helpers/types';
+import OAuthService, { isOAuthResponse } from '@/services/oauth';
+import { loadResourcesContent } from '@/services/registry/resources';
+import { WorkspaceAdapter } from '@/services/workspace-adapter';
 import {
-  DevWorkspaceClient,
-  DEVWORKSPACE_NEXT_START_ANNOTATION,
   COMPONENT_UPDATE_POLICY,
+  DEVWORKSPACE_NEXT_START_ANNOTATION,
+  DevWorkspaceClient,
   REGISTRY_URL,
-} from '../../../services/workspace-client/devworkspace/devWorkspaceClient';
-import { getCustomEditor } from '../../../services/workspace-client/helpers';
-import { selectApplications } from '../../ClusterInfo/selectors';
-import { getEditor } from '../../DevfileRegistries/getEditor';
-import { createObject } from '../../helpers';
-import { selectDefaultNamespace } from '../../InfrastructureNamespaces/selectors';
-import { AUTHORIZED, SanityCheckAction } from '../../sanityCheckMiddleware';
-import * as DwServerConfigStore from '../../ServerConfig';
+} from '@/services/workspace-client/devworkspace/devWorkspaceClient';
+import { getCustomEditor } from '@/services/workspace-client/helpers';
+import { AppThunk } from '@/store';
+import { selectApplications } from '@/store/ClusterInfo/selectors';
+import { getEditor } from '@/store/DevfileRegistries/getEditor';
+import { selectDefaultDevfile } from '@/store/DevfileRegistries/selectors';
+import { createObject } from '@/store/helpers';
+import { selectDefaultNamespace } from '@/store/InfrastructureNamespaces/selectors';
+import { selectDefaultEditor } from '@/store/Plugins/devWorkspacePlugins/selectors';
+import { selectAsyncIsAuthorized, selectSanityCheckError } from '@/store/SanityCheck/selectors';
+import { AUTHORIZED, SanityCheckAction } from '@/store/sanityCheckMiddleware';
+import * as DwServerConfigStore from '@/store/ServerConfig';
 import {
   selectOpenVSXUrl,
   selectPluginRegistryInternalUrl,
   selectPluginRegistryUrl,
   selectWaziLicenseUsage,
-} from '../../ServerConfig/selectors';
-import { checkRunningWorkspacesLimit } from './checkRunningWorkspacesLimit';
-import { selectDevWorkspacesResourceVersion } from './selectors';
+} from '@/store/ServerConfig/selectors';
+import { checkRunningWorkspacesLimit } from '@/store/Workspaces/devWorkspaces/checkRunningWorkspacesLimit';
+import { selectDevWorkspacesResourceVersion } from '@/store/Workspaces/devWorkspaces/selectors';
 
 export const onStatusChangeCallbacks = new Map<string, (status: string) => void>();
 
@@ -169,6 +172,9 @@ export type ActionCreators = {
     workspace: devfileApi.DevWorkspace,
   ) => AppThunk<KnownAction, Promise<void>>;
   updateWorkspace: (workspace: devfileApi.DevWorkspace) => AppThunk<KnownAction, Promise<void>>;
+  updateWorkspaceWithDefaultDevfile: (
+    workspace: devfileApi.DevWorkspace,
+  ) => AppThunk<KnownAction, Promise<void>>;
   createWorkspaceFromDevfile: (
     devfile: devfileApi.Devfile,
     attributes: Partial<FactoryParams>,
@@ -190,9 +196,12 @@ export const actionCreators: ActionCreators = {
   requestWorkspaces:
     (): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
-      await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
-
       try {
+        await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         const defaultKubernetesNamespace = selectDefaultNamespace(getState());
         const defaultNamespace = defaultKubernetesNamespace.name;
         const { workspaces, resourceVersion } = defaultNamespace
@@ -211,7 +220,6 @@ export const actionCreators: ActionCreators = {
           type: Type.UPDATE_STARTED_WORKSPACES,
           workspaces,
         });
-
         const promises = workspaces
           .filter(
             workspace =>
@@ -236,10 +244,13 @@ export const actionCreators: ActionCreators = {
 
   requestWorkspace:
     (workspace: devfileApi.DevWorkspace): AppThunk<KnownAction, Promise<void>> =>
-    async (dispatch): Promise<void> => {
-      await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
-
+    async (dispatch, getState): Promise<void> => {
       try {
+        await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         const namespace = workspace.metadata.namespace;
         const name = workspace.metadata.name;
         const update = await getDevWorkspaceClient().getWorkspaceByName(namespace, name);
@@ -283,9 +294,13 @@ export const actionCreators: ActionCreators = {
         console.warn(`Workspace ${_workspace.metadata.name} already started`);
         return;
       }
-      await OAuthService.refreshTokenIfNeeded(workspace);
-      await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
       try {
+        await OAuthService.refreshTokenIfNeeded(workspace);
+        await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         checkRunningWorkspacesLimit(getState());
 
         if (workspace.metadata.annotations?.[DEVWORKSPACE_NEXT_START_ANNOTATION]) {
@@ -352,6 +367,10 @@ export const actionCreators: ActionCreators = {
 
         getDevWorkspaceClient().checkForDevWorkspaceError(startingWorkspace);
       } catch (e) {
+        // Skip unauthorised errors. The page is redirecting to an SCM authentication page.
+        if (common.helpers.errors.includesAxiosResponse(e) && isOAuthResponse(e.response.data)) {
+          return;
+        }
         const errorMessage =
           `Failed to start the workspace ${workspace.metadata.name}, reason: ` +
           common.helpers.errors.getMessage(e);
@@ -429,8 +448,13 @@ export const actionCreators: ActionCreators = {
 
   terminateWorkspace:
     (workspace: devfileApi.DevWorkspace): AppThunk<KnownAction, Promise<void>> =>
-    async (dispatch): Promise<void> => {
+    async (dispatch, getState): Promise<void> => {
       try {
+        await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         const namespace = workspace.metadata.namespace;
         const name = workspace.metadata.name;
         await getDevWorkspaceClient().delete(namespace, name);
@@ -455,10 +479,13 @@ export const actionCreators: ActionCreators = {
 
   updateWorkspaceAnnotation:
     (workspace: devfileApi.DevWorkspace): AppThunk<KnownAction, Promise<void>> =>
-    async (dispatch): Promise<void> => {
-      await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
-
+    async (dispatch, getState): Promise<void> => {
       try {
+        await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         const updated = await getDevWorkspaceClient().updateAnnotation(workspace);
         dispatch({
           type: Type.UPDATE_DEVWORKSPACE,
@@ -478,10 +505,13 @@ export const actionCreators: ActionCreators = {
 
   updateWorkspace:
     (workspace: devfileApi.DevWorkspace): AppThunk<KnownAction, Promise<void>> =>
-    async (dispatch): Promise<void> => {
-      await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
-
+    async (dispatch, getState): Promise<void> => {
       try {
+        await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         const updated = await getDevWorkspaceClient().update(workspace);
         dispatch({
           type: Type.UPDATE_DEVWORKSPACE,
@@ -507,22 +537,24 @@ export const actionCreators: ActionCreators = {
     ): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
       const state = getState();
-
-      await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
-
       const defaultKubernetesNamespace = selectDefaultNamespace(state);
       const openVSXUrl = selectOpenVSXUrl(state);
       const pluginRegistryUrl = selectPluginRegistryUrl(state);
       const pluginRegistryInternalUrl = selectPluginRegistryInternalUrl(state);
       const waziLicenseUsage = selectWaziLicenseUsage(state);
-      const cheEditor = editorId ? editorId : state.dwPlugins.defaultEditorName;
       const defaultNamespace = defaultKubernetesNamespace.name;
+
       try {
+        await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         /* create a new DevWorkspace */
         const createResp = await getDevWorkspaceClient().createDevWorkspace(
           defaultNamespace,
           devWorkspaceResource,
-          cheEditor,
+          editorId,
         );
 
         if (createResp.headers.warning) {
@@ -586,6 +618,202 @@ export const actionCreators: ActionCreators = {
       }
     },
 
+  updateWorkspaceWithDefaultDevfile:
+    (workspace: devfileApi.DevWorkspace): AppThunk<KnownAction, Promise<void>> =>
+    async (dispatch, getState): Promise<void> => {
+      const state = getState();
+      const defaultsDevfile = selectDefaultDevfile(state);
+      if (!defaultsDevfile) {
+        throw new Error('Cannot define default devfile');
+      }
+      const defaultsEditor = selectDefaultEditor(state);
+      if (!defaultsEditor) {
+        throw new Error('Cannot define default editor');
+      }
+      const openVSXUrl = selectOpenVSXUrl(state);
+      const pluginRegistryUrl = selectPluginRegistryUrl(state);
+      const pluginRegistryInternalUrl = selectPluginRegistryInternalUrl(state);
+      const waziLicenseUsage = selectWaziLicenseUsage(state);
+      const clusterConsole = selectApplications(state).find(
+        app => app.id === ApplicationId.CLUSTER_CONSOLE,
+      );
+
+      let editorContent: string | undefined;
+      let editorYamlUrl: string | undefined;
+      let devWorkspaceResource: devfileApi.DevWorkspace;
+      let devWorkspaceTemplateResource: devfileApi.DevWorkspaceTemplate;
+
+      try {
+        await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
+        const response = await getEditor(defaultsEditor, dispatch, getState, pluginRegistryUrl);
+        if (response.content) {
+          editorContent = response.content;
+          editorYamlUrl = response.editorYamlUrl;
+        } else {
+          throw new Error(response.error);
+        }
+        console.debug(`Using default editor ${defaultsEditor}`);
+
+        defaultsDevfile.metadata.name = workspace.metadata.name;
+        delete defaultsDevfile.metadata.generateName;
+        const resourcesContent = await fetchResources({
+          pluginRegistryUrl,
+          devfileContent: dump(defaultsDevfile),
+          editorPath: undefined,
+          editorId: undefined,
+          editorContent,
+        });
+        const resources = loadResourcesContent(resourcesContent);
+        devWorkspaceResource = resources.find(
+          resource => resource.kind === 'DevWorkspace',
+        ) as devfileApi.DevWorkspace;
+        if (devWorkspaceResource === undefined) {
+          throw new Error('Failed to find a DevWorkspace in the fetched resources.');
+        }
+        if (devWorkspaceResource.metadata) {
+          if (!devWorkspaceResource.metadata.annotations) {
+            devWorkspaceResource.metadata.annotations = {};
+          }
+        }
+        if (!devWorkspaceResource.spec.routingClass) {
+          devWorkspaceResource.spec.routingClass = 'che';
+        }
+        devWorkspaceResource.spec.started = false;
+
+        getDevWorkspaceClient().addEnvVarsToContainers(
+          devWorkspaceResource.spec.template.components,
+          pluginRegistryUrl,
+          pluginRegistryInternalUrl,
+          openVSXUrl,
+          waziLicenseUsage,
+          clusterConsole,
+        );
+        if (!devWorkspaceResource.metadata.annotations) {
+          devWorkspaceResource.metadata.annotations = {};
+        }
+        devWorkspaceResource.spec.contributions = workspace.spec.contributions;
+
+        // add projects from the origin workspace
+        devWorkspaceResource.spec.template.projects = workspace.spec.template.projects;
+
+        devWorkspaceTemplateResource = resources.find(
+          resource => resource.kind === 'DevWorkspaceTemplate',
+        ) as devfileApi.DevWorkspaceTemplate;
+        if (devWorkspaceTemplateResource === undefined) {
+          throw new Error('Failed to find a DevWorkspaceTemplate in the fetched resources.');
+        }
+        if (!devWorkspaceTemplateResource.metadata.annotations) {
+          devWorkspaceTemplateResource.metadata.annotations = {};
+        }
+
+        // removes endpoints with 'urlRewriteSupport: false'
+        const components = devWorkspaceTemplateResource.spec?.components || [];
+        components.forEach(component => {
+          if (component.container && Array.isArray(component.container.endpoints)) {
+            component.container.endpoints = component.container.endpoints.filter(endpoint => {
+              const attributes = endpoint.attributes as { urlRewriteSupported: boolean };
+              return attributes.urlRewriteSupported;
+            });
+          }
+        });
+
+        if (editorYamlUrl) {
+          devWorkspaceTemplateResource.metadata.annotations[COMPONENT_UPDATE_POLICY] = 'managed';
+          devWorkspaceTemplateResource.metadata.annotations[REGISTRY_URL] = editorYamlUrl;
+        }
+
+        getDevWorkspaceClient().addEnvVarsToContainers(
+          devWorkspaceTemplateResource.spec?.components,
+          pluginRegistryUrl,
+          pluginRegistryInternalUrl,
+          openVSXUrl,
+          waziLicenseUsage,
+          clusterConsole,
+        );
+        const templates = await DwtApi.getTemplates(workspace.metadata.namespace);
+        const targetTemplate = templates.find(template => {
+          const ownerReferences = template.metadata?.ownerReferences || [];
+          return (
+            ownerReferences.find(
+              ownerReference => ownerReference.uid === workspace.metadata.uid,
+            ) !== undefined
+          );
+        });
+        const templateName = targetTemplate?.metadata?.name;
+        const templateNamespace = targetTemplate?.metadata?.namespace;
+        if (!templateName || !templateNamespace) {
+          throw new Error('Cannot define the target template');
+        }
+
+        const targetTemplatePatch: api.IPatch[] = [];
+        if (targetTemplate.metadata.annotations) {
+          targetTemplatePatch.push({
+            op: 'replace',
+            path: '/metadata/annotations',
+            value: devWorkspaceTemplateResource.metadata.annotations,
+          });
+        } else {
+          targetTemplatePatch.push({
+            op: 'add',
+            path: '/metadata/annotations',
+            value: devWorkspaceTemplateResource.metadata.annotations,
+          });
+        }
+        targetTemplatePatch.push({
+          op: 'replace',
+          path: '/spec',
+          value: devWorkspaceTemplateResource.spec,
+        });
+        await DwtApi.patchTemplate(templateNamespace, templateName, targetTemplatePatch);
+
+        const targetWorkspacePatch: api.IPatch[] = [];
+        devWorkspaceResource.metadata.annotations[DEVWORKSPACE_UPDATING_TIMESTAMP_ANNOTATION] =
+          new Date().toISOString();
+        devWorkspaceResource.metadata.annotations[DEVWORKSPACE_CHE_EDITOR] = defaultsEditor;
+        if (workspace.metadata.annotations) {
+          targetWorkspacePatch.push({
+            op: 'replace',
+            path: '/metadata/annotations',
+            value: devWorkspaceResource.metadata.annotations,
+          });
+        } else {
+          targetWorkspacePatch.push({
+            op: 'add',
+            path: '/metadata/annotations',
+            value: devWorkspaceResource.metadata.annotations,
+          });
+        }
+        targetWorkspacePatch.push({
+          op: 'replace',
+          path: '/spec',
+          value: devWorkspaceResource.spec,
+        });
+        const { devWorkspace } = await DwApi.patchWorkspace(
+          workspace.metadata.namespace,
+          workspace.metadata.name,
+          targetWorkspacePatch,
+        );
+
+        dispatch({
+          type: Type.UPDATE_DEVWORKSPACE,
+          workspace: devWorkspace,
+        });
+      } catch (e) {
+        const errorMessage =
+          `Failed to update the workspace ${workspace.metadata.name}, reason: ` +
+          common.helpers.errors.getMessage(e);
+        dispatch({
+          type: Type.RECEIVE_DEVWORKSPACE_ERROR,
+          error: errorMessage,
+        });
+        throw e;
+      }
+    },
+
   createWorkspaceFromDevfile:
     (
       devfile: devfileApi.Devfile,
@@ -596,10 +824,7 @@ export const actionCreators: ActionCreators = {
     ): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
       const state = getState();
-
-      await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
-
-      const pluginRegistryUrl = state.dwServerConfig.config.pluginRegistryURL;
+      const pluginRegistryUrl = selectPluginRegistryUrl(state);
       let devWorkspaceResource: devfileApi.DevWorkspace;
       let devWorkspaceTemplateResource: devfileApi.DevWorkspaceTemplate;
       let editorContent: string | undefined;
@@ -646,6 +871,11 @@ export const actionCreators: ActionCreators = {
       }
 
       try {
+        await dispatch({ type: Type.REQUEST_DEVWORKSPACE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         const resourcesContent = await fetchResources({
           pluginRegistryUrl,
           devfileContent: dump(devfile),
@@ -819,23 +1049,23 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case Type.REQUEST_DEVWORKSPACE:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         error: undefined,
       });
     case Type.RECEIVE_DEVWORKSPACE:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         workspaces: action.workspaces,
         resourceVersion: getNewerResourceVersion(action.resourceVersion, state.resourceVersion),
       });
     case Type.RECEIVE_DEVWORKSPACE_ERROR:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         error: action.error,
       });
     case Type.UPDATE_DEVWORKSPACE:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         workspaces: state.workspaces.map(workspace =>
           WorkspaceAdapter.getUID(workspace) === WorkspaceAdapter.getUID(action.workspace)
@@ -848,7 +1078,7 @@ export const reducer: Reducer<State> = (
         ),
       });
     case Type.ADD_DEVWORKSPACE:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         workspaces: state.workspaces
           .filter(
@@ -862,7 +1092,7 @@ export const reducer: Reducer<State> = (
         ),
       });
     case Type.TERMINATE_DEVWORKSPACE:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         workspaces: state.workspaces.map(workspace => {
           if (WorkspaceAdapter.getUID(workspace) === action.workspaceUID) {
@@ -878,7 +1108,7 @@ export const reducer: Reducer<State> = (
         }),
       });
     case Type.DELETE_DEVWORKSPACE:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         workspaces: state.workspaces.filter(
           workspace =>
@@ -890,7 +1120,7 @@ export const reducer: Reducer<State> = (
         ),
       });
     case Type.UPDATE_STARTED_WORKSPACES:
-      return createObject(state, {
+      return createObject<State>(state, {
         startedWorkspaces: action.workspaces.reduce((acc, workspace) => {
           if (workspace.spec.started === false) {
             delete acc[WorkspaceAdapter.getUID(workspace)];
@@ -913,7 +1143,7 @@ export const reducer: Reducer<State> = (
         }, state.startedWorkspaces),
       });
     case Type.UPDATE_WARNING:
-      return createObject(state, {
+      return createObject<State>(state, {
         warnings: {
           [WorkspaceAdapter.getUID(action.workspace)]: action.warning,
         },

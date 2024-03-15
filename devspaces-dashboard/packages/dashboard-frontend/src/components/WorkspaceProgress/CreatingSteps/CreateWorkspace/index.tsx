@@ -11,16 +11,18 @@
  */
 
 import React from 'react';
-import { delay } from '../../../../services/helpers/delay';
-import { DisposableCollection } from '../../../../services/helpers/disposable';
+
+import {
+  ProgressStep,
+  ProgressStepProps,
+  ProgressStepState,
+} from '@/components/WorkspaceProgress/ProgressStep';
+import { ProgressStepTitle } from '@/components/WorkspaceProgress/StepTitle';
 import {
   buildFactoryParams,
   FactoryParams,
-} from '../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { AlertItem } from '../../../../services/helpers/types';
-import { MIN_STEP_DURATION_MS } from '../../const';
-import { ProgressStep, ProgressStepProps, ProgressStepState } from '../../ProgressStep';
-import { ProgressStepTitle } from '../../StepTitle';
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { AlertItem } from '@/services/helpers/types';
 
 export type Props = ProgressStepProps & {
   searchParams: URLSearchParams;
@@ -31,7 +33,6 @@ export type State = ProgressStepState & {
 
 export default class CreatingStepCreateWorkspace extends ProgressStep<Props, State> {
   protected readonly name = 'Creating a workspace';
-  protected readonly toDispose = new DisposableCollection();
 
   constructor(props: Props) {
     super(props);
@@ -47,7 +48,6 @@ export default class CreatingStepCreateWorkspace extends ProgressStep<Props, Sta
   }
 
   protected async runStep(): Promise<boolean> {
-    await delay(MIN_STEP_DURATION_MS);
     return true;
   }
 
@@ -57,7 +57,7 @@ export default class CreatingStepCreateWorkspace extends ProgressStep<Props, Sta
   }
 
   render(): React.ReactElement {
-    const { distance } = this.props;
+    const { distance, hasChildren } = this.props;
     const { name } = this.state;
 
     const isError = false;
@@ -65,7 +65,12 @@ export default class CreatingStepCreateWorkspace extends ProgressStep<Props, Sta
 
     return (
       <React.Fragment>
-        <ProgressStepTitle distance={distance} isError={isError} isWarning={isWarning}>
+        <ProgressStepTitle
+          distance={distance}
+          hasChildren={hasChildren}
+          isError={isError}
+          isWarning={isWarning}
+        >
           {name}
         </ProgressStepTitle>
       </React.Fragment>

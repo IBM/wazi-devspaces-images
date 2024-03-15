@@ -10,22 +10,20 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import React from 'react';
-import { ConnectedProps, connect } from 'react-redux';
-import { AppState } from '../../store';
-import {
-  selectRegistriesErrors,
-  selectDevfileSchemaError,
-} from '../../store/DevfileRegistries/selectors';
-import { selectPluginsError } from '../../store/Plugins/chePlugins/selectors';
-import { selectDwDefaultEditorError } from '../../store/Plugins/devWorkspacePlugins/selectors';
-import { selectInfrastructureNamespacesError } from '../../store/InfrastructureNamespaces/selectors';
-import { selectUserProfileError } from '../../store/User/Profile/selectors';
-import { selectWorkspacesError } from '../../store/Workspaces/selectors';
-import { selectSanityCheckError } from '../../store/SanityCheck/selectors';
 import { AlertVariant } from '@patternfly/react-core';
-import { lazyInject } from '../../inversify.config';
-import { AppAlerts } from '../../services/alerts/appAlerts';
+import React from 'react';
+import { connect, ConnectedProps } from 'react-redux';
+
+import { lazyInject } from '@/inversify.config';
+import { AppAlerts } from '@/services/alerts/appAlerts';
+import { AppState } from '@/store';
+import { selectRegistriesErrors } from '@/store/DevfileRegistries/selectors';
+import { selectInfrastructureNamespacesError } from '@/store/InfrastructureNamespaces/selectors';
+import { selectPluginsError } from '@/store/Plugins/chePlugins/selectors';
+import { selectDwDefaultEditorError } from '@/store/Plugins/devWorkspacePlugins/selectors';
+import { selectSanityCheckError } from '@/store/SanityCheck/selectors';
+import { selectUserProfileError } from '@/store/User/Profile/selectors';
+import { selectWorkspacesError } from '@/store/Workspaces/selectors';
 
 type Props = MappedProps;
 
@@ -102,14 +100,6 @@ export class StoreErrorsAlert extends React.PureComponent<Props> {
         variant: AlertVariant.danger,
       });
     }
-    // devfile schema error
-    if (this.props.devfileSchemaError) {
-      this.appAlerts.showAlert({
-        key: 'devfile-schema-error',
-        title: this.props.devfileSchemaError,
-        variant: AlertVariant.danger,
-      });
-    }
     // user profile error
     if (this.props.userProfileError) {
       this.appAlerts.showAlert({
@@ -131,7 +121,6 @@ const mapStateToProps = (state: AppState) => ({
   sanityCheckError: selectSanityCheckError(state),
   dwDefaultEditorError: selectDwDefaultEditorError(state),
   infrastructureNamespacesError: selectInfrastructureNamespacesError(state),
-  devfileSchemaError: selectDevfileSchemaError(state),
   userProfileError: selectUserProfileError(state),
   workspacesError: selectWorkspacesError(state),
 });

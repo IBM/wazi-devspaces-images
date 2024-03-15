@@ -10,18 +10,24 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import { helpers } from '@eclipse-che/common';
 import { Action, Reducer } from 'redux';
+
+import { provisionKubernetesNamespace } from '@/services/backend-client/kubernetesNamespaceApi';
+import { getDefer } from '@/services/helpers/deferred';
+import { delay } from '@/services/helpers/delay';
+import { signIn } from '@/services/helpers/login';
+import {
+  getErrorMessage,
+  hasLoginPage,
+  isForbidden,
+  isUnauthorized,
+} from '@/services/workspace-client/helpers';
+import { createObject } from '@/store/helpers';
+
 import { AppThunk } from '..';
-import { container } from '../../inversify.config';
-import { getDefer } from '../../services/helpers/deferred';
-import { delay } from '../../services/helpers/delay';
-import { CheWorkspaceClient } from '../../services/workspace-client/cheworkspace/cheWorkspaceClient';
-import { isForbidden, isUnauthorized } from '../../services/workspace-client/helpers';
-import { createObject } from '../helpers';
 
-const WorkspaceClient = container.get(CheWorkspaceClient);
-
-const secToStale = 5;
+const secToStale = 15;
 const timeToStale = secToStale * 1000;
 const maxAttemptsNumber = 2;
 
@@ -92,7 +98,7 @@ export const actionCreators: ActionCreators = {
 
         for (let attempt = 1; attempt <= maxAttemptsNumber; attempt++) {
           try {
-            await WorkspaceClient.restApiClient.provisionKubernetesNamespace();
+            await provisionKubernetesNamespace();
 
             deferred.resolve(true);
             dispatch({
@@ -104,20 +110,27 @@ export const actionCreators: ActionCreators = {
             if (attempt === maxAttemptsNumber) {
               throw e;
             }
-            delay(1000);
+            await delay(1000);
           }
         }
       } catch (e) {
-        let errorMessage =
-          'Backend is not available. Try to refresh the page or re-login to the Dashboard.';
-        if (isUnauthorized(e) || isForbidden(e)) {
-          errorMessage = 'User session has expired. You need to re-login to the Dashboard.';
+        if (isUnauthorized(e) || (isForbidden(e) && hasLoginPage(e))) {
+          signIn();
         }
-        deferred.resolve(false);
+        const errorMessage = getErrorMessage(e);
         dispatch({
           type: Type.RECEIVED_BACKEND_CHECK_ERROR,
           error: errorMessage,
         });
+        deferred.resolve(false);
+        console.error(helpers.errors.getMessage(e));
+        if (
+          helpers.errors.includesAxiosResponse(e) &&
+          e.response.data.trace &&
+          Array.isArray(e.response.data.trace)
+        ) {
+          console.error(e.response.data.trace.join('\n'));
+        }
         throw new Error(errorMessage);
       }
     },
@@ -139,15 +152,15 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case Type.REQUEST_BACKEND_CHECK:
-      return createObject(state, {
+      return createObject<State>(state, {
         error: undefined,
         authorized: action.authorized,
         lastFetched: action.lastFetched,
       });
     case Type.RECEIVED_BACKEND_CHECK:
-      return createObject(state, {});
+      return createObject<State>(state, {});
     case Type.RECEIVED_BACKEND_CHECK_ERROR:
-      return createObject(state, {
+      return createObject<State>(state, {
         authorized: state.authorized,
         lastFetched: state.lastFetched,
         error: action.error,

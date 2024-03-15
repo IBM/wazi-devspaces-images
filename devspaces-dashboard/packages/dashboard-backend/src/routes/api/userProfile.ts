@@ -11,24 +11,27 @@
  */
 
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { baseApiPath } from '../../constants/config';
-import { namespacedSchema } from '../../constants/schemas';
-import { getSchema } from '../../services/helpers';
-import { restParams } from '../../models';
-import { getDevWorkspaceClient } from './helpers/getDevWorkspaceClient';
-import { getToken } from './helpers/getToken';
+
+import { baseApiPath } from '@/constants/config';
+import { namespacedSchema } from '@/constants/schemas';
+import { restParams } from '@/models';
+import { getDevWorkspaceClient } from '@/routes/api/helpers/getDevWorkspaceClient';
+import { getToken } from '@/routes/api/helpers/getToken';
+import { getSchema } from '@/services/helpers';
 
 const tags = ['UserProfile'];
 
-export function registerUserProfileRoute(server: FastifyInstance) {
-  server.get(
-    `${baseApiPath}/userprofile/:namespace`,
-    getSchema({ tags, params: namespacedSchema }),
-    async function (request: FastifyRequest) {
-      const { namespace } = request.params as restParams.INamespacedParams;
-      const token = getToken(request);
-      const { userProfileApi } = getDevWorkspaceClient(token);
-      return userProfileApi.getUserProfile(namespace);
-    },
-  );
+export function registerUserProfileRoute(instance: FastifyInstance) {
+  instance.register(async server => {
+    server.get(
+      `${baseApiPath}/userprofile/:namespace`,
+      getSchema({ tags, params: namespacedSchema }),
+      async function (request: FastifyRequest) {
+        const { namespace } = request.params as restParams.INamespacedParams;
+        const token = getToken(request);
+        const { userProfileApi } = getDevWorkspaceClient(token);
+        return userProfileApi.getUserProfile(namespace);
+      },
+    );
+  });
 }

@@ -10,27 +10,23 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import { Nav } from '@patternfly/react-core';
+import { History, Location, UnregisterCallback } from 'history';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { History, Location, UnregisterCallback } from 'history';
-import { Nav } from '@patternfly/react-core';
 
-import { ThemeVariant } from '../themeVariant';
-import { AppState } from '../../store';
-import NavigationMainList from './MainList';
-import NavigationRecentList from './RecentList';
-import * as WorkspacesStore from '../../store/Workspaces';
-import { selectAllWorkspaces, selectRecentWorkspaces } from '../../store/Workspaces/selectors';
-import { ROUTE } from '../../Routes/routes';
-import {
-  buildGettingStartedLocation,
-  buildWorkspacesLocation,
-} from '../../services/helpers/location';
+import NavigationMainList from '@/Layout/Navigation/MainList';
+import NavigationRecentList from '@/Layout/Navigation/RecentList';
+import { ROUTE } from '@/Routes/routes';
+import { buildGettingStartedLocation, buildWorkspacesLocation } from '@/services/helpers/location';
 import {
   DeprecatedWorkspaceStatus,
   DevWorkspaceStatus,
   WorkspaceStatus,
-} from '../../services/helpers/types';
+} from '@/services/helpers/types';
+import { AppState } from '@/store';
+import * as WorkspacesStore from '@/store/Workspaces';
+import { selectAllWorkspaces, selectRecentWorkspaces } from '@/store/Workspaces/selectors';
 
 export interface NavigationItemObject {
   to: string;
@@ -47,7 +43,6 @@ export interface NavigationRecentItemObject {
 
 type Props = MappedProps & {
   history: History;
-  theme: ThemeVariant;
 };
 
 type State = {
@@ -112,15 +107,11 @@ export class Navigation extends React.PureComponent<Props, State> {
   }
 
   public render(): React.ReactElement {
-    const { theme, recentWorkspaces, history } = this.props;
+    const { recentWorkspaces, history } = this.props;
     const { activeLocation } = this.state;
 
     return (
-      <Nav
-        aria-label="Navigation"
-        onSelect={selected => this.handleNavSelect(selected)}
-        theme={theme}
-      >
+      <Nav aria-label="Navigation" onSelect={selected => this.handleNavSelect(selected)}>
         <NavigationMainList activePath={activeLocation.pathname} />
         <NavigationRecentList
           workspaces={recentWorkspaces}

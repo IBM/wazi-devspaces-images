@@ -10,25 +10,25 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import React from 'react';
 import {
   Button,
   ButtonVariant,
-  TextInput,
-  ValidatedOptions,
   Flex,
   FlexItem,
   Form,
   FormGroup,
   Text,
-  TextVariants,
   TextContent,
+  TextInput,
+  TextVariants,
+  ValidatedOptions,
 } from '@patternfly/react-core';
 import { ExclamationCircleIcon } from '@patternfly/react-icons';
-import { FactoryLocationAdapter } from '../../../../services/factory-location-adapter';
+import React from 'react';
+
+import { FactoryLocationAdapter } from '@/services/factory-location-adapter';
 
 const ERROR_PATTERN_MISMATCH = 'The URL or SSHLocation is not valid.';
-const ERROR_FAILED_LOAD = 'Failed to load the devfile.';
 
 type Props = {
   onChange: (location: string) => void;
@@ -41,8 +41,6 @@ type State = {
 };
 
 export class GitRepoLocationInput extends React.PureComponent<Props, State> {
-  options: JSX.Element[];
-
   constructor(props: Props) {
     super(props);
 
@@ -52,19 +50,9 @@ export class GitRepoLocationInput extends React.PureComponent<Props, State> {
     };
   }
 
-  /**
-   * This method is used from parent component by reference.
-   */
-  public invalidateInput(): void {
-    this.setState({
-      errorMessage: ERROR_FAILED_LOAD,
-      validated: ValidatedOptions.error,
-    });
-  }
-
   private handleChange(location: string): void {
     const isValid =
-      FactoryLocationAdapter.isFullPathUrl(location) ||
+      FactoryLocationAdapter.isHttpLocation(location) ||
       FactoryLocationAdapter.isSshLocation(location);
 
     if (isValid) {

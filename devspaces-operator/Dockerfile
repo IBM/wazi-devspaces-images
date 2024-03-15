@@ -9,8 +9,8 @@
 #   Red Hat, Inc. - initial API and implementation
 #
 
-# https://registry.access.redhat.com/rhel8/go-toolset
-FROM rhel8/go-toolset:1.19.10-3 as builder
+# https://registry.access.redhat.com/ubi8/go-toolset
+FROM registry.access.redhat.com/ubi8/go-toolset:1.20.10-3 as builder
 ENV GOPATH=/go/ \
     CGO_ENABLED=1
 ARG SKIP_TESTS="false"
@@ -48,7 +48,7 @@ RUN export ARCH="$(uname -m)" && if [[ ${ARCH} == "x86_64" ]]; then export ARCH=
     GOOS=linux GOARCH=${ARCH} GO111MODULE=on go build -mod=vendor -a -o che-operator main.go
 
 # https://registry.access.redhat.com/ubi8-minimal
-FROM ubi8-minimal:8.8-1014
+FROM ubi8-minimal:8.9-1029
 
 COPY --from=builder /tmp/devworkspace-operator/templates /tmp/devworkspace-operator/templates
 COPY --from=builder /tmp/header-rewrite-traefik-plugin /tmp/header-rewrite-traefik-plugin
@@ -69,8 +69,8 @@ LABEL com.redhat.delivery.appregistry="false" \
       io.openshift.tags="$PRODNAME,$COMPNAME" \
       com.redhat.component="$PRODNAME-rhel8-$COMPNAME-container" \
       name="$PRODNAME/$COMPNAME" \
-      version="3.8" \
+      version="3.10" \
       license="EPLv2" \
-      maintainer="Anatolii Bazko <abazko@redhat.com>, Nick Boldt <nboldt@redhat.com>, Dmytro Nochevnov <dnochevn@redhat.com>" \
+      maintainer="Anatolii Bazko <abazko@redhat.com>, Dmytro Nochevnov <dnochevn@redhat.com>, Samantha Dawley <sdawley@redhat.com>,  Nick Boldt <nboldt@redhat.com>" \
       io.openshift.expose-services="" \
       usage=""

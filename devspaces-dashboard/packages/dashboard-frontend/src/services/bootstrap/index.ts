@@ -11,45 +11,52 @@
  *   IBM Corporation - implementation
  */
 
-import { Store } from 'redux';
 import common, { api, ApplicationId } from '@eclipse-che/common';
-import { lazyInject } from '../../inversify.config';
-import { AppState } from '../../store';
-import * as BannerAlertStore from '../../store/BannerAlert';
-import * as BrandingStore from '../../store/Branding';
-import * as ClusterConfigStore from '../../store/ClusterConfig';
-import * as ClusterInfoStore from '../../store/ClusterInfo';
-import * as ServerConfigStore from '../../store/ServerConfig';
-import * as DevfileRegistriesStore from '../../store/DevfileRegistries';
-import * as InfrastructureNamespacesStore from '../../store/InfrastructureNamespaces';
-import * as PluginsStore from '../../store/Plugins/chePlugins';
-import * as SanityCheckStore from '../../store/SanityCheck';
-import * as DwPluginsStore from '../../store/Plugins/devWorkspacePlugins';
-import * as UserProfileStore from '../../store/User/Profile';
-import * as WorkspacesStore from '../../store/Workspaces';
-import * as EventsStore from '../../store/Events';
-import * as PodsStore from '../../store/Pods';
-import * as DevWorkspacesStore from '../../store/Workspaces/devWorkspaces';
-import { ResourceFetcherService } from '../resource-fetcher';
-import { IssuesReporterService, IssueType, WorkspaceData } from './issuesReporter';
-import { DevWorkspaceClient } from '../workspace-client/devworkspace/devWorkspaceClient';
-import { selectDwEditorsPluginsList } from '../../store/Plugins/devWorkspacePlugins/selectors';
-import devfileApi from '../devfileApi';
-import { selectDefaultNamespace } from '../../store/InfrastructureNamespaces/selectors';
-import { selectDevWorkspacesResourceVersion } from '../../store/Workspaces/devWorkspaces/selectors';
-import { buildDetailsLocation, buildIdeLoaderLocation } from '../helpers/location';
-import { Workspace } from '../workspace-adapter';
-import { WorkspaceRunningError, WorkspaceStoppedDetector } from './workspaceStoppedDetector';
-import { selectOpenVSXUrl } from '../../store/ServerConfig/selectors';
-import { selectWaziLicenseUsage } from '../../store/ServerConfig/selectors';
-import { selectEmptyWorkspaceUrl } from '../../store/DevfileRegistries/selectors';
-import { WebsocketClient } from '../dashboard-backend-client/websocketClient';
-import { selectEventsResourceVersion } from '../../store/Events/selectors';
-import { selectPodsResourceVersion } from '../../store/Pods/selectors';
-import { ChannelListener } from '../dashboard-backend-client/websocketClient/messageHandler';
-import { selectApplications } from '../../store/ClusterInfo/selectors';
-import { isAvailableEndpoint } from '../helpers/api-ping';
-import { DEFAULT_REGISTRY } from '../../store/DevfileRegistries';
+import { Store } from 'redux';
+
+import { lazyInject } from '@/inversify.config';
+import { WebsocketClient } from '@/services/backend-client/websocketClient';
+import { ChannelListener } from '@/services/backend-client/websocketClient/messageHandler';
+import {
+  IssuesReporterService,
+  IssueType,
+  WorkspaceData,
+} from '@/services/bootstrap/issuesReporter';
+import {
+  WorkspaceRunningError,
+  WorkspaceStoppedDetector,
+} from '@/services/bootstrap/workspaceStoppedDetector';
+import devfileApi from '@/services/devfileApi';
+import { isAvailableEndpoint } from '@/services/helpers/api-ping';
+import { buildDetailsLocation, buildIdeLoaderLocation } from '@/services/helpers/location';
+import { ResourceFetcherService } from '@/services/resource-fetcher';
+import { Workspace } from '@/services/workspace-adapter';
+import { DevWorkspaceClient } from '@/services/workspace-client/devworkspace/devWorkspaceClient';
+import { AppState } from '@/store';
+import * as BannerAlertStore from '@/store/BannerAlert';
+import * as BrandingStore from '@/store/Branding';
+import * as ClusterConfigStore from '@/store/ClusterConfig';
+import * as ClusterInfoStore from '@/store/ClusterInfo';
+import { selectApplications } from '@/store/ClusterInfo/selectors';
+import * as DevfileRegistriesStore from '@/store/DevfileRegistries';
+import { DEFAULT_REGISTRY } from '@/store/DevfileRegistries';
+import { selectEmptyWorkspaceUrl } from '@/store/DevfileRegistries/selectors';
+import * as EventsStore from '@/store/Events';
+import { selectEventsResourceVersion } from '@/store/Events/selectors';
+import * as InfrastructureNamespacesStore from '@/store/InfrastructureNamespaces';
+import { selectDefaultNamespace } from '@/store/InfrastructureNamespaces/selectors';
+import * as PluginsStore from '@/store/Plugins/chePlugins';
+import * as DwPluginsStore from '@/store/Plugins/devWorkspacePlugins';
+import { selectDwEditorsPluginsList } from '@/store/Plugins/devWorkspacePlugins/selectors';
+import * as PodsStore from '@/store/Pods';
+import { selectPodsResourceVersion } from '@/store/Pods/selectors';
+import * as SanityCheckStore from '@/store/SanityCheck';
+import * as ServerConfigStore from '@/store/ServerConfig';
+import { selectOpenVSXUrl, selectPluginRegistryUrl, selectWaziLicenseUsage } from '@/store/ServerConfig/selectors';
+import * as UserProfileStore from '@/store/User/Profile';
+import * as WorkspacesStore from '@/store/Workspaces';
+import * as DevWorkspacesStore from '@/store/Workspaces/devWorkspaces';
+import { selectDevWorkspacesResourceVersion } from '@/store/Workspaces/devWorkspaces/selectors';
 
 /**
  * This class executes a few initial instructions
@@ -91,7 +98,7 @@ export default class Bootstrap {
 
     const results = await Promise.allSettled([
       this.fetchUserProfile(),
-      this.fetchPlugins().then(() => this.fetchDevfileSchema()),
+      this.fetchPlugins(),
       this.fetchDwPlugins(),
       this.fetchDefaultDwPlugins(),
       this.fetchRegistriesMetadata().then(() => this.fetchEmptyWorkspace()),
@@ -265,7 +272,8 @@ export default class Bootstrap {
 
   private async fetchPlugins(): Promise<void> {
     const { requestPlugins } = PluginsStore.actionCreators;
-    const pluginRegistryURL = this.store.getState().dwServerConfig.config.pluginRegistryURL;
+    const state = this.store.getState();
+    const pluginRegistryURL = selectPluginRegistryUrl(state);
     await requestPlugins(pluginRegistryURL)(this.store.dispatch, this.store.getState, undefined);
   }
 
@@ -301,9 +309,9 @@ export default class Bootstrap {
         pluginsByUrl[dwEditor.url] = dwEditor.devfile;
       });
       const openVSXUrl = selectOpenVSXUrl(state);
-      const waziLicenseUsage = selectWaziLicenseUsage(state);
-      const pluginRegistryUrl = state.dwServerConfig.config.pluginRegistryURL;
+      const pluginRegistryUrl = selectPluginRegistryUrl(state);
       const pluginRegistryInternalUrl = state.dwServerConfig.config.pluginRegistryInternalURL;
+      const waziLicenseUsage = selectWaziLicenseUsage(state);
       const clusterConsole = selectApplications(state).find(
         app => app.id === ApplicationId.CLUSTER_CONSOLE,
       );
@@ -353,6 +361,16 @@ export default class Bootstrap {
       undefined,
     );
 
+    const gettingStartedSampleURL = new URL(
+      '/dashboard/api/getting-started-sample',
+      window.location.origin,
+    ).href;
+    await requestRegistriesMetadata(gettingStartedSampleURL, false)(
+      this.store.dispatch,
+      this.store.getState,
+      undefined,
+    );
+
     const serverConfig = this.store.getState().dwServerConfig.config;
     const devfileRegistry = serverConfig.devfileRegistry;
     const internalDevfileRegistryUrl = serverConfig.devfileRegistryURL;
@@ -387,11 +405,6 @@ export default class Bootstrap {
     if (emptyWorkspaceUrl) {
       await requestDevfile(emptyWorkspaceUrl)(this.store.dispatch, this.store.getState, undefined);
     }
-  }
-
-  private async fetchDevfileSchema(): Promise<void> {
-    const { requestJsonSchema } = DevfileRegistriesStore.actionCreators;
-    return requestJsonSchema()(this.store.dispatch, this.store.getState, undefined);
   }
 
   private async fetchUserProfile(): Promise<void> {

@@ -16,24 +16,26 @@ import { createMemoryHistory, MemoryHistory } from 'history';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Action, Store } from 'redux';
-import CreatingStepApplyResources from '..';
-import { ROUTE } from '../../../../../../Routes/routes';
-import devfileApi from '../../../../../../services/devfileApi';
+
+import { MIN_STEP_DURATION_MS, TIMEOUT_TO_CREATE_SEC } from '@/components/WorkspaceProgress/const';
+import prepareResources from '@/components/WorkspaceProgress/CreatingSteps/Apply/Resources/prepareResources';
+import { ROUTE } from '@/Routes/routes';
+import getComponentRenderer from '@/services/__mocks__/getComponentRenderer';
+import devfileApi from '@/services/devfileApi';
+import { getDefer } from '@/services/helpers/deferred';
 import {
   DEV_WORKSPACE_ATTR,
   FACTORY_URL_ATTR,
   POLICIES_CREATE_ATTR,
-} from '../../../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { getDefer } from '../../../../../../services/helpers/deferred';
-import { AlertItem } from '../../../../../../services/helpers/types';
-import getComponentRenderer from '../../../../../../services/__mocks__/getComponentRenderer';
-import { AppThunk } from '../../../../../../store';
-import { DevWorkspaceResources } from '../../../../../../store/DevfileRegistries';
-import { ActionCreators } from '../../../../../../store/Workspaces/devWorkspaces';
-import { DevWorkspaceBuilder } from '../../../../../../store/__mocks__/devWorkspaceBuilder';
-import { FakeStoreBuilder } from '../../../../../../store/__mocks__/storeBuilder';
-import { MIN_STEP_DURATION_MS, TIMEOUT_TO_CREATE_SEC } from '../../../../const';
-import prepareResources from '../prepareResources';
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { AlertItem } from '@/services/helpers/types';
+import { AppThunk } from '@/store';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
+import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+import { DevWorkspaceResources } from '@/store/DevfileRegistries';
+import { ActionCreators } from '@/store/Workspaces/devWorkspaces';
+
+import CreatingStepApplyResources from '..';
 
 jest.mock('../../../../TimeLimit');
 jest.mock('../prepareResources.ts');
@@ -103,7 +105,7 @@ describe('Creating steps, applying resources', () => {
     const store = getStoreBuilder().build();
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     const expectAlertItem = expect.objectContaining({
       title: 'Failed to create the workspace',
@@ -139,7 +141,7 @@ describe('Creating steps, applying resources', () => {
         .build();
 
       renderComponent(store, searchParams);
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() =>
         expect(prepareResources).toHaveBeenCalledWith(resources, factoryId, undefined, true),
@@ -164,7 +166,7 @@ describe('Creating steps, applying resources', () => {
       searchParams.append(POLICIES_CREATE_ATTR, 'perclick');
 
       renderComponent(store, searchParams);
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() =>
         expect(prepareResources).toHaveBeenCalledWith(resources, factoryId, undefined, true),
@@ -186,7 +188,7 @@ describe('Creating steps, applying resources', () => {
         .build();
 
       renderComponent(store, searchParams);
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() =>
         expect(prepareResources).toHaveBeenCalledWith(resources, factoryId, undefined, false),
@@ -246,7 +248,7 @@ describe('Creating steps, applying resources', () => {
       });
 
       renderComponent(emptyStore, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       // trigger timeout
       const timeoutButton = screen.getByRole('button', {
@@ -263,10 +265,11 @@ describe('Creating steps, applying resources', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       await waitFor(() => expect(mockOnRestart).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
-      expect(mockOnError).not.toHaveBeenCalled();
+      expect(mockOnError).toHaveBeenCalled();
     });
   });
 
@@ -288,7 +291,8 @@ describe('Creating steps, applying resources', () => {
 
     const { reRenderComponent } = renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
+    await jest.runOnlyPendingTimersAsync();
 
     await waitFor(() => expect(mockCreateWorkspaceFromResources).toHaveBeenCalled());
 
@@ -300,7 +304,7 @@ describe('Creating steps, applying resources', () => {
 
     // wait a bit less than necessary to end the workspace creating timeout
     const time = (TIMEOUT_TO_CREATE_SEC - 1) * 1000;
-    jest.advanceTimersByTime(time);
+    await jest.advanceTimersByTimeAsync(time);
 
     // build next store
     const nextStore = getStoreBuilder()
@@ -322,7 +326,7 @@ describe('Creating steps, applying resources', () => {
       .build();
     reRenderComponent(nextStore, searchParams);
 
-    jest.runAllTimers();
+    await jest.runAllTimersAsync();
 
     await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
     expect(mockOnError).not.toHaveBeenCalled();
@@ -354,7 +358,7 @@ describe('Creating steps, applying resources', () => {
       .build();
 
     renderComponent(store, searchParams);
-    jest.runOnlyPendingTimers();
+    await jest.runAllTimersAsync();
 
     await waitFor(() => expect(screen.getByText(`Warning: ${warningMessage}`)).toBeTruthy());
 
@@ -377,6 +381,7 @@ function getComponent(store: Store, searchParams: URLSearchParams): React.ReactE
   const component = (
     <CreatingStepApplyResources
       distance={0}
+      hasChildren={false}
       searchParams={searchParams}
       history={history}
       onNextStep={mockOnNextStep}

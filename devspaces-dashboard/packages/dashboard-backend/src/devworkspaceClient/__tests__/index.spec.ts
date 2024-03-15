@@ -12,16 +12,21 @@
 
 import * as mockClientNode from '@kubernetes/client-node';
 import { KubeConfig } from '@kubernetes/client-node';
+
+import { DevWorkspaceApiService } from '@/devworkspaceClient/services/devWorkspaceApi';
+import { DevWorkspaceTemplateApiService } from '@/devworkspaceClient/services/devWorkspaceTemplateApi';
+import { DockerConfigApiService } from '@/devworkspaceClient/services/dockerConfigApi';
+import { EventApiService } from '@/devworkspaceClient/services/eventApi';
+import { GettingStartedSamplesApiService } from '@/devworkspaceClient/services/gettingStartedSamplesApi';
+import { GitConfigApiService } from '@/devworkspaceClient/services/gitConfigApi';
+import { KubeConfigApiService } from '@/devworkspaceClient/services/kubeConfigApi';
+import { LogsApiService } from '@/devworkspaceClient/services/logsApi';
+import { PodApiService } from '@/devworkspaceClient/services/podApi';
+import { ServerConfigApiService } from '@/devworkspaceClient/services/serverConfigApi';
+import { SshKeysService } from '@/devworkspaceClient/services/sshKeysApi';
+import { UserProfileApiService } from '@/devworkspaceClient/services/userProfileApi';
+
 import { DevWorkspaceClient } from '..';
-import { DevWorkspaceApiService } from '../services/devWorkspaceApi';
-import { DevWorkspaceTemplateApiService } from '../services/devWorkspaceTemplateApi';
-import { DockerConfigApiService } from '../services/dockerConfigApi';
-import { EventApiService } from '../services/eventApi';
-import { KubeConfigApiService } from '../services/kubeConfigApi';
-import { LogsApiService } from '../services/logsApi';
-import { PodApiService } from '../services/podApi';
-import { ServerConfigApiService } from '../services/serverConfigApi';
-import { UserProfileApiService } from '../services/userProfileApi';
 
 jest.mock('../services/devWorkspaceApi.ts');
 
@@ -49,5 +54,8 @@ describe('DevWorkspace client', () => {
     expect(client.podApi).toBeInstanceOf(PodApiService);
     expect(client.serverConfigApi).toBeInstanceOf(ServerConfigApiService);
     expect(client.userProfileApi).toBeInstanceOf(UserProfileApiService);
+    expect(client.gitConfigApi).toBeInstanceOf(GitConfigApiService);
+    expect(client.gettingStartedSampleApi).toBeInstanceOf(GettingStartedSamplesApiService);
+    expect(client.sshKeysApi).toBeInstanceOf(SshKeysService);
   });
 });

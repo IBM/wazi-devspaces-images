@@ -11,11 +11,11 @@
  *   IBM Corporation - implementation
  */
 
-import { container } from '../../../../inversify.config';
-import { DevWorkspaceClient } from '../devWorkspaceClient';
-import * as DwtApi from '../../../dashboard-backend-client/devWorkspaceTemplateApi';
-import * as DwApi from '../../../dashboard-backend-client/devWorkspaceApi';
-import devfileApi from '../../../devfileApi';
+import { container } from '@/inversify.config';
+import * as DwApi from '@/services/backend-client/devWorkspaceApi';
+import * as DwtApi from '@/services/backend-client/devWorkspaceTemplateApi';
+import devfileApi from '@/services/devfileApi';
+import { DevWorkspaceClient } from '@/services/workspace-client/devworkspace/devWorkspaceClient';
 
 describe('DevWorkspace client, create', () => {
   let client: DevWorkspaceClient;
@@ -148,6 +148,7 @@ describe('DevWorkspace client, create', () => {
         title: clusterConsoleTitle,
       };
 
+      // Wazi 'undefined'
       await client.createDevWorkspaceTemplate(
         namespace,
         testDevWorkspace,

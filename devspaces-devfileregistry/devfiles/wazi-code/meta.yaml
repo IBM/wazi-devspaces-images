@@ -1,6 +1,6 @@
 ---
 displayName: IBM Wazi for Dev Spaces
-description: (Analyze, Edit, Build, and Debug) IBM Z Open Editor 3.3 (for COBOL 6.4, PL/I 6.1, HLASM 2.5, REXX 2.5). IBM Z Open Debug, Zowe Explorer, Zowe CLI, Ansible.
+description: (Analyze, Edit, Build, and Debug) IBM Z Open Editor 4.0 (for COBOL 6.4, PL/I 6.1, HLASM 3.1). IBM Z Open Debug, Zowe Explorer, Zowe CLI, REXX, Ansible.
 tags: ["wazi", "cobol", "pli", "hlasm", "lsp", "zos", "zowe"]
 icon: /images/type-code.svg
 links:

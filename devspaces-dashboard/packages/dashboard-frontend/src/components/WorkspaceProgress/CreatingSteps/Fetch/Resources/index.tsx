@@ -15,21 +15,24 @@ import { AlertVariant } from '@patternfly/react-core';
 import { isEqual } from 'lodash';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+
+import { TIMEOUT_TO_RESOLVE_SEC } from '@/components/WorkspaceProgress/const';
+import {
+  ProgressStep,
+  ProgressStepProps,
+  ProgressStepState,
+} from '@/components/WorkspaceProgress/ProgressStep';
+import { ProgressStepTitle } from '@/components/WorkspaceProgress/StepTitle';
+import { TimeLimit } from '@/components/WorkspaceProgress/TimeLimit';
 import {
   buildFactoryParams,
   FactoryParams,
-} from '../../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { delay } from '../../../../../services/helpers/delay';
-import { DisposableCollection } from '../../../../../services/helpers/disposable';
-import { AlertItem } from '../../../../../services/helpers/types';
-import { AppState } from '../../../../../store';
-import * as DevfileRegistriesStore from '../../../../../store/DevfileRegistries';
-import { selectDevWorkspaceResources } from '../../../../../store/DevfileRegistries/selectors';
-import { selectAllWorkspaces } from '../../../../../store/Workspaces/selectors';
-import { MIN_STEP_DURATION_MS, TIMEOUT_TO_RESOLVE_SEC } from '../../../const';
-import { ProgressStep, ProgressStepProps, ProgressStepState } from '../../../ProgressStep';
-import { ProgressStepTitle } from '../../../StepTitle';
-import { TimeLimit } from '../../../TimeLimit';
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { AlertItem } from '@/services/helpers/types';
+import { AppState } from '@/store';
+import * as DevfileRegistriesStore from '@/store/DevfileRegistries';
+import { selectDevWorkspaceResources } from '@/store/DevfileRegistries/selectors';
+import { selectAllWorkspaces } from '@/store/Workspaces/selectors';
 
 export type Props = MappedProps &
   ProgressStepProps & {
@@ -42,7 +45,6 @@ export type State = ProgressStepState & {
 
 class CreatingStepFetchResources extends ProgressStep<Props, State> {
   protected readonly name = 'Fetching pre-built resources';
-  protected readonly toDispose = new DisposableCollection();
 
   constructor(props: Props) {
     super(props);
@@ -59,8 +61,6 @@ class CreatingStepFetchResources extends ProgressStep<Props, State> {
   }
 
   public componentDidUpdate() {
-    this.toDispose.dispose();
-
     this.init();
   }
 
@@ -136,8 +136,6 @@ class CreatingStepFetchResources extends ProgressStep<Props, State> {
   }
 
   protected async runStep(): Promise<boolean> {
-    await delay(MIN_STEP_DURATION_MS);
-
     const { devWorkspaceResources } = this.props;
     const { factoryParams, shouldResolve } = this.state;
     const { sourceUrl } = factoryParams;
@@ -174,7 +172,7 @@ class CreatingStepFetchResources extends ProgressStep<Props, State> {
   }
 
   render(): React.ReactElement {
-    const { distance } = this.props;
+    const { distance, hasChildren } = this.props;
     const { name, lastError } = this.state;
 
     const isActive = distance === 0;
@@ -186,7 +184,12 @@ class CreatingStepFetchResources extends ProgressStep<Props, State> {
         {isActive && (
           <TimeLimit timeLimitSec={TIMEOUT_TO_RESOLVE_SEC} onTimeout={() => this.handleTimeout()} />
         )}
-        <ProgressStepTitle distance={distance} isError={isError} isWarning={isWarning}>
+        <ProgressStepTitle
+          distance={distance}
+          hasChildren={hasChildren}
+          isError={isError}
+          isWarning={isWarning}
+        >
           {name}
         </ProgressStepTitle>
       </React.Fragment>

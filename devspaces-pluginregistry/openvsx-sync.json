@@ -12,7 +12,7 @@
         "id": "vscode.github-authentication"
     },
     {
-        "id": "github.vscode-pull-request-github"
+        "id": "GitHub.vscode-pull-request-github"
     },
     {
         "id": "ms-vscode.js-debug"
@@ -54,7 +54,7 @@
         "id": "ms-toolsai.vscode-jupyter-slideshow"
     },
     {
-        "id": "golang.go"
+        "id": "golang.Go"
     },
     {
         "id": "ms-kubernetes-tools.vscode-kubernetes-tools"
@@ -96,7 +96,7 @@
         "id": "muhammad-sammy.csharp"
     },
     {
-        "id": "sonarsource.sonarlint-vscode"
+        "id": "SonarSource.sonarlint-vscode"
     },
     {
         "id": "vscode.git-base"
@@ -144,12 +144,9 @@
         "id": "Zowe.vscode-extension-for-zowe"
     },
     {
-        "id": "IBM.zopeneditor"
-    },
-    {
         "id": "IBM.zopendebug"
     },
     {
-        "id": "IBM.zopendebug-profileui"
+        "id": "IBM.zopeneditor"
     }
 ]

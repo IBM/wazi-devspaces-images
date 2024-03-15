@@ -11,12 +11,10 @@
  */
 
 import common, { helpers } from '@eclipse-che/common';
-import { OAuthResponse } from '../../store/FactoryResolver';
-import { container } from '../../inversify.config';
-import { CheWorkspaceClient } from '../workspace-client/cheworkspace/cheWorkspaceClient';
-import devfileApi from '../devfileApi';
 
-const WorkspaceClient = container.get(CheWorkspaceClient);
+import { refreshFactoryOauthToken } from '@/services/backend-client/factoryApi';
+import devfileApi from '@/services/devfileApi';
+import { OAuthResponse } from '@/store/FactoryResolver';
 
 export default class OAuthService {
   static openOAuthPage(authenticationUrl: string, redirectUrl: string): void {
@@ -44,7 +42,7 @@ export default class OAuthService {
     }
 
     try {
-      await WorkspaceClient.restApiClient.refreshFactoryOauthToken(project.git.remotes.origin);
+      await refreshFactoryOauthToken(project.git.remotes.origin);
     } catch (e) {
       if (!common.helpers.errors.includesAxiosResponse(e)) {
         return;
@@ -64,7 +62,10 @@ export default class OAuthService {
           response.data.attributes.oauth_authentication_url,
           redirectUrl.toString(),
         );
+        // Interrupt the workspace start. The workspace should start again after the authentication.
+        throw e;
       }
+      // Skip other exceptions to proceed the workspace start.
     }
   }
 }

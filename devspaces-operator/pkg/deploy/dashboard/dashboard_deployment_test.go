@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2021 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -208,6 +208,10 @@ func TestDashboardDeploymentEnvVars(t *testing.T) {
 					Value: defaults.GetDevEnvironmentsDisableContainerBuildCapabilities(),
 				},
 				{
+					Name:  "CHE_DEFAULT_SPEC_DEVENVIRONMENTS_CONTAINERSECURITYCONTEXT",
+					Value: defaults.GetDevEnvironmentsContainerSecurityContext(),
+				},
+				{
 					Name:  "WAZI_LICENSE_USAGE",
 					Value: test.TestWaziLicenseUsageWazi,
 				},
@@ -287,6 +291,10 @@ func TestDashboardDeploymentEnvVars(t *testing.T) {
 				{
 					Name:  "CHE_DEFAULT_SPEC_DEVENVIRONMENTS_DISABLECONTAINERBUILDCAPABILITIES",
 					Value: defaults.GetDevEnvironmentsDisableContainerBuildCapabilities(),
+				},
+				{
+					Name:  "CHE_DEFAULT_SPEC_DEVENVIRONMENTS_CONTAINERSECURITYCONTEXT",
+					Value: defaults.GetDevEnvironmentsContainerSecurityContext(),
 				},
 				{
 					Name:  "WAZI_LICENSE_USAGE",

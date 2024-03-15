@@ -11,8 +11,9 @@
  */
 
 import { V221DevfileProjects } from '@devfile/api';
-import { FactoryLocationAdapter } from '../../../../../services/factory-location-adapter';
-import { getProjectName } from '../../../../../services/helpers/getProjectName';
+
+import { FactoryLocationAdapter } from '@/services/factory-location-adapter';
+import { getProjectName } from '@/services/helpers/getProjectName';
 
 export function getProjectFromLocation(
   location: string,
@@ -25,7 +26,7 @@ export function getProjectFromLocation(
       git: { remotes: { [remoteName]: origin } },
       name,
     };
-  } else if (FactoryLocationAdapter.isFullPathUrl(location)) {
+  } else if (FactoryLocationAdapter.isHttpLocation(location)) {
     const sourceUrl = new URL(location);
     if (sourceUrl.pathname.endsWith('.git')) {
       const origin = `${sourceUrl.origin}${sourceUrl.pathname}`;

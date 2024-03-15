@@ -12,7 +12,7 @@
 #
 
 # https://registry.access.redhat.com/rhel8/postgresql-15
-FROM rhel8/postgresql-15:1-20
+FROM registry.redhat.io/rhel8/postgresql-15:1-39
 USER 0
 WORKDIR /
 
@@ -42,12 +42,9 @@ COPY ./build/dockerfiles/content_sets_rhel8.repo /etc/yum.repos.d/
 COPY ./build/dockerfiles/rhel.install.sh /tmp
 RUN /tmp/rhel.install.sh && rm -f /tmp/rhel.install.sh
 
-# Use the final root filesystem as default directory
-WORKDIR /
-
 # Copy OpenVSX server files
 COPY --chown=0:0 /openvsx-server.tar.gz .
-RUN tar -xf openvsx-server.tar.gz && rm openvsx-server.tar.gz
+RUN tar --no-same-owner -xf openvsx-server.tar.gz && rm openvsx-server.tar.gz
 # Copy our configuration file for OpenVSX server
 COPY /build/dockerfiles/application.yaml /openvsx-server/config/
 RUN chmod -R g+rwx /openvsx-server
@@ -76,7 +73,7 @@ COPY README.md .htaccess /var/www/html/
 COPY /build/scripts/*.sh resources.tgz che-*.yaml /build/
 
 RUN chmod 755 /usr/local/bin/*.sh && \
-    tar -xvf /build/resources.tgz -C /build/ && \
+    tar --no-same-owner -xvf /build/resources.tgz -C /build/ && \
     rm -rf /build/output/v3/che-editors.yaml && \
     /build/list_referenced_images.sh /build/output/v3 --use-generated-content > /build/output/v3/external_images.txt && cat /build/output/v3/external_images.txt && \
     chmod -R g+rwX /build && \
@@ -113,7 +110,7 @@ USER postgres
 ENV LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US.UTF-8 \
-    PGDATA=/var/lib/pgsql/13/data/database \
+    PGDATA=/var/lib/pgsql/15/data/database \
     PATH="/tmp/opt/ovsx/bin:$PATH" \
     # use a cached version of the license list and not go over the internet
     # it's needed for openvsx server when vsix is publishing on AirGap environment
@@ -126,9 +123,23 @@ RUN \
     echo "======================" \
     echo -n "ovsx:  "; /tmp/opt/ovsx/bin/ovsx --version && \
     echo "======================"
-RUN chmod 777 /var/run/postgresql
 
-ARG DS_BRANCH=devspaces-3.8-rhel-8
+RUN chmod 777 /var/run/postgresql && \
+    initdb && \
+    /usr/local/bin/import_vsix.sh && \
+    chmod -R 777 /tmp/file && \
+    rm /var/lib/pgsql/15/data/database/postmaster.pid && \
+    rm /var/run/postgresql/.s.PGSQL* && \
+    rm /tmp/.s.PGSQL* && \
+    rm /tmp/.lock
+
+RUN \
+    echo "Change permissions for postgres user" && \
+    chmod -R g+rwx /var/lib/pgsql/15 /var/lib/pgsql/data /var/lib/pgsql/backups && \
+    chgrp -R 0 /var/lib/pgsql/15 /var/lib/pgsql/data /var/lib/pgsql/backups && \
+    mv /var/lib/pgsql/15/data/database /var/lib/pgsql/15/data/old
+
+ARG DS_BRANCH=devspaces-3.10-rhel-8
 ENV DS_BRANCH=${DS_BRANCH}
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
@@ -145,7 +156,7 @@ LABEL summary="$SUMMARY" \
       io.openshift.tags="$PRODNAME,$COMPNAME" \
       com.redhat.component="$PRODNAME-$COMPNAME-container" \
       name="$PRODNAME/$COMPNAME" \
-      version="3.8" \
+      version="3.10" \
       license="EPLv2" \
       maintainer="Valerii Svydenko <vsvydenk@redhat.com>, Nick Boldt <nboldt@redhat.com>" \
       io.openshift.expose-services="" \

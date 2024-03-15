@@ -19,10 +19,14 @@ export { webSocket };
 
 export type GitOauthProvider =
   | 'github'
+  | 'github_2'
   | 'gitlab'
   | 'bitbucket'
+  | 'bitbucket-server'
   | 'azure-devops';
 
+// The list of available Git providers for PAT
+// https://eclipse.dev/che/docs/stable/end-user-guide/using-a-git-provider-access-token/
 export type GitProvider =
   | 'github'
   | 'gitlab'
@@ -44,6 +48,21 @@ export type PersonalAccessToken = {
     }
 );
 
+export type SshKey = {
+  creationTimestamp?: Date;
+  name: string;
+  /**
+   * base64 encoded public key.
+   */
+  keyPub: string;
+};
+export type NewSshKey = Omit<SshKey, 'creationTimestamp'> & {
+  /**
+   * base64 encoded private key.
+   */
+  key: string;
+};
+
 export interface IPatch {
   op: string;
   path: string;
@@ -53,6 +72,19 @@ export interface IPatch {
 export interface IDockerConfig {
   dockerconfig: string;
   resourceVersion?: string;
+}
+
+export interface IGitConfig {
+  resourceVersion?: string;
+  gitconfig: {
+    user: {
+      name: string;
+      email: string;
+    };
+    [section: string]: {
+      [key: string]: string;
+    };
+  };
 }
 
 export interface IWorkspacesDefaultPlugins {
@@ -81,9 +113,7 @@ export interface IServerConfig {
     disableInternalRegistry: boolean;
     externalDevfileRegistries: IExternalDevfileRegistry[];
   };
-  pluginRegistry: {
-    openVSXURL: string;
-  };
+  pluginRegistry: IPluginRegistry;
   timeouts: {
     inactivityTimeout: number;
     runTimeout: number;
@@ -94,7 +124,14 @@ export interface IServerConfig {
   pluginRegistryInternalURL: string;
   devfileRegistryURL: string;
   devfileRegistryInternalURL: string;
+  dashboardLogo?: { base64data: string; mediatype: string };
   waziLicenseUsage: string;
+}
+
+export interface IPluginRegistry {
+  disableInternalRegistry?: boolean;
+  externalPluginRegistries?: { url: string }[];
+  openVSXURL?: string;
 }
 
 export interface IUserProfile {
@@ -126,4 +163,12 @@ export interface IDevWorkspaceResources {
   pluginRegistryUrl: string | undefined;
   editorId: string | undefined;
   editorContent: string | undefined;
+}
+
+export interface IGettingStartedSample {
+  displayName: string;
+  description?: string;
+  icon: { base64data: string; mediatype: string };
+  url: string;
+  tags?: Array<string>;
 }

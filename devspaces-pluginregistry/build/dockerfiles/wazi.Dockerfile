@@ -12,13 +12,13 @@
 #
 
 # OpenVSX
-FROM ghcr.io/eclipse/openvsx-server:d7fba39 AS openvsx-server
+FROM ghcr.io/eclipse/openvsx-server:v0.14.2 AS openvsx-server
 
 ### Open VSX Server - Builder
 FROM registry.access.redhat.com/ubi8/ubi:latest as ovsx-server-builder
 
 ENV \
-    CURRENT_BRANCH="devspaces-3.8-rhel-8"
+    CURRENT_BRANCH="devspaces-3.10-rhel-8"
 
 RUN \
     YUM_PKGS="java-17-openjdk-devel git jq unzip curl" && \
@@ -44,7 +44,7 @@ FROM registry.access.redhat.com/ubi8/nodejs-18:latest as ovsx-lib-builder
 USER 0
 
 ENV \
-    ovsx_version=0.8.2 \
+    ovsx_version=0.8.3 \
     npm_config_cache=/tmp/opt/cache
 
 # Install pre-requisites for ovsx (multi-arch support)
@@ -117,12 +117,12 @@ RUN \
     tar -xzf openvsx-server.tar.gz && \
     tar -xzf ovsx.tar.gz && \
     tar -xzf resources.tar.gz && \
-    mv /output /build && \
+    mv -v /output /build && \
     rm -rvf /build/output/v3/che-editors.yaml && \
     /tmp/rhel.install.sh && \
     /build/wazi_plugin.sh /build/output/v3 && \
     /build/list_referenced_images.sh /build/output/v3 --use-generated-content > /build/output/v3/external_images.txt && \
-    rm -rvf /build/output/v3//plugins/wazi.external_images.yaml && \
+    rm -rvf /build/output/v3/plugins/wazi.external_images.yaml && \
     cat /build/output/v3/external_images.txt && \
     mv /build/output/v3 /var/www/html/ && \
     cat /etc/passwd | sed s#root:x.*#root:x:\${USER_ID}:\${GROUP_ID}::\${HOME}:/bin/bash#g > /.passwd.template && \
@@ -145,12 +145,12 @@ RUN \
 STOPSIGNAL SIGWINCH
 
 USER postgres
-ARG DS_BRANCH=devspaces-3.6-rhel-8
+ARG DS_BRANCH=devspaces-3.10-rhel-8
 ENV \
     LC_ALL=en_US.UTF-8 \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US.UTF-8 \
-    PGDATA=/var/lib/pgsql/13/data/database \
+    PGDATA=/var/lib/pgsql/15/data/database \
     PATH="/tmp/opt/ovsx/bin:$PATH" \
     JVM_ARGS="-DSPDXParser.OnlyUseLocalLicenses=true -Xmx2048m" \
     DS_BRANCH=${DS_BRANCH}
@@ -161,9 +161,19 @@ RUN \
     echo "======================" \
     echo -n "ovsx:  "; /tmp/opt/ovsx/bin/ovsx --version && \
     echo "======================" && \
-    chmod 777 /var/run/postgresql
+    chmod 777 /var/run/postgresql && \
+    initdb && \
+    /usr/local/bin/import_vsix.sh && \
+    chmod -R 777 /tmp/file && \
+    rm /var/lib/pgsql/15/data/database/postmaster.pid && \
+    rm /var/run/postgresql/.s.PGSQL* && \
+    rm /tmp/.s.PGSQL* && \
+    rm /tmp/.lock && \
+    chmod -R g+rwx /var/lib/pgsql/15 /var/lib/pgsql/data /var/lib/pgsql/backups && \
+    chgrp -R 0 /var/lib/pgsql/15 /var/lib/pgsql/data /var/lib/pgsql/backups && \
+    mv /var/lib/pgsql/15/data/database /var/lib/pgsql/15/data/old
 
-ARG PRODUCT_VERSION="3.0.1"
+ARG PRODUCT_VERSION="4.0.0"
 ENV \
     SUMMARY="IBM Wazi for Dev Spaces" \
     DESCRIPTION="IBM Wazi for Dev Spaces" \

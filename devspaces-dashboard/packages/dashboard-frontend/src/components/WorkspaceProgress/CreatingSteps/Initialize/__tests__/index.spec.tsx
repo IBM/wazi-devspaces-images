@@ -14,20 +14,20 @@ import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Store } from 'redux';
-import CreatingStepInitialize from '..';
+
+import { MIN_STEP_DURATION_MS } from '@/components/WorkspaceProgress/const';
+import getComponentRenderer, { waitFor } from '@/services/__mocks__/getComponentRenderer';
 import {
   DEV_WORKSPACE_ATTR,
   ERROR_CODE_ATTR,
   FACTORY_URL_ATTR,
   POLICIES_CREATE_ATTR,
-} from '../../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { AlertItem } from '../../../../../services/helpers/types';
-import getComponentRenderer, {
-  waitFor,
-} from '../../../../../services/__mocks__/getComponentRenderer';
-import { DevWorkspaceBuilder } from '../../../../../store/__mocks__/devWorkspaceBuilder';
-import { FakeStoreBuilder } from '../../../../../store/__mocks__/storeBuilder';
-import { MIN_STEP_DURATION_MS } from '../../../const';
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { AlertItem } from '@/services/helpers/types';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
+import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+
+import CreatingStepInitialize from '..';
 
 const { renderComponent } = getComponentRenderer(getComponent);
 
@@ -69,7 +69,7 @@ describe('Creating steps, initializing', () => {
 
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     const expectAlertItem = expect.objectContaining({
       title: 'Failed to create the workspace',
@@ -95,7 +95,7 @@ describe('Creating steps, initializing', () => {
 
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     const expectAlertItem = expect.objectContaining({
       title: 'Failed to create the workspace',
@@ -120,7 +120,7 @@ describe('Creating steps, initializing', () => {
 
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     const expectAlertItem = expect.objectContaining({
       title: 'Failed to create the workspace',
@@ -147,7 +147,7 @@ describe('Creating steps, initializing', () => {
 
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
     expect(mockOnError).not.toHaveBeenCalled();
@@ -162,7 +162,7 @@ describe('Creating steps, initializing', () => {
 
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     const expectAlertItem = expect.objectContaining({
       title: 'Failed to create the workspace',
@@ -189,7 +189,7 @@ describe('Creating steps, initializing', () => {
 
     renderComponent(storeNoNamespace, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     const expectAlertItem = expect.objectContaining({
       title: 'Failed to create the workspace',
@@ -220,7 +220,7 @@ describe('Creating steps, initializing', () => {
 
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     const expectAlertItem = expect.objectContaining({
       title: 'Failed to create the workspace',
@@ -244,6 +244,7 @@ function getComponent(store: Store, searchParams: URLSearchParams): React.ReactE
     <Provider store={store}>
       <CreatingStepInitialize
         distance={0}
+        hasChildren={false}
         history={history}
         searchParams={searchParams}
         onNextStep={mockOnNextStep}

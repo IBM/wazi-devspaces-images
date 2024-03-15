@@ -14,12 +14,17 @@ import { api, helpers } from '@eclipse-che/common';
 import * as k8s from '@kubernetes/client-node';
 import { Log, V1Container, V1Pod, V1Status } from '@kubernetes/client-node';
 import { Writable } from 'stream';
-import { isHttpError, isResponse, isV1Status } from '../../../helpers/typeguards';
-import { delay } from '../../../services/helpers';
-import { MessageListener } from '../../../services/types/Observer';
-import { ILogsApi } from '../../types';
-import { CoreV1API, prepareCoreV1API } from '../helpers/prepareCoreV1API';
-import { RETRY_DELAY_SECONDS, RETRY_NUMBER } from './const';
+
+import {
+  CoreV1API,
+  prepareCoreV1API,
+} from '@/devworkspaceClient/services/helpers/prepareCoreV1API';
+import { RETRY_DELAY_SECONDS, RETRY_NUMBER } from '@/devworkspaceClient/services/logsApi/const';
+import { ILogsApi } from '@/devworkspaceClient/types';
+import { isHttpError, isResponse, isV1Status } from '@/helpers/typeguards';
+import { delay } from '@/services/helpers';
+import { MessageListener } from '@/services/types/Observer';
+import { logger } from '@/utils/logger';
 
 type StopWatchCallback = () => void;
 type ContainerName = string;
@@ -64,7 +69,7 @@ export class LogsApiService implements ILogsApi {
         params,
       });
 
-      console.warn(`Unable to watch logs in pod "${params.podName}". Error:`, e);
+      logger.warn(e, `Unable to watch logs in pod "${params.podName}".`);
     }
 
     await Promise.all(
@@ -179,7 +184,6 @@ export class LogsApiService implements ILogsApi {
       this.storeStopWatchCallback(params, containerName, () => request.destroy());
     } catch (e) {
       const status = this.buildStatus(e);
-      console.warn(status.message);
 
       listener({
         eventPhase: api.webSocket.EventPhase.ERROR,
@@ -187,7 +191,7 @@ export class LogsApiService implements ILogsApi {
         params: { ...params, containerName },
       });
 
-      console.warn(`Unable to watch logs of ${containerName} in ${podName}: ${status.message}`);
+      logger.warn(e, `Unable to watch logs of ${containerName} in ${podName}.`);
       throw e;
     }
   }

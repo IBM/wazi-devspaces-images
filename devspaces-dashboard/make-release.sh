@@ -7,6 +7,9 @@
 #
 # SPDX-License-Identifier: EPL-2.0
 #
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+#
 
 # Release process automation script.
 # Used to create branch/tag, update VERSION files
@@ -61,8 +64,7 @@ bump_version () {
         git checkout "${PR_BRANCH}"
         git pull origin "${PR_BRANCH}"
         git push origin "${PR_BRANCH}"
-        lastCommitComment="$(git log -1 --pretty=%B)"
-        hub pull-request -f -m "${lastCommitComment}" -b "${BUMP_BRANCH}" -h "${PR_BRANCH}"
+        gh pr create -f -B "${BUMP_BRANCH}" -H "${PR_BRANCH}"
     fi
     set -e
   fi
@@ -75,6 +77,15 @@ function update_pkgs_versions() {
   npm --no-git-tag-version version --allow-same-version "${VER}"
   # update each package version
   lerna version --no-git-tag-version -y "${VER}"
+  if [[ ${VER} != *"-next" ]]; then
+    # update devworkspace generator version for release
+    jq ".\"dependencies\".\"@eclipse-che/che-devworkspace-generator\" = \"${VER}\"" packages/dashboard-backend/package.json > packages/dashboard-backend/package.json.update
+    mv packages/dashboard-backend/package.json.update packages/dashboard-backend/package.json
+  elif [[ "${BASEBRANCH}" == "${BRANCH}" ]]; then
+    # update devworkspace generator version only for bugfix branch version bump
+    jq ".\"dependencies\".\"@eclipse-che/che-devworkspace-generator\" = \"next-${BRANCH}\"" packages/dashboard-backend/package.json > packages/dashboard-backend/package.json.update
+    mv packages/dashboard-backend/package.json.update packages/dashboard-backend/package.json
+  fi
   # update excluded dependencies vesion
   sed_in_place -e "s/@eclipse-che\/dashboard-backend@.*\`/@eclipse-che\/dashboard-backend@${VER}\`/" .deps/EXCLUDED/prod.md
   sed_in_place -e "s/@eclipse-che\/dashboard-frontend@.*\`/@eclipse-che\/dashboard-frontend@${VER}\`/" .deps/EXCLUDED/prod.md
@@ -86,7 +97,7 @@ function update_pkgs_versions() {
 usage ()
 {
   echo "Usage: $0 --version [VERSION TO RELEASE] [--tag-release]"
-  echo "Example: $0 --version 7.7.0 --tag-release"; echo
+  echo "Example: $0 --version 7.75.0 --tag-release"; echo
 }
 
 if [[ ! ${VERSION} ]]; then
@@ -122,7 +133,7 @@ update_pkgs_versions $VERSION
 
 # commit change into branch
 if [[ ${NOCOMMIT} -eq 0 ]]; then
-  COMMIT_MSG="chore: Bump to ${VERSION} in ${BRANCH}"
+  COMMIT_MSG="chore: release: bump to ${VERSION} in ${BRANCH}"
   git commit -asm "${COMMIT_MSG}"
   git pull origin "${BRANCH}"
   git push origin "${BRANCH}"

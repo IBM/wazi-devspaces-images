@@ -10,17 +10,18 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { createHashHistory, History, Location } from 'history';
+import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router';
-import { WorkspaceDetails, Props } from '..';
-import { DevWorkspaceBuilder } from '../../../store/__mocks__/devWorkspaceBuilder';
-import { FakeStoreBuilder } from '../../../store/__mocks__/storeBuilder';
-import { constructWorkspace } from '../../../services/workspace-adapter';
-import devfileApi from '../../../services/devfileApi';
+
+import devfileApi from '@/services/devfileApi';
+import { constructWorkspace } from '@/services/workspace-adapter';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
+import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+
+import { Props, WorkspaceDetails } from '..';
 
 const mockOnSave = jest.fn();
 
@@ -72,24 +73,11 @@ describe('Workspace Details page', () => {
         workspace,
       });
 
-      const overviewTab = screen.getByRole('button', { name: 'Overview' });
-      const devfileTab = screen.getByRole('button', { name: 'Devfile' });
+      const overviewTab = screen.queryByRole('tab', { name: 'Overview' });
+      const devfileTab = screen.queryByRole('tab', { name: 'Devfile' });
 
       expect(overviewTab).toBeTruthy();
       expect(devfileTab).toBeTruthy();
-    });
-
-    it('should show the Devfile tab content', () => {
-      const workspace = constructWorkspace(devWorkspaceBuilder.build());
-      renderComponent({
-        workspace,
-      });
-
-      const devfileTab = screen.getByRole('button', { name: 'Devfile' });
-      userEvent.click(devfileTab);
-
-      const fakeEditor = screen.queryByText('Fake Editor Tab');
-      expect(fakeEditor).toBeTruthy();
     });
   });
 
@@ -115,56 +103,6 @@ describe('Workspace Details page', () => {
         oldWorkspaceLocation: oldWorkspacePath,
       });
       expect(screen.queryByRole('link', { name: 'Show Original Devfile' })).toBeTruthy();
-    });
-  });
-
-  describe('Saving changes', () => {
-    test('successfully saved changes', async () => {
-      const workspace = constructWorkspace(devWorkspaceBuilder.build());
-
-      const spyHistoryReplace = jest.spyOn(history, 'replace');
-
-      renderComponent({
-        workspace,
-      });
-
-      const devfileTab = screen.getByRole('button', { name: 'Devfile' });
-      userEvent.click(devfileTab);
-
-      const saveButton = screen.getByRole('button', { name: 'Save' });
-      userEvent.click(saveButton);
-
-      await waitFor(() => expect(mockOnSave).toHaveBeenCalled());
-      await waitFor(() => expect(spyHistoryReplace).toHaveBeenCalled());
-
-      spyHistoryReplace.mockReset();
-    });
-
-    test('failure when saving changes', async () => {
-      const workspace = constructWorkspace(devWorkspaceBuilder.build());
-
-      const spyHistoryReplace = jest.spyOn(history, 'replace');
-      mockOnSave.mockImplementationOnce(() => {
-        throw new Error('Failed.');
-      });
-
-      renderComponent({
-        workspace,
-      });
-
-      const devfileTab = screen.getByRole('button', { name: 'Devfile' });
-      userEvent.click(devfileTab);
-
-      const saveButton = screen.getByRole('button', { name: 'Save' });
-      userEvent.click(saveButton);
-
-      await waitFor(() => expect(mockOnSave).toHaveBeenCalled());
-
-      const errorMessage = screen.queryByTestId('current-request-error');
-      await waitFor(() => expect(errorMessage).toHaveTextContent('Failed.'));
-
-      expect(spyHistoryReplace).not.toHaveBeenCalled();
-      spyHistoryReplace.mockReset();
     });
   });
 });

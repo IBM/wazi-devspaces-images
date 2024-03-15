@@ -8,6 +8,7 @@
  *
  * Contributors:
  *   Red Hat, Inc. - initial API and implementation
+ *   IBM Corporation - implementation
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -18,38 +19,104 @@ import { dump } from 'js-yaml';
 import { AnyAction } from 'redux';
 import { MockStoreEnhanced } from 'redux-mock-store';
 import { ThunkDispatch } from 'redux-thunk';
-import * as testStore from '..';
-import { AppState } from '../../..';
-import { container } from '../../../../inversify.config';
-import { FactoryParams } from '../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { fetchServerConfig } from '../../../../services/dashboard-backend-client/serverConfigApi';
-import { WebsocketClient } from '../../../../services/dashboard-backend-client/websocketClient';
-import devfileApi from '../../../../services/devfileApi';
-import { DevWorkspaceClient } from '../../../../services/workspace-client/devworkspace/devWorkspaceClient';
-import { AUTHORIZED } from '../../../sanityCheckMiddleware';
-import * as ServerConfigStore from '../../../ServerConfig';
-import { DevWorkspaceBuilder } from '../../../__mocks__/devWorkspaceBuilder';
-import { FakeStoreBuilder } from '../../../__mocks__/storeBuilder';
-import { checkRunningWorkspacesLimit } from '../checkRunningWorkspacesLimit';
 
-jest.mock('../../../../services/dashboard-backend-client/serverConfigApi');
+import { container } from '@/inversify.config';
+import { fetchServerConfig } from '@/services/backend-client/serverConfigApi';
+import { WebsocketClient } from '@/services/backend-client/websocketClient';
+import devfileApi from '@/services/devfileApi';
+import { DEVWORKSPACE_STORAGE_TYPE_ATTR } from '@/services/devfileApi/devWorkspace/spec/template';
+import { FactoryParams } from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { DevWorkspaceClient } from '@/services/workspace-client/devworkspace/devWorkspaceClient';
+import { AppState } from '@/store';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
+import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+import { AUTHORIZED } from '@/store/sanityCheckMiddleware';
+import * as ServerConfigStore from '@/store/ServerConfig';
+import { checkRunningWorkspacesLimit } from '@/store/Workspaces/devWorkspaces/checkRunningWorkspacesLimit';
+
+import * as testStore from '..';
+
+jest.mock('../../../../services/backend-client/serverConfigApi');
 jest.mock('../../../../services/helpers/delay', () => ({
   delay: jest.fn().mockResolvedValue(undefined),
 }));
 jest.mock('../checkRunningWorkspacesLimit.ts');
 
-jest.mock('../../../../services/dashboard-backend-client/devworkspaceResourcesApi', () => ({
+jest.mock('../../../../services/backend-client/devworkspaceResourcesApi', () => ({
   fetchResources: () => `
 apiVersion: workspace.devfile.io/v1alpha2
 kind: DevWorkspaceTemplate
 metadata:
   name: che-code
+spec:
+  components:
+    - name: che-code-runtime-description
+      container:
+        image: quay.io/devfile/universal-developer-image:next
+        endpoints:
+          - name: che-code
+            attributes:
+              type: main
+              cookiesAuthEnabled: true
+              discoverable: false
+              urlRewriteSupported: true
+            targetPort: 3100
+            exposure: public
+            secure: false
+            protocol: https
+          - name: code-redirect-1
+            attributes:
+              discoverable: false
+              urlRewriteSupported: false
+            targetPort: 13131
+            exposure: public
+            protocol: http
+          - name: code-redirect-2
+            attributes:
+              discoverable: false
+              urlRewriteSupported: false
+            targetPort: 13132
+            exposure: public
+            protocol: http
+          - name: code-redirect-3
+            attributes:
+              discoverable: false
+              urlRewriteSupported: false
+            targetPort: 13133
+            exposure: public
+            protocol: http
 ---
 apiVersion: workspace.devfile.io/v1alpha2
 kind: DevWorkspace
 metadata:
   name: che
+spec:
+  routingClass: che
+  template:
+    components: []
 `,
+}));
+
+const mockPatchTemplate = jest.fn();
+jest.mock('../../../../services/backend-client/devWorkspaceTemplateApi', () => ({
+  getTemplates: () => [
+    {
+      apiVersion: 'workspace.devfile.io/v1alpha2',
+      kind: 'DevWorkspaceTemplate',
+      metadata: {
+        name: 'che-code',
+        namespace: 'test-che',
+        ownerReferences: [{ uid: 'testDevWorkspaceUID' }],
+      },
+    },
+  ],
+  patchTemplate: (templateNamespace, templateName, targetTemplatePatch) =>
+    mockPatchTemplate(templateNamespace, templateName, targetTemplatePatch),
+}));
+const mockPatchWorkspace = jest.fn();
+jest.mock('../../../../services/backend-client/devWorkspaceApi', () => ({
+  patchWorkspace: (namespace, workspaceName, patch) =>
+    mockPatchWorkspace(namespace, workspaceName, patch),
 }));
 
 // DevWorkspaceClient mocks
@@ -70,10 +137,8 @@ const mockUpdateAnnotation = jest.fn();
 
 describe('DevWorkspace store, actions', () => {
   const devWorkspaceClient = container.get(DevWorkspaceClient);
-
   let storeBuilder: FakeStoreBuilder;
   let store: MockStoreEnhanced<AppState, ThunkDispatch<AppState, undefined, AnyAction>>;
-
   beforeEach(() => {
     container.snapshot();
     devWorkspaceClient.changeWorkspaceStatus = mockChangeWorkspaceStatus;
@@ -353,6 +418,177 @@ describe('DevWorkspace store, actions', () => {
     });
   });
 
+  describe('updateWorkspaceWithDefaultDevfile', () => {
+    const timestampNew = '2023-08-15T11:59:18.331Z';
+    beforeEach(() => {
+      class MockDate extends Date {
+        constructor() {
+          super(timestampNew);
+        }
+      }
+      window.Date = MockDate as DateConstructor;
+    });
+
+    it('should create REQUEST_DEVWORKSPACE and UPDATE_DEVWORKSPACE when update DevWorkspace with default devfile', async () => {
+      const devWorkspace = new DevWorkspaceBuilder()
+        .withName('dev-wksp')
+        .withNamespace('test-che')
+        .withUID('testDevWorkspaceUID')
+        .build();
+
+      mockPatchTemplate.mockResolvedValueOnce({});
+      mockPatchWorkspace.mockResolvedValueOnce({ devWorkspace: devWorkspace });
+
+      const store = storeBuilder
+        .withDevWorkspaces({ workspaces: [devWorkspace] })
+        .withDevfileRegistries({
+          registries: {
+            ['https://registry-url']: {
+              metadata: [
+                {
+                  displayName: 'Empty Workspace',
+                  description: 'Start an empty remote development environment',
+                  tags: ['Empty'],
+                  icon: '/images/empty.svg',
+                  links: {
+                    v2: 'https://resources-url',
+                  },
+                } as che.DevfileMetaData,
+              ],
+            },
+          },
+          devfiles: {
+            ['https://resources-url']: {
+              content: dump({
+                schemaVersion: '2.1.0',
+                metadata: {
+                  generateName: 'empty',
+                },
+              } as devfileApi.Devfile),
+            },
+            'https://dummy.registry/plugins/che-incubator/che-code/latest/devfile.yaml': {
+              content: dump({
+                apiVersion: 'workspace.devfile.io/v1alpha2',
+                kind: 'DevWorkspaceTemplate',
+                metadata: {
+                  name: 'che-code',
+                },
+                spec: {
+                  components: [],
+                },
+              }),
+            },
+          },
+        })
+        .withDwPlugins({}, false, undefined, 'che-incubator/che-code/latest')
+        .build();
+
+      await store.dispatch(
+        testStore.actionCreators.updateWorkspaceWithDefaultDevfile(devWorkspace),
+      );
+
+      const actions = store.getActions();
+
+      const expectedActions: Array<testStore.KnownAction | ServerConfigStore.KnownAction> = [
+        {
+          type: testStore.Type.REQUEST_DEVWORKSPACE,
+          check: AUTHORIZED,
+        },
+        {
+          type: testStore.Type.UPDATE_DEVWORKSPACE,
+          workspace: devWorkspace,
+        },
+      ];
+
+      expect(mockPatchTemplate).toHaveBeenCalledWith('test-che', 'che-code', [
+        {
+          op: 'add',
+          path: '/metadata/annotations',
+          value: {
+            'che.eclipse.org/components-update-policy': 'managed',
+            'che.eclipse.org/plugin-registry-url':
+              'https://dummy.registry/plugins/che-incubator/che-code/latest/devfile.yaml',
+          },
+        },
+        {
+          op: 'replace',
+          path: '/spec',
+          value: {
+            components: [
+              {
+                name: 'che-code-runtime-description',
+                container: {
+                  image: 'quay.io/devfile/universal-developer-image:next',
+                  endpoints: [
+                    {
+                      name: 'che-code',
+                      attributes: {
+                        type: 'main',
+                        discoverable: false,
+                        cookiesAuthEnabled: true,
+                        urlRewriteSupported: true,
+                      },
+                      targetPort: 3100,
+                      exposure: 'public',
+                      secure: false,
+                      protocol: 'https',
+                    },
+                  ],
+                  env: [
+                    {
+                      name: 'CHE_DASHBOARD_URL',
+                      value: 'http://localhost',
+                    },
+                    {
+                      name: 'CHE_PLUGIN_REGISTRY_URL',
+                      value: 'https://dummy.registry',
+                    },
+                    {
+                      name: 'CHE_PLUGIN_REGISTRY_INTERNAL_URL',
+                      value: '',
+                    },
+                    {
+                      name: 'OPENVSX_REGISTRY_URL',
+                      value: '',
+                    },
+                    {
+                      name: 'WAZI_LICENSE_USAGE',
+                      value: '',
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ]);
+      expect(mockPatchWorkspace).toHaveBeenCalledWith('test-che', 'dev-wksp', [
+        {
+          op: 'replace',
+          path: '/metadata/annotations',
+          value: {
+            'che.eclipse.org/che-editor': 'che-incubator/che-code/latest',
+            'che.eclipse.org/last-updated-timestamp': '2023-08-15T11:59:18.331Z',
+          },
+        },
+        {
+          op: 'replace',
+          path: '/spec',
+          value: {
+            contributions: undefined,
+            routingClass: 'che',
+            started: false,
+            template: {
+              components: [],
+              projects: undefined,
+            },
+          },
+        },
+      ]);
+      expect(actions).toStrictEqual(expectedActions);
+    });
+  });
+
   describe('stopWorkspace', () => {
     it('should create no actions', async () => {
       const devWorkspace = new DevWorkspaceBuilder().build();
@@ -404,6 +640,10 @@ describe('DevWorkspace store, actions', () => {
 
       const expectedActions: Array<testStore.KnownAction> = [
         {
+          type: testStore.Type.REQUEST_DEVWORKSPACE,
+          check: AUTHORIZED,
+        },
+        {
           message: 'Cleaning up resources for deletion',
           type: testStore.Type.TERMINATE_DEVWORKSPACE,
           workspaceUID: devWorkspace.metadata.uid,
@@ -427,6 +667,10 @@ describe('DevWorkspace store, actions', () => {
       const actions = store.getActions();
 
       const expectedActions: Array<testStore.KnownAction> = [
+        {
+          type: testStore.Type.REQUEST_DEVWORKSPACE,
+          check: AUTHORIZED,
+        },
         {
           type: testStore.Type.RECEIVE_DEVWORKSPACE_ERROR,
           error: `Failed to delete the workspace ${devWorkspace.metadata.name}, reason: Something unexpected happened.`,
@@ -687,6 +931,12 @@ describe('DevWorkspace store, actions', () => {
             metadata: {
               annotations: {},
               name: 'che',
+            },
+            spec: {
+              routingClass: 'che',
+              template: {
+                components: [],
+              },
             },
           },
         ]),

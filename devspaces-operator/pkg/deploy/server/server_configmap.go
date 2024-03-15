@@ -9,6 +9,7 @@
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
 //
+
 package server
 
 import (
@@ -258,7 +259,7 @@ func (s *CheServerReconciler) getCheConfigMapData(ctx *chetypes.DeployContext) (
 
 	s.updateUserClusterRoles(ctx, cheEnv)
 
-	for _, oauthProvider := range []string{"bitbucket", "gitlab", "github", constants.AzureDevOpsOAuth} {
+	for _, oauthProvider := range []string{"bitbucket", "gitlab", constants.AzureDevOpsOAuth} {
 		err := s.updateIntegrationServerEndpoints(ctx, cheEnv, oauthProvider)
 		if err != nil {
 			return nil, err

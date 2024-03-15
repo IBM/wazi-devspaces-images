@@ -10,13 +10,13 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import axios from 'axios';
 import common from '@eclipse-che/common';
+import axios from 'axios';
 
 export async function fetchData<T>(url: string): Promise<T> {
   try {
     const response = await axios.get<T>(url);
-    return response.data;
+    return response?.data;
   } catch (e) {
     throw new Error(common.helpers.errors.getMessage(e));
   }

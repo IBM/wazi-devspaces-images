@@ -6,4 +6,4 @@ openvsx-server.tar.gz
 postgresql13.tar.gz
 ds_config.json
 bundles.db
-.vscode
+/.vscode

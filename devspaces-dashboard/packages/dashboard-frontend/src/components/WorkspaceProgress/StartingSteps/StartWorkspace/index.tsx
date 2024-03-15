@@ -15,21 +15,29 @@ import { AlertVariant } from '@patternfly/react-core';
 import { isEqual } from 'lodash';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { WorkspaceParams } from '../../../../Routes/routes';
-import { delay } from '../../../../services/helpers/delay';
-import { DisposableCollection } from '../../../../services/helpers/disposable';
-import { findTargetWorkspace } from '../../../../services/helpers/factoryFlow/findTargetWorkspace';
-import { AlertItem, DevWorkspaceStatus, LoaderTab } from '../../../../services/helpers/types';
-import { Workspace } from '../../../../services/workspace-adapter';
-import { AppState } from '../../../../store';
-import { selectStartTimeout } from '../../../../store/ServerConfig/selectors';
-import * as WorkspaceStore from '../../../../store/Workspaces';
-import { selectAllWorkspaces } from '../../../../store/Workspaces/selectors';
-import { MIN_STEP_DURATION_MS } from '../../const';
-import { ProgressStep, ProgressStepProps, ProgressStepState } from '../../ProgressStep';
-import { ProgressStepTitle } from '../../StepTitle';
-import { TimeLimit } from '../../TimeLimit';
-import workspaceStatusIs from '../../workspaceStatusIs';
+
+import {
+  ProgressStep,
+  ProgressStepProps,
+  ProgressStepState,
+} from '@/components/WorkspaceProgress/ProgressStep';
+import {
+  applyRestartDefaultLocation,
+  applyRestartInSafeModeLocation,
+  getStartParams,
+  resetRestartInSafeModeLocation,
+} from '@/components/WorkspaceProgress/StartingSteps/StartWorkspace/prepareRestart';
+import { ProgressStepTitle } from '@/components/WorkspaceProgress/StepTitle';
+import { TimeLimit } from '@/components/WorkspaceProgress/TimeLimit';
+import workspaceStatusIs from '@/components/WorkspaceProgress/workspaceStatusIs';
+import { WorkspaceParams } from '@/Routes/routes';
+import { findTargetWorkspace } from '@/services/helpers/factoryFlow/findTargetWorkspace';
+import { AlertItem, DevWorkspaceStatus, LoaderTab } from '@/services/helpers/types';
+import { Workspace } from '@/services/workspace-adapter';
+import { AppState } from '@/store';
+import { selectStartTimeout } from '@/store/ServerConfig/selectors';
+import * as WorkspaceStore from '@/store/Workspaces';
+import { selectAllWorkspaces } from '@/store/Workspaces/selectors';
 
 export type Props = MappedProps &
   ProgressStepProps & {
@@ -37,11 +45,11 @@ export type Props = MappedProps &
   };
 export type State = ProgressStepState & {
   shouldStart: boolean; // should the loader start a workspace?
+  shouldUpdateWithDefaultDevfile: boolean;
 };
 
 class StartingStepStartWorkspace extends ProgressStep<Props, State> {
   protected readonly name = 'Waiting for workspace to start';
-  protected readonly toDispose = new DisposableCollection();
 
   constructor(props: Props) {
     super(props);
@@ -49,6 +57,7 @@ class StartingStepStartWorkspace extends ProgressStep<Props, State> {
     this.state = {
       shouldStart: true,
       name: this.name,
+      shouldUpdateWithDefaultDevfile: false,
     };
   }
 
@@ -57,7 +66,11 @@ class StartingStepStartWorkspace extends ProgressStep<Props, State> {
   }
 
   public async componentDidUpdate() {
-    this.toDispose.dispose();
+    const safeMode = resetRestartInSafeModeLocation(this.props.history.location);
+    if (safeMode) {
+      this.setState({ shouldUpdateWithDefaultDevfile: safeMode });
+      return;
+    }
 
     this.init();
   }
@@ -65,6 +78,11 @@ class StartingStepStartWorkspace extends ProgressStep<Props, State> {
   public shouldComponentUpdate(nextProps: Props, nextState: State): boolean {
     // active step changed
     if (this.props.distance !== nextProps.distance) {
+      return true;
+    }
+
+    // show/hide spinner near the step title
+    if (this.props.hasChildren !== nextProps.hasChildren) {
       return true;
     }
 
@@ -84,6 +102,15 @@ class StartingStepStartWorkspace extends ProgressStep<Props, State> {
     if (!isEqual(this.state.lastError, nextState.lastError)) {
       return true;
     }
+
+    if (this.state.shouldUpdateWithDefaultDevfile !== nextState.shouldUpdateWithDefaultDevfile) {
+      return true;
+    }
+
+    if (this.props.history.location.search !== nextProps.history.location.search) {
+      return true;
+    }
+
     return false;
   }
 
@@ -128,8 +155,6 @@ class StartingStepStartWorkspace extends ProgressStep<Props, State> {
    * The resolved boolean indicates whether to go to the next step or not
    */
   protected async runStep(): Promise<boolean> {
-    await delay(MIN_STEP_DURATION_MS);
-
     const { matchParams } = this.props;
     if (matchParams === undefined) {
       throw new Error('Cannot determine the workspace to start.');
@@ -141,6 +166,12 @@ class StartingStepStartWorkspace extends ProgressStep<Props, State> {
       throw new Error(
         `Workspace "${matchParams.namespace}/${matchParams.workspaceName}" not found.`,
       );
+    }
+
+    if (this.state.shouldUpdateWithDefaultDevfile) {
+      await this.props.updateWorkspaceWithDefaultDevfile(workspace);
+      this.setState({ shouldUpdateWithDefaultDevfile: false });
+      return false;
     }
 
     if (
@@ -168,7 +199,7 @@ class StartingStepStartWorkspace extends ProgressStep<Props, State> {
       this.state.shouldStart &&
       workspaceStatusIs(workspace, DevWorkspaceStatus.STOPPED, DevWorkspaceStatus.FAILED)
     ) {
-      await this.props.startWorkspace(workspace);
+      await this.props.startWorkspace(workspace, getStartParams(this.props.history.location));
     }
 
     // do not switch to the next step
@@ -192,18 +223,24 @@ class StartingStepStartWorkspace extends ProgressStep<Props, State> {
       actionCallbacks: [
         {
           title: 'Restart',
-          callback: () => this.handleRestart(key, LoaderTab.Progress),
+          callback: () => {
+            applyRestartDefaultLocation(this.props.history.location);
+            this.handleRestart(key, LoaderTab.Progress);
+          },
         },
         {
-          title: 'Open in Verbose mode',
-          callback: () => this.handleRestart(key, LoaderTab.Logs),
+          title: 'Restart with default devfile',
+          callback: () => {
+            applyRestartInSafeModeLocation(this.props.history.location);
+            this.handleRestart(key, LoaderTab.Progress);
+          },
         },
       ],
     };
   }
 
   render(): React.ReactNode {
-    const { distance, startTimeout } = this.props;
+    const { distance, hasChildren, startTimeout } = this.props;
     const { name, lastError } = this.state;
 
     const isActive = distance === 0;
@@ -217,7 +254,12 @@ class StartingStepStartWorkspace extends ProgressStep<Props, State> {
         {isActive && (
           <TimeLimit timeLimitSec={startTimeout} onTimeout={() => this.handleTimeout(workspace)} />
         )}
-        <ProgressStepTitle distance={distance} isError={isError} isWarning={isWarning}>
+        <ProgressStepTitle
+          distance={distance}
+          hasChildren={hasChildren}
+          isError={isError}
+          isWarning={isWarning}
+        >
           {name}
         </ProgressStepTitle>
       </React.Fragment>

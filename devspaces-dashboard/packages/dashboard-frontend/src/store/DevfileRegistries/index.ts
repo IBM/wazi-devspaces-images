@@ -10,15 +10,17 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { Action, Reducer } from 'redux';
 import common from '@eclipse-che/common';
+import { Action, Reducer } from 'redux';
+
+import devfileApi from '@/services/devfileApi';
+import { fetchDevfile, fetchRegistryMetadata } from '@/services/registry/devfiles';
+import { fetchResources, loadResourcesContent } from '@/services/registry/resources';
+import { createObject } from '@/store/helpers';
+import { selectAsyncIsAuthorized, selectSanityCheckError } from '@/store/SanityCheck/selectors';
+import { AUTHORIZED, SanityCheckAction } from '@/store/sanityCheckMiddleware';
+
 import { AppThunk } from '..';
-import { fetchRegistryMetadata, fetchDevfile } from '../../services/registry/devfiles';
-import { createObject } from '../helpers';
-import fetchAndUpdateDevfileSchema from './fetchAndUpdateDevfileSchema';
-import devfileApi from '../../services/devfileApi';
-import { fetchResources, loadResourcesContent } from '../../services/registry/resources';
-import { AUTHORIZED, SanityCheckAction } from '../sanityCheckMiddleware';
 
 export const DEFAULT_REGISTRY = '/dashboard/devfile-registry/';
 
@@ -27,10 +29,6 @@ export type DevWorkspaceResources = [devfileApi.DevWorkspace, devfileApi.DevWork
 // This state defines the type of data maintained in the Redux store.
 export interface State {
   isLoading: boolean;
-  schema: {
-    schema?: any;
-    error?: string;
-  };
   registries: {
     [location: string]: {
       metadata?: che.DevfileMetaData[];
@@ -63,9 +61,6 @@ export enum Type {
   REQUEST_RESOURCES = 'REQUEST_RESOURCES',
   RECEIVE_RESOURCES = 'RECEIVE_RESOURCES',
   RECEIVE_RESOURCES_ERROR = 'RECEIVE_RESOURCES_ERROR',
-  REQUEST_SCHEMA = 'REQUEST_SCHEMA',
-  RECEIVE_SCHEMA = 'RECEIVE_SCHEMA',
-  RECEIVE_SCHEMA_ERROR = 'RECEIVE_SCHEMA_ERROR',
   SET_FILTER = 'SET_FILTER',
   CLEAR_FILTER = 'CLEAR_FILTER',
 }
@@ -113,20 +108,6 @@ export interface ReceiveResourcesErrorAction {
   error: string;
 }
 
-export interface RequestSchemaAction extends Action, SanityCheckAction {
-  type: Type.REQUEST_SCHEMA;
-}
-
-export interface ReceiveSchemaAction {
-  type: Type.RECEIVE_SCHEMA;
-  schema: any;
-}
-
-export interface ReceiveSchemaErrorAction {
-  type: Type.RECEIVE_SCHEMA_ERROR;
-  error: string;
-}
-
 export interface SetFilterValue extends Action {
   type: Type.SET_FILTER;
   value: string;
@@ -145,9 +126,6 @@ export type KnownAction =
   | RequestResourcesAction
   | ReceiveResourcesAction
   | ReceiveResourcesErrorAction
-  | RequestSchemaAction
-  | ReceiveSchemaAction
-  | ReceiveSchemaErrorAction
   | SetFilterValue
   | ClearFilterValue;
 
@@ -158,7 +136,6 @@ export type ActionCreators = {
   ) => AppThunk<KnownAction, Promise<void>>;
   requestDevfile: (location: string) => AppThunk<KnownAction, Promise<string>>;
   requestResources: (resourceUrl: string) => AppThunk<KnownAction, Promise<void>>;
-  requestJsonSchema: () => AppThunk<KnownAction, any>;
 
   setFilter: (value: string) => AppThunk<SetFilterValue, void>;
   clearFilter: () => AppThunk<ClearFilterValue, void>;
@@ -170,12 +147,15 @@ export const actionCreators: ActionCreators = {
    */
   requestRegistriesMetadata:
     (registryUrls: string, isExternal: boolean): AppThunk<KnownAction, Promise<void>> =>
-    async (dispatch): Promise<void> => {
-      await dispatch({ type: Type.REQUEST_REGISTRY_METADATA, check: AUTHORIZED });
-
+    async (dispatch, getState): Promise<void> => {
       const registries: string[] = registryUrls.split(' ');
       const promises = registries.map(async url => {
         try {
+          await dispatch({ type: Type.REQUEST_REGISTRY_METADATA, check: AUTHORIZED });
+          if (!(await selectAsyncIsAuthorized(getState()))) {
+            const error = selectSanityCheckError(getState());
+            throw new Error(error);
+          }
           const metadata: che.DevfileMetaData[] = await fetchRegistryMetadata(url, isExternal);
           if (!Array.isArray(metadata) || metadata.length === 0) {
             return;
@@ -205,9 +185,13 @@ export const actionCreators: ActionCreators = {
 
   requestDevfile:
     (url: string): AppThunk<KnownAction, Promise<string>> =>
-    async (dispatch): Promise<string> => {
-      await dispatch({ type: Type.REQUEST_DEVFILE, check: AUTHORIZED });
+    async (dispatch, getState): Promise<string> => {
       try {
+        await dispatch({ type: Type.REQUEST_DEVFILE, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         const devfile = await fetchDevfile(url);
         dispatch({ type: Type.RECEIVE_DEVFILE, devfile, url });
         return devfile;
@@ -218,10 +202,13 @@ export const actionCreators: ActionCreators = {
 
   requestResources:
     (resourcesUrl: string): AppThunk<KnownAction, Promise<void>> =>
-    async (dispatch): Promise<void> => {
-      await dispatch({ type: Type.REQUEST_RESOURCES, check: AUTHORIZED });
-
+    async (dispatch, getState): Promise<void> => {
       try {
+        await dispatch({ type: Type.REQUEST_RESOURCES, check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         const resourcesContent = await fetchResources(resourcesUrl);
         const resources = loadResourcesContent(resourcesContent);
 
@@ -257,36 +244,6 @@ export const actionCreators: ActionCreators = {
       }
     },
 
-  requestJsonSchema:
-    (): AppThunk<KnownAction, any> =>
-    async (dispatch): Promise<any> => {
-      await dispatch({ type: Type.REQUEST_SCHEMA, check: AUTHORIZED });
-      try {
-        const schemav200 = await fetchAndUpdateDevfileSchema('2.0.0');
-        const schemav210 = await fetchAndUpdateDevfileSchema('2.1.0');
-        const schemav220 = await fetchAndUpdateDevfileSchema('2.2.0');
-        const schemav221alpha = await fetchAndUpdateDevfileSchema('2.2.1-alpha');
-
-        const schema = {
-          oneOf: [schemav200, schemav210, schemav220, schemav221alpha],
-        };
-
-        dispatch({
-          type: Type.RECEIVE_SCHEMA,
-          schema,
-        });
-        return schema;
-      } catch (e) {
-        const errorMessage =
-          'Failed to request devfile JSON schema, reason: ' + common.helpers.errors.getMessage(e);
-        dispatch({
-          type: Type.RECEIVE_SCHEMA_ERROR,
-          error: errorMessage,
-        });
-        throw errorMessage;
-      }
-    },
-
   setFilter:
     (value: string): AppThunk<SetFilterValue, void> =>
     dispatch => {
@@ -302,7 +259,6 @@ const unloadedState: State = {
   isLoading: false,
   registries: {},
   devfiles: {},
-  schema: {},
   devWorkspaceResources: {},
 
   filter: '',
@@ -319,24 +275,19 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case Type.REQUEST_REGISTRY_METADATA:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
-      });
-    case Type.REQUEST_SCHEMA:
-      return createObject(state, {
-        isLoading: true,
-        schema: {},
       });
     case Type.REQUEST_DEVFILE:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
       });
     case Type.REQUEST_RESOURCES:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
       });
     case Type.RECEIVE_REGISTRY_METADATA:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         registries: createObject(state.registries, {
           [action.url]: {
@@ -345,7 +296,7 @@ export const reducer: Reducer<State> = (
         }),
       });
     case Type.RECEIVE_REGISTRY_ERROR:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         registries: {
           [action.url]: {
@@ -354,7 +305,7 @@ export const reducer: Reducer<State> = (
         },
       });
     case Type.RECEIVE_DEVFILE:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         devfiles: createObject(state.devfiles, {
           [action.url]: {
@@ -363,7 +314,7 @@ export const reducer: Reducer<State> = (
         }),
       });
     case Type.RECEIVE_RESOURCES:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         devWorkspaceResources: createObject(state.devWorkspaceResources, {
           [action.url]: {
@@ -372,7 +323,7 @@ export const reducer: Reducer<State> = (
         }),
       });
     case Type.RECEIVE_RESOURCES_ERROR:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         devWorkspaceResources: {
           [action.url]: {
@@ -380,27 +331,13 @@ export const reducer: Reducer<State> = (
           },
         },
       });
-    case Type.RECEIVE_SCHEMA:
-      return createObject(state, {
-        isLoading: false,
-        schema: {
-          schema: action.schema,
-        },
-      });
-    case Type.RECEIVE_SCHEMA_ERROR:
-      return createObject(state, {
-        isLoading: false,
-        schema: {
-          error: action.error,
-        },
-      });
     case Type.SET_FILTER: {
-      return createObject(state, {
+      return createObject<State>(state, {
         filter: action.value,
       });
     }
     case Type.CLEAR_FILTER: {
-      return createObject(state, {
+      return createObject<State>(state, {
         filter: '',
       });
     }

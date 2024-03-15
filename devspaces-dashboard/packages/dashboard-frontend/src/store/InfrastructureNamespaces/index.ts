@@ -10,15 +10,15 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { Action, Reducer } from 'redux';
 import common from '@eclipse-che/common';
-import { container } from '../../inversify.config';
-import { CheWorkspaceClient } from '../../services/workspace-client/cheworkspace/cheWorkspaceClient';
-import { AppThunk } from '..';
-import { createObject } from '../helpers';
-import { AUTHORIZED, SanityCheckAction } from '../sanityCheckMiddleware';
+import { Action, Reducer } from 'redux';
 
-const WorkspaceClient = container.get(CheWorkspaceClient);
+import { getKubernetesNamespace } from '@/services/backend-client/kubernetesNamespaceApi';
+import { createObject } from '@/store/helpers';
+import { selectAsyncIsAuthorized, selectSanityCheckError } from '@/store/SanityCheck/selectors';
+import { AUTHORIZED, SanityCheckAction } from '@/store/sanityCheckMiddleware';
+
+import { AppThunk } from '..';
 
 export interface State {
   isLoading: boolean;
@@ -49,13 +49,14 @@ export type ActionCreators = {
 export const actionCreators: ActionCreators = {
   requestNamespaces:
     (): AppThunk<KnownAction, Promise<Array<che.KubernetesNamespace>>> =>
-    async (dispatch): Promise<Array<che.KubernetesNamespace>> => {
-      await dispatch({ type: 'REQUEST_NAMESPACES', check: AUTHORIZED });
-
+    async (dispatch, getState): Promise<Array<che.KubernetesNamespace>> => {
       try {
-        const namespaces = await WorkspaceClient.restApiClient.getKubernetesNamespace<
-          Array<che.KubernetesNamespace>
-        >();
+        await dispatch({ type: 'REQUEST_NAMESPACES', check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
+        const namespaces = await getKubernetesNamespace();
         dispatch({
           type: 'RECEIVE_NAMESPACES',
           namespaces,
@@ -90,17 +91,17 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case 'REQUEST_NAMESPACES':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         error: undefined,
       });
     case 'RECEIVE_NAMESPACES':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         namespaces: action.namespaces,
       });
     case 'RECEIVE_NAMESPACES_ERROR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         error: action.error,
       });

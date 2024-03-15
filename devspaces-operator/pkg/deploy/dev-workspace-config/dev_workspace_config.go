@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2022 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -13,12 +13,14 @@
 package devworkspaceconfig
 
 import (
+	"encoding/json"
 	"fmt"
 
 	controllerv1alpha1 "github.com/devfile/devworkspace-operator/apis/controller/v1alpha1"
 	chev2 "github.com/eclipse-che/che-operator/api/v2"
 	"github.com/eclipse-che/che-operator/pkg/common/chetypes"
 	"github.com/eclipse-che/che-operator/pkg/common/constants"
+	defaults "github.com/eclipse-che/che-operator/pkg/common/operator-defaults"
 	"github.com/eclipse-che/che-operator/pkg/common/utils"
 	"github.com/eclipse-che/che-operator/pkg/deploy"
 	v1 "k8s.io/api/apps/v1"
@@ -61,7 +63,7 @@ func (d *DevWorkspaceConfigReconciler) Reconcile(ctx *chetypes.DeployContext) (r
 		dwoc.Config = &controllerv1alpha1.OperatorConfiguration{}
 	}
 
-	if err := updateWorkspaceConfig(ctx.CheCluster, dwoc.Config); err != nil {
+	if err := updateWorkspaceConfig(ctx, dwoc.Config); err != nil {
 		return reconcile.Result{}, false, err
 	}
 
@@ -76,7 +78,8 @@ func (d *DevWorkspaceConfigReconciler) Finalize(ctx *chetypes.DeployContext) boo
 	return true
 }
 
-func updateWorkspaceConfig(cheCluster *chev2.CheCluster, operatorConfig *controllerv1alpha1.OperatorConfiguration) error {
+func updateWorkspaceConfig(ctx *chetypes.DeployContext, operatorConfig *controllerv1alpha1.OperatorConfiguration) error {
+	cheCluster := ctx.CheCluster
 	devEnvironments := &cheCluster.Spec.DevEnvironments
 	if operatorConfig.Workspace == nil {
 		operatorConfig.Workspace = &controllerv1alpha1.WorkspaceConfig{}
@@ -88,22 +91,51 @@ func updateWorkspaceConfig(cheCluster *chev2.CheCluster, operatorConfig *control
 
 	updateWorkspaceServiceAccountConfig(devEnvironments, operatorConfig.Workspace)
 
-	if err := updateWorkspacePodSchedulerNameConfig(devEnvironments, operatorConfig.Workspace); err != nil {
-		return err
-	}
+	updateWorkspacePodSchedulerNameConfig(devEnvironments, operatorConfig.Workspace)
 
 	updateProjectCloneConfig(devEnvironments, operatorConfig.Workspace)
 
-	operatorConfig.Workspace.ContainerSecurityContext = nil
-	if cheCluster.IsContainerBuildCapabilitiesEnabled() {
-		operatorConfig.Workspace.ContainerSecurityContext = constants.DefaultWorkspaceContainerSecurityContext.DeepCopy()
+	if err := updateSecurityContext(operatorConfig, cheCluster); err != nil {
+		return err
 	}
 
 	updateStartTimeout(operatorConfig, devEnvironments.StartTimeoutSeconds)
 
 	updatePersistUserHomeConfig(devEnvironments.PersistUserHome, operatorConfig.Workspace)
 
+	updateWorkspaceImagePullPolicy(devEnvironments.ImagePullPolicy, operatorConfig.Workspace)
+
+	// If the CheCluster has a configured proxy, or if the Che Operator has detected a proxy configuration,
+	// we need to disable automatic proxy handling in the DevWorkspace Operator as its implementation collides
+	// with ours -- they set environment variables the deployment spec explicitly, which overrides the proxy-settings
+	// automount configmap.
+	if ctx.Proxy.HttpProxy != "" || ctx.Proxy.HttpsProxy != "" {
+		if operatorConfig.Routing == nil {
+			operatorConfig.Routing = &controllerv1alpha1.RoutingConfig{}
+		}
+		disableDWOProxy(operatorConfig.Routing)
+	}
+
 	operatorConfig.Workspace.DeploymentStrategy = v1.DeploymentStrategyType(utils.GetValue(string(devEnvironments.DeploymentStrategy), constants.DefaultDeploymentStrategy))
+	return nil
+}
+
+func updateSecurityContext(operatorConfig *controllerv1alpha1.OperatorConfiguration, cheCluster *chev2.CheCluster) error {
+	operatorConfig.Workspace.ContainerSecurityContext = nil
+	if cheCluster.IsContainerBuildCapabilitiesEnabled() {
+		defaultContainerSecurityContext, err := getDefaultContainerSecurityContext()
+		if err != nil {
+			return err
+		}
+		operatorConfig.Workspace.ContainerSecurityContext = defaultContainerSecurityContext
+	} else if cheCluster.Spec.DevEnvironments.Security.ContainerSecurityContext != nil {
+		operatorConfig.Workspace.ContainerSecurityContext = cheCluster.Spec.DevEnvironments.Security.ContainerSecurityContext
+	}
+
+	operatorConfig.Workspace.PodSecurityContext = nil
+	if cheCluster.Spec.DevEnvironments.Security.PodSecurityContext != nil {
+		operatorConfig.Workspace.PodSecurityContext = cheCluster.Spec.DevEnvironments.Security.PodSecurityContext
+	}
 	return nil
 }
 
@@ -158,6 +190,10 @@ func updatePersistUserHomeConfig(persistentHomeConfig *chev2.PersistentHomeConfi
 	}
 }
 
+func updateWorkspaceImagePullPolicy(imagePullPolicy corev1.PullPolicy, workspaceConfig *controllerv1alpha1.WorkspaceConfig) {
+	workspaceConfig.ImagePullPolicy = string(imagePullPolicy)
+}
+
 func updateWorkspaceServiceAccountConfig(devEnvironments *chev2.CheClusterDevEnvironments, workspaceConfig *controllerv1alpha1.WorkspaceConfig) {
 	isNamespaceAutoProvisioned := pointer.BoolDeref(devEnvironments.DefaultNamespace.AutoProvision, constants.DefaultAutoProvision)
 
@@ -169,9 +205,8 @@ func updateWorkspaceServiceAccountConfig(devEnvironments *chev2.CheClusterDevEnv
 	}
 }
 
-func updateWorkspacePodSchedulerNameConfig(devEnvironments *chev2.CheClusterDevEnvironments, workspaceConfig *controllerv1alpha1.WorkspaceConfig) error {
+func updateWorkspacePodSchedulerNameConfig(devEnvironments *chev2.CheClusterDevEnvironments, workspaceConfig *controllerv1alpha1.WorkspaceConfig) {
 	workspaceConfig.SchedulerName = devEnvironments.PodSchedulerName
-	return nil
 }
 
 func updateProjectCloneConfig(devEnvironments *chev2.CheClusterDevEnvironments, workspaceConfig *controllerv1alpha1.WorkspaceConfig) {
@@ -188,6 +223,27 @@ func updateProjectCloneConfig(devEnvironments *chev2.CheClusterDevEnvironments, 
 	workspaceConfig.ProjectCloneConfig.ImagePullPolicy = container.ImagePullPolicy
 	workspaceConfig.ProjectCloneConfig.Env = container.Env
 	workspaceConfig.ProjectCloneConfig.Resources = cheResourcesToCoreV1Resources(container.Resources)
+}
+
+func disableDWOProxy(routingConfig *controllerv1alpha1.RoutingConfig) {
+	// Since we create proxy configmaps to mount proxy settings, we want to disable
+	// proxy handling in DWO; otherwise the env vars added by DWO will override the env
+	// vars we intend to mount via configmap.
+	routingConfig.ProxyConfig = &controllerv1alpha1.Proxy{}
+	routingConfig.ProxyConfig.HttpProxy = pointer.String("")
+	routingConfig.ProxyConfig.HttpsProxy = pointer.String("")
+	routingConfig.ProxyConfig.NoProxy = pointer.String("")
+}
+
+// Returns the default container security context required for container builds.
+// Returns an error if the default container security context could not be retrieved.
+func getDefaultContainerSecurityContext() (*corev1.SecurityContext, error) {
+	containerSecurityContext := &corev1.SecurityContext{}
+	err := json.Unmarshal([]byte(defaults.GetDevEnvironmentsContainerSecurityContext()), &containerSecurityContext)
+	if err != nil {
+		return nil, err
+	}
+	return containerSecurityContext, nil
 }
 
 // cheResourcesToCoreV1Resources converts a Che resources struct to the usual Kubernetes object by directly copying fields.

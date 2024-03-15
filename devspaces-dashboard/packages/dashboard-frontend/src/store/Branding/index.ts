@@ -10,15 +10,17 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { Action, Reducer } from 'redux';
-import { fetchBranding } from '../../services/assets/branding';
-import { AppThunk } from '..';
-import { merge } from 'lodash';
-import axios from 'axios';
 import common from '@eclipse-che/common';
-import { BRANDING_DEFAULT, BrandingData } from '../../services/bootstrap/branding.constant';
-import { createObject } from '../helpers';
-import { AUTHORIZED, SanityCheckAction } from '../sanityCheckMiddleware';
+import axios from 'axios';
+import { merge } from 'lodash';
+import { Action, Reducer } from 'redux';
+
+import { fetchBranding } from '@/services/assets/branding';
+import { BRANDING_DEFAULT, BrandingData } from '@/services/bootstrap/branding.constant';
+import { createObject } from '@/store/helpers';
+import { AUTHORIZED, SanityCheckAction } from '@/store/sanityCheckMiddleware';
+
+import { AppThunk } from '..';
 
 export const ASSET_PREFIX = './assets/branding/';
 
@@ -117,17 +119,17 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case 'REQUEST_BRANDING':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         error: undefined,
       });
     case 'RECEIVED_BRANDING':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         data: action.data,
       });
     case 'RECEIVED_BRANDING_ERROR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         error: action.error,
       });

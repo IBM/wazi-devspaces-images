@@ -11,38 +11,41 @@
  */
 
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { baseApiPath } from '../../constants/config';
-import { dockerConfigSchema, namespacedSchema } from '../../constants/schemas';
-import { getDevWorkspaceClient } from './helpers/getDevWorkspaceClient';
-import { getToken } from './helpers/getToken';
-import { restParams } from '../../models';
-import { getSchema } from '../../services/helpers';
+
+import { baseApiPath } from '@/constants/config';
+import { dockerConfigSchema, namespacedSchema } from '@/constants/schemas';
+import { restParams } from '@/models';
+import { getDevWorkspaceClient } from '@/routes/api/helpers/getDevWorkspaceClient';
+import { getToken } from '@/routes/api/helpers/getToken';
+import { getSchema } from '@/services/helpers';
 
 const tags = ['Docker Config'];
 
-export function registerDockerConfigRoutes(server: FastifyInstance) {
-  server.get(
-    `${baseApiPath}/namespace/:namespace/dockerconfig`,
-    getSchema({ tags, params: namespacedSchema }),
-    async function (request: FastifyRequest) {
-      const { namespace } = request.params as restParams.INamespacedParams;
-      const token = getToken(request);
-      const { dockerConfigApi } = getDevWorkspaceClient(token);
+export function registerDockerConfigRoutes(instance: FastifyInstance) {
+  instance.register(async server => {
+    server.get(
+      `${baseApiPath}/namespace/:namespace/dockerconfig`,
+      getSchema({ tags, params: namespacedSchema }),
+      async function (request: FastifyRequest) {
+        const { namespace } = request.params as restParams.INamespacedParams;
+        const token = getToken(request);
+        const { dockerConfigApi } = getDevWorkspaceClient(token);
 
-      return dockerConfigApi.read(namespace);
-    },
-  );
+        return dockerConfigApi.read(namespace);
+      },
+    );
 
-  server.put(
-    `${baseApiPath}/namespace/:namespace/dockerconfig`,
-    getSchema({ tags, params: namespacedSchema, body: dockerConfigSchema }),
-    async function (request: FastifyRequest) {
-      const { namespace } = request.params as restParams.INamespacedParams;
-      const dockerCfg = request.body as restParams.IDockerConfigParams;
-      const token = getToken(request);
-      const { dockerConfigApi } = getDevWorkspaceClient(token);
+    server.put(
+      `${baseApiPath}/namespace/:namespace/dockerconfig`,
+      getSchema({ tags, params: namespacedSchema, body: dockerConfigSchema }),
+      async function (request: FastifyRequest) {
+        const { namespace } = request.params as restParams.INamespacedParams;
+        const dockerCfg = request.body as restParams.IDockerConfigParams;
+        const token = getToken(request);
+        const { dockerConfigApi } = getDevWorkspaceClient(token);
 
-      return dockerConfigApi.update(namespace, dockerCfg);
-    },
-  );
+        return dockerConfigApi.update(namespace, dockerCfg);
+      },
+    );
+  });
 }

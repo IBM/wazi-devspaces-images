@@ -24,7 +24,8 @@ import {
   Tr,
 } from '@patternfly/react-table';
 import React from 'react';
-import { PersonalAccessTokenListToolbar } from './Toolbar';
+
+import { PersonalAccessTokenListToolbar } from '@/pages/UserPreferences/PersonalAccessTokens/List/Toolbar';
 
 const COLUMN_NAMES: Omit<
   Record<keyof api.PersonalAccessToken, string>,
@@ -111,6 +112,7 @@ export class PersonalAccessTokenList extends React.PureComponent<Props, State> {
           select={{
             onSelect: (...args) => this.handleSelectAllTokens(...args),
             isSelected: areAllTokensSelected,
+            isDisabled: isDisabled,
             isHeaderSelectDisabled: isDisabled,
           }}
         />

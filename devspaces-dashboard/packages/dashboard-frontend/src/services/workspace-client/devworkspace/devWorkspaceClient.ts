@@ -18,35 +18,35 @@ import {
   V221DevfileComponentsItemsContainer,
 } from '@devfile/api';
 import { api } from '@eclipse-che/common';
-import { WorkspacesDefaultPlugins } from 'dashboard-frontend/src/store/Plugins/devWorkspacePlugins';
 import { inject, injectable } from 'inversify';
 import { load } from 'js-yaml';
 import { cloneDeep, isEqual } from 'lodash';
-import * as DwApi from '../../dashboard-backend-client/devWorkspaceApi';
-import * as DwtApi from '../../dashboard-backend-client/devWorkspaceTemplateApi';
-import devfileApi from '../../devfileApi';
+
+import * as DwApi from '@/services/backend-client/devWorkspaceApi';
+import * as DwtApi from '@/services/backend-client/devWorkspaceTemplateApi';
+import devfileApi from '@/services/devfileApi';
+import { DevWorkspacePlugin } from '@/services/devfileApi/devWorkspace';
 import {
   DEVWORKSPACE_CHE_EDITOR,
   DEVWORKSPACE_UPDATING_TIMESTAMP_ANNOTATION,
-} from '../../devfileApi/devWorkspace/metadata';
+} from '@/services/devfileApi/devWorkspace/metadata';
 import {
   DEVWORKSPACE_CONFIG_ATTR,
   DEVWORKSPACE_CONTAINER_BUILD_ATTR,
   DEVWORKSPACE_STORAGE_TYPE_ATTR,
-} from '../../devfileApi/devWorkspace/spec/template';
-import { delay } from '../../helpers/delay';
-import { isWebTerminal } from '../../helpers/devworkspace';
-import { DevWorkspaceStatus } from '../../helpers/types';
-import { fetchData } from '../../registry/fetchData';
-import { WorkspaceAdapter } from '../../workspace-adapter';
-import { WorkspaceClient } from '../index';
+} from '@/services/devfileApi/devWorkspace/spec/template';
+import { delay } from '@/services/helpers/delay';
+import { isWebTerminal } from '@/services/helpers/devworkspace';
+import { DevWorkspaceStatus } from '@/services/helpers/types';
+import { fetchData } from '@/services/registry/fetchData';
+import { WorkspaceAdapter } from '@/services/workspace-adapter';
 import {
   devWorkspaceApiGroup,
   devWorkspaceSingularSubresource,
   devWorkspaceVersion,
-} from './converters';
-import { DevWorkspaceDefaultPluginsHandler } from './DevWorkspaceDefaultPluginsHandler';
-import { DevWorkspacePlugin } from '../../devfileApi/devWorkspace';
+} from '@/services/workspace-client/devworkspace/converters';
+import { DevWorkspaceDefaultPluginsHandler } from '@/services/workspace-client/devworkspace/DevWorkspaceDefaultPluginsHandler';
+import { WorkspacesDefaultPlugins } from '@/store/Plugins/devWorkspacePlugins';
 
 export const COMPONENT_UPDATE_POLICY = 'che.eclipse.org/components-update-policy';
 export const REGISTRY_URL = 'che.eclipse.org/plugin-registry-url';
@@ -78,7 +78,7 @@ export interface ICheEditorYaml {
  * This class manages the connection between the frontend and the devworkspace typescript library
  */
 @injectable()
-export class DevWorkspaceClient extends WorkspaceClient {
+export class DevWorkspaceClient {
   private readonly maxStatusAttempts: number;
   private readonly pluginRegistryUrlEnvName: string;
   private readonly pluginRegistryInternalUrlEnvName: string;
@@ -93,7 +93,6 @@ export class DevWorkspaceClient extends WorkspaceClient {
     @inject(DevWorkspaceDefaultPluginsHandler)
     defaultPluginsHandler: DevWorkspaceDefaultPluginsHandler,
   ) {
-    super();
     this.maxStatusAttempts = 10;
     this.pluginRegistryUrlEnvName = 'CHE_PLUGIN_REGISTRY_URL';
     this.pluginRegistryInternalUrlEnvName = 'CHE_PLUGIN_REGISTRY_INTERNAL_URL';
@@ -108,10 +107,13 @@ export class DevWorkspaceClient extends WorkspaceClient {
   async getAllWorkspaces(
     defaultNamespace: string,
   ): Promise<{ workspaces: devfileApi.DevWorkspace[]; resourceVersion: string }> {
+    const listWorkspaces = await DwApi.listWorkspacesInNamespace(defaultNamespace);
     const {
       items,
       metadata: { resourceVersion },
-    } = await DwApi.listWorkspacesInNamespace(defaultNamespace);
+    } = listWorkspaces?.metadata
+      ? listWorkspaces
+      : { items: [], metadata: { resourceVersion: '' } };
     const workspaces: devfileApi.DevWorkspace[] = [];
     for (const item of items) {
       if (!isWebTerminal(item)) {
@@ -242,7 +244,7 @@ export class DevWorkspaceClient extends WorkspaceClient {
    * propagate the plugin registry, plugin internal registry,
    * and dashboard URLs into the components containers
    */
-  private addEnvVarsToContainers(
+  public addEnvVarsToContainers(
     components:
       | V1alpha2DevWorkspaceSpecTemplateComponents[]
       | V1alpha2DevWorkspaceTemplateSpecComponents[]
@@ -513,7 +515,7 @@ export class DevWorkspaceClient extends WorkspaceClient {
       }
     }
 
-    const openVSXURL = config.pluginRegistry.openVSXURL;
+    const openVSXURL = config.pluginRegistry?.openVSXURL || '';
     const components = cloneDeep(workspace.spec.template.components);
     if (components) {
       let shouldUpdate = false;

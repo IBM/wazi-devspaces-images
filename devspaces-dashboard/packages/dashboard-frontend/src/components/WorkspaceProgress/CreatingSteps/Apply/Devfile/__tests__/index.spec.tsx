@@ -19,24 +19,26 @@ import { dump } from 'js-yaml';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Action, Store } from 'redux';
-import CreatingStepApplyDevfile, { State } from '..';
-import ExpandableWarning from '../../../../../ExpandableWarning';
-import { ROUTE } from '../../../../../../Routes/routes';
-import devfileApi from '../../../../../../services/devfileApi';
+
+import ExpandableWarning from '@/components/ExpandableWarning';
+import { MIN_STEP_DURATION_MS } from '@/components/WorkspaceProgress/const';
+import { prepareDevfile } from '@/components/WorkspaceProgress/CreatingSteps/Apply/Devfile/prepareDevfile';
+import { ROUTE } from '@/Routes/routes';
+import getComponentRenderer from '@/services/__mocks__/getComponentRenderer';
+import devfileApi from '@/services/devfileApi';
+import { getDefer } from '@/services/helpers/deferred';
 import {
   buildFactoryParams,
   FACTORY_URL_ATTR,
   POLICIES_CREATE_ATTR,
-} from '../../../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { getDefer } from '../../../../../../services/helpers/deferred';
-import { AlertItem } from '../../../../../../services/helpers/types';
-import getComponentRenderer from '../../../../../../services/__mocks__/getComponentRenderer';
-import { AppThunk } from '../../../../../../store';
-import { ActionCreators } from '../../../../../../store/Workspaces';
-import { DevWorkspaceBuilder } from '../../../../../../store/__mocks__/devWorkspaceBuilder';
-import { FakeStoreBuilder } from '../../../../../../store/__mocks__/storeBuilder';
-import { MIN_STEP_DURATION_MS } from '../../../../const';
-import { prepareDevfile } from '../prepareDevfile';
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { AlertItem } from '@/services/helpers/types';
+import { AppThunk } from '@/store';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
+import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+import { ActionCreators } from '@/store/Workspaces';
+
+import CreatingStepApplyDevfile, { State } from '..';
 
 jest.mock('../../../../TimeLimit');
 jest.mock('../prepareDevfile.ts');
@@ -105,12 +107,16 @@ describe('Creating steps, applying a devfile', () => {
       const store = getStoreBuilder().build();
       renderComponent(store, searchParams);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       const expectAlertItem = expect.objectContaining({
         title: 'Failed to create the workspace',
         children: 'Failed to resolve the devfile.',
         actionCallbacks: [
+          expect.objectContaining({
+            title: 'Continue with default devfile',
+            callback: expect.any(Function),
+          }),
           expect.objectContaining({
             title: 'Click to try again',
             callback: expect.any(Function),
@@ -146,7 +152,7 @@ describe('Creating steps, applying a devfile', () => {
 
       const store = getStoreBuilder().build();
       renderComponent(store, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       await waitFor(() => expect(mockOnError).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
@@ -156,6 +162,7 @@ describe('Creating steps, applying a devfile', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       await waitFor(() => expect(mockOnRestart).toHaveBeenCalled());
     });
@@ -326,7 +333,7 @@ describe('Creating steps, applying a devfile', () => {
         .build();
 
       renderComponent(store, searchParams);
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() =>
         expect(prepareDevfile).toHaveBeenCalledWith(devfile, factoryId, undefined, true),
@@ -350,7 +357,7 @@ describe('Creating steps, applying a devfile', () => {
       factoryId = `${POLICIES_CREATE_ATTR}=perclick&` + factoryId;
 
       renderComponent(store, searchParams);
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() =>
         expect(prepareDevfile).toHaveBeenCalledWith(devfile, factoryId, undefined, true),
@@ -371,7 +378,7 @@ describe('Creating steps, applying a devfile', () => {
         .build();
 
       renderComponent(store, searchParams);
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() =>
         expect(prepareDevfile).toHaveBeenCalledWith(devfile, factoryId, undefined, false),
@@ -430,7 +437,8 @@ describe('Creating steps, applying a devfile', () => {
 
     test('notification alert', async () => {
       renderComponent(store, searchParams);
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
+      await jest.runOnlyPendingTimersAsync();
 
       const expectAlertItem = expect.objectContaining({
         title: 'Warning',
@@ -444,7 +452,7 @@ describe('Creating steps, applying a devfile', () => {
         ),
         actionCallbacks: [
           expect.objectContaining({
-            title: 'Continue with the default devfile',
+            title: 'Continue with default devfile',
             callback: expect.any(Function),
           }),
           expect.objectContaining({
@@ -479,34 +487,34 @@ describe('Creating steps, applying a devfile', () => {
       });
 
       renderComponent(store, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       await waitFor(() => expect(mockOnError).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
       expect(mockOnRestart).not.toHaveBeenCalled();
+      expect(mockCreateWorkspaceFromDevfile).toHaveBeenCalledTimes(1);
 
       mockOnError.mockClear();
+      mockCreateWorkspaceFromDevfile.mockClear();
 
       /* test the action */
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       await waitFor(() => expect(mockOnRestart).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
       expect(mockOnError).not.toHaveBeenCalled();
 
       expect(mockCreateWorkspaceFromDevfile).toHaveBeenCalledTimes(1);
-
-      // the workspace creation was called twice
-      await waitFor(() => expect(mockCreateWorkspaceFromDevfile).toHaveBeenCalledTimes(2));
     });
 
-    test('action callback to continue with the default devfile', async () => {
+    test('action callback to continue with default devfile', async () => {
       // this deferred object will help run the callback at the right time
       const deferred = getDefer();
 
-      const continueActionTitle = 'Continue with the default devfile';
+      const continueActionTitle = 'Continue with default devfile';
       mockOnError.mockImplementationOnce(async (alertItem: AlertItem) => {
         const continueAction = alertItem.actionCallbacks?.find(action =>
           action.title.startsWith(continueActionTitle),
@@ -521,7 +529,7 @@ describe('Creating steps, applying a devfile', () => {
       });
 
       renderComponent(store, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       await waitFor(() => expect(mockOnError).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
@@ -533,6 +541,7 @@ describe('Creating steps, applying a devfile', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runAllTimersAsync();
 
       await waitFor(() => expect(mockCreateWorkspaceFromDevfile).toHaveBeenCalledTimes(2));
     });
@@ -550,7 +559,8 @@ describe('Creating steps, applying a devfile', () => {
 
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
+    await jest.runOnlyPendingTimersAsync();
 
     await waitFor(() => expect(mockCreateWorkspaceFromDevfile).toHaveBeenCalled());
     expect(mockOnError).not.toHaveBeenCalled();
@@ -568,6 +578,10 @@ describe('Creating steps, applying a devfile', () => {
       title: 'Failed to create the workspace',
       children: `Workspace hasn't been created in the last 20 seconds.`,
       actionCallbacks: [
+        expect.objectContaining({
+          title: 'Continue with default devfile',
+          callback: expect.any(Function),
+        }),
         expect.objectContaining({
           title: 'Click to try again',
           callback: expect.any(Function),
@@ -594,7 +608,8 @@ describe('Creating steps, applying a devfile', () => {
 
     const { reRenderComponent } = renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
+    await jest.runOnlyPendingTimersAsync();
 
     await waitFor(() => expect(mockCreateWorkspaceFromDevfile).toHaveBeenCalled());
     expect(mockOnError).not.toHaveBeenCalled();
@@ -619,7 +634,7 @@ describe('Creating steps, applying a devfile', () => {
       .build();
     reRenderComponent(nextStore, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
     expect(history.location.pathname).toEqual(`/ide/user-che/${devfileName}`);
@@ -649,7 +664,8 @@ describe('Creating steps, applying a devfile', () => {
       .build();
 
     renderComponent(store, searchParams);
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
+    await jest.runOnlyPendingTimersAsync();
 
     await waitFor(() => expect(screen.getByText(`Warning: ${warningMessage}`)).toBeTruthy());
 
@@ -676,6 +692,7 @@ function getComponent(
   const component = (
     <CreatingStepApplyDevfile
       distance={0}
+      hasChildren={false}
       searchParams={searchParams}
       history={history}
       onNextStep={mockOnNextStep}

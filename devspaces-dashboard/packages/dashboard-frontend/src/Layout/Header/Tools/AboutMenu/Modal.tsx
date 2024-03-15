@@ -10,7 +10,6 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import React from 'react';
 import {
   AboutModal as PatternflyAboutModal,
   TextContent,
@@ -18,6 +17,7 @@ import {
   TextListItem,
 } from '@patternfly/react-core';
 import { detect } from 'detect-browser';
+import React from 'react';
 
 type Props = {
   productName: string | undefined;
@@ -29,9 +29,9 @@ type Props = {
 };
 
 export class AboutModal extends React.PureComponent<Props> {
-  private browserVersion: string | undefined | null;
-  private browserOS: string | undefined | null;
-  private browserName: string | undefined;
+  private readonly browserVersion: string | undefined | null;
+  private readonly browserOS: string | undefined | null;
+  private readonly browserName: string | undefined;
 
   constructor(props: Props) {
     super(props);

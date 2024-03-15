@@ -12,8 +12,8 @@
 #
 
 # Builder: check meta.yamls and create index.json
-# https://registry.access.redhat.com/ubi8/python-38
-FROM registry.access.redhat.com/ubi8/python-38:1-129 as builder
+# https://registry.access.redhat.com/ubi8/python-311
+FROM registry.access.redhat.com/ubi8/python-311:1-36 as builder
 USER 0
 
 ################# 
@@ -71,7 +71,7 @@ RUN ./check_referenced_images.sh devfiles --registries "${ALLOWED_REGISTRIES}" -
 RUN ./check_mandatory_fields.sh devfiles
 
 # Cache projects in DS 
-RUN ./index.sh > /build/devfiles/index.json && \
+RUN ./index.sh > /build/devfiles/index.json && cp /build/devfiles/index.json /build/index && \
     ./list_referenced_images.sh devfiles > /build/devfiles/external_images.txt && \
     ./list_referenced_images_by_file.sh devfiles > /build/devfiles/external_images_by_devfile.txt && \
     chmod -R g+rwX /build/devfiles /build/resources
@@ -82,7 +82,7 @@ RUN ./index.sh > /build/devfiles/index.json && \
 
 # Build registry, copying meta.yamls and index.json from builder
 # https://registry.access.redhat.com/ubi8/httpd-24
-FROM registry.access.redhat.com/ubi8/httpd-24:1-268.1689584944 AS registry
+FROM registry.access.redhat.com/ubi8/httpd-24:1-294 AS registry
 USER 0
 
 # latest httpd container doesn't include ssl cert, so generate one
@@ -119,6 +119,7 @@ RUN mkdir -m 777 /var/www/html/devfiles
 COPY README.md .htaccess /var/www/html/
 COPY --from=builder /build/devfiles /var/www/html/devfiles
 COPY --from=builder /build/resources /var/www/html/resources
+COPY --from=builder /build/devfiles/index.json /var/www/html/index
 COPY ./images /var/www/html/images
 COPY ./build/dockerfiles/rhel.entrypoint.sh ./build/dockerfiles/entrypoint.sh /usr/local/bin/
 RUN chmod g+rwX /usr/local/bin/entrypoint.sh /usr/local/bin/rhel.entrypoint.sh && \
@@ -134,6 +135,7 @@ RUN ./cache_projects.sh devfiles resources && \
 
 FROM registry AS offline-registry
 COPY --from=offline-builder /build/devfiles /var/www/html/devfiles
+COPY --from=offline-builder /build/devfiles/index.json /var/www/html/index
 COPY --from=offline-builder /build/resources /var/www/html/resources
 
 # append Brew metadata here

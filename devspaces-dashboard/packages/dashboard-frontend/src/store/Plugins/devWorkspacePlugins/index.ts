@@ -10,15 +10,17 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import common from '@eclipse-che/common';
 import { load } from 'js-yaml';
 import { Action, Reducer } from 'redux';
-import common from '@eclipse-che/common';
-import devfileApi from '../../../services/devfileApi';
-import { AppThunk } from '../..';
-import { fetchDevfile } from '../../../services/registry/devfiles';
-import { fetchData } from '../../../services/registry/fetchData';
-import { createObject } from '../../helpers';
-import { AUTHORIZED, SanityCheckAction } from '../../sanityCheckMiddleware';
+
+import devfileApi from '@/services/devfileApi';
+import { fetchDevfile } from '@/services/registry/devfiles';
+import { fetchData } from '@/services/registry/fetchData';
+import { AppThunk } from '@/store';
+import { createObject } from '@/store/helpers';
+import { AUTHORIZED, SanityCheckAction } from '@/store/sanityCheckMiddleware';
+import { selectPluginRegistryUrl } from '@/store/ServerConfig/selectors';
 
 export interface PluginDefinition {
   plugin?: devfileApi.Devfile;
@@ -127,7 +129,7 @@ export const actionCreators: ActionCreators = {
   requestDwDevfile:
     (url: string): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch): Promise<void> => {
-      await dispatch({
+      dispatch({
         type: 'REQUEST_DW_PLUGIN',
         check: AUTHORIZED,
         url,
@@ -160,7 +162,7 @@ export const actionCreators: ActionCreators = {
       if (editorName.startsWith('https://')) {
         editorUrl = editorName;
       } else {
-        const pluginRegistryUrl = getState().dwServerConfig.config.pluginRegistryURL;
+        const pluginRegistryUrl = selectPluginRegistryUrl(getState());
         editorUrl = `${pluginRegistryUrl}/plugins/${editorName}/devfile.yaml`;
 
         if (!pluginRegistryUrl) {
@@ -177,7 +179,7 @@ export const actionCreators: ActionCreators = {
       }
 
       try {
-        await dispatch({
+        dispatch({
           type: 'REQUEST_DW_EDITOR',
           check: AUTHORIZED,
           url: editorUrl,
@@ -208,7 +210,7 @@ export const actionCreators: ActionCreators = {
     async (dispatch, getState): Promise<void> => {
       const config = getState().dwServerConfig.config;
       const defaultEditor = config.defaults.editor;
-      await dispatch({
+      dispatch({
         type: 'REQUEST_DW_DEFAULT_EDITOR',
         check: AUTHORIZED,
       });
@@ -223,9 +225,10 @@ export const actionCreators: ActionCreators = {
         throw errorMessage;
       }
 
-      const defaultEditorUrl = defaultEditor.startsWith('https://')
+      const pluginRegistryURL = selectPluginRegistryUrl(getState());
+      const defaultEditorUrl = (defaultEditor as string).startsWith('https://')
         ? defaultEditor
-        : `${config.pluginRegistryURL}/plugins/${defaultEditor}/devfile.yaml`;
+        : `${pluginRegistryURL}/plugins/${defaultEditor}/devfile.yaml`;
 
       // request default editor
       await dispatch(actionCreators.requestDwEditor(defaultEditor));
@@ -240,14 +243,14 @@ export const actionCreators: ActionCreators = {
   requestDwDefaultPlugins:
     (): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
-      await dispatch({
+      dispatch({
         type: 'REQUEST_DW_DEFAULT_PLUGINS',
         check: AUTHORIZED,
       });
 
       const defaultPlugins = {};
       const defaults = getState().dwServerConfig.config.defaults;
-      defaults.plugins.forEach(item => {
+      (defaults.plugins || []).forEach(item => {
         if (!defaultPlugins[item.editor]) {
           defaultPlugins[item.editor] = [];
         }
@@ -280,7 +283,7 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case 'REQUEST_DW_PLUGIN':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         plugins: {
           [action.url]: {
@@ -291,7 +294,7 @@ export const reducer: Reducer<State> = (
         },
       });
     case 'REQUEST_DW_EDITOR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         editors: createObject(state.editors, {
           [action.editorName]: {
@@ -301,13 +304,13 @@ export const reducer: Reducer<State> = (
         }),
       });
     case 'REQUEST_DW_DEFAULT_EDITOR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         defaultEditorName: undefined,
         defaultEditorError: undefined,
       });
     case 'RECEIVE_DW_PLUGIN':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         plugins: {
           [action.url]: {
@@ -317,7 +320,7 @@ export const reducer: Reducer<State> = (
         },
       });
     case 'RECEIVE_DW_EDITOR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         editors: createObject(state.editors, {
           [action.editorName]: {
@@ -327,7 +330,7 @@ export const reducer: Reducer<State> = (
         }),
       });
     case 'RECEIVE_DW_EDITOR_ERROR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         editors: {
           [action.editorName]: {
@@ -338,7 +341,7 @@ export const reducer: Reducer<State> = (
       });
 
     case 'RECEIVE_DW_PLUGIN_ERROR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         plugins: {
           [action.url]: {
@@ -350,21 +353,21 @@ export const reducer: Reducer<State> = (
         },
       });
     case 'RECEIVE_DW_DEFAULT_EDITOR_ERROR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         defaultEditorError: action.error,
       });
     case 'RECEIVE_DW_DEFAULT_EDITOR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         defaultEditorName: action.defaultEditorName,
       });
     case 'REQUEST_DW_DEFAULT_PLUGINS':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
       });
     case 'RECEIVE_DW_DEFAULT_PLUGINS':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         defaultPlugins: action.defaultPlugins,
       });

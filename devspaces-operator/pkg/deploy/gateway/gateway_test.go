@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2021 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -9,6 +9,7 @@
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
 //
+
 package gateway
 
 import (
@@ -360,4 +361,77 @@ func TestCustomizeGatewayDeploymentSingleImage(t *testing.T) {
 
 	assert.Equal(t, constants.GatewayAuthorizationContainerName, containers[3].Name)
 	assert.Equal(t, defaults.GetGatewayAuthorizationSidecarImage(checluster), containers[3].Image)
+}
+
+func TestTraefikLogLevel(t *testing.T) {
+	checluster := &chev2.CheCluster{
+		Spec: chev2.CheClusterSpec{
+			Networking: chev2.CheClusterSpecNetworking{
+				Auth: chev2.Auth{
+					Gateway: chev2.Gateway{
+						Traefik: &chev2.Traefik{
+							LogLevel: "DEBUG",
+						},
+					},
+				},
+			},
+		},
+	}
+	configmap := getGatewayTraefikConfigSpec(checluster)
+	config := configmap.Data["traefik.yml"]
+	if !strings.Contains(config, "level: \"DEBUG\"") {
+		t.Error("log.level within traefik config should be \"DEBUG\"", config)
+	}
+}
+
+func TestTraefikLogLevelDefault(t *testing.T) {
+	configmap := getGatewayTraefikConfigSpec(&chev2.CheCluster{
+		Spec: chev2.CheClusterSpec{},
+	})
+	config := configmap.Data["traefik.yml"]
+	if !strings.Contains(config, "level: \"INFO\"") {
+		t.Error("log.level within traefik config should be \"INFO\"", config)
+	}
+}
+
+func TestKubeRbacProxyLogLevel(t *testing.T) {
+	logLevel := int32(10)
+	checluster := &chev2.CheCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eclipse-che",
+			Namespace: "eclipse-che",
+		},
+		Spec: chev2.CheClusterSpec{
+			Networking: chev2.CheClusterSpecNetworking{
+				Auth: chev2.Auth{
+					Gateway: chev2.Gateway{
+						KubeRbacProxy: &chev2.KubeRbacProxy{
+							LogLevel: &logLevel,
+						},
+					},
+				},
+			},
+		},
+	}
+	ctx := test.GetDeployContext(checluster, []runtime.Object{})
+
+	deployment, err := getGatewayDeploymentSpec(ctx)
+	assert.NoError(t, err)
+
+	containers := deployment.Spec.Template.Spec.Containers
+	assert.Equal(t, constants.GatewayAuthorizationContainerName, containers[3].Name)
+	assert.Equal(t, "--v=10", containers[3].Args[4])
+}
+
+func TestKubeRbacProxyLogLevelDefault(t *testing.T) {
+	ctx := test.GetDeployContext(&chev2.CheCluster{
+		Spec: chev2.CheClusterSpec{},
+	}, []runtime.Object{})
+
+	deployment, err := getGatewayDeploymentSpec(ctx)
+	assert.NoError(t, err)
+
+	containers := deployment.Spec.Template.Spec.Containers
+	assert.Equal(t, constants.GatewayAuthorizationContainerName, containers[3].Name)
+	assert.Equal(t, "--v=0", containers[3].Args[4])
 }

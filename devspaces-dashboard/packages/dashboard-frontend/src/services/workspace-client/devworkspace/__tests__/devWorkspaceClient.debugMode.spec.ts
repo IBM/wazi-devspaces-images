@@ -10,11 +10,15 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { DEVWORKSPACE_DEBUG_START_ANNOTATION, DevWorkspaceClient } from '../devWorkspaceClient';
-import { container } from '../../../../inversify.config';
-import devfileApi from '../../../devfileApi';
 import mockAxios from 'axios';
-import { DevWorkspaceBuilder } from '../../../../store/__mocks__/devWorkspaceBuilder';
+
+import { container } from '@/inversify.config';
+import devfileApi from '@/services/devfileApi';
+import {
+  DEVWORKSPACE_DEBUG_START_ANNOTATION,
+  DevWorkspaceClient,
+} from '@/services/workspace-client/devworkspace/devWorkspaceClient';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
 
 describe('DevWorkspaceClient debug mode', () => {
   const devWorkspaceClient = container.get(DevWorkspaceClient);
@@ -48,13 +52,13 @@ describe('DevWorkspaceClient debug mode', () => {
   });
 
   describe('updating debug mode', () => {
-    afterEach(() => {
-      jest.resetAllMocks();
+    beforeEach(() => {
+      mockAxios.patch = jest.fn();
     });
 
     it('if debug mode doesn`t change, the patch request shouldn`t be called', async () => {
       const mockPatch = mockAxios.patch as jest.Mock;
-      mockPatch.mockResolvedValue({ data: undefined });
+      mockPatch.mockResolvedValue(new Promise(resolve => resolve({ data: undefined })));
 
       let resultData = await devWorkspaceClient.manageDebugMode(devWorkspaceNoDebug, false);
       expect(resultData).toEqual(devWorkspaceNoDebug);
@@ -67,7 +71,7 @@ describe('DevWorkspaceClient debug mode', () => {
 
     it('if debug mode has changed to true, the patch "add" request should be called', async () => {
       const mockPatch = mockAxios.patch as jest.Mock;
-      mockPatch.mockResolvedValue({ data: devWorkspaceWithDebug });
+      mockPatch.mockResolvedValue(new Promise(resolve => resolve({ data: devWorkspaceWithDebug })));
 
       expect(devWorkspaceClient.getDebugMode(devWorkspaceNoDebug)).toEqual(false);
 
@@ -90,7 +94,7 @@ describe('DevWorkspaceClient debug mode', () => {
 
     it('if debug mode has changed to true, the patch "replace" request should be called', async () => {
       const mockPatch = mockAxios.patch as jest.Mock;
-      mockPatch.mockResolvedValue({ data: devWorkspaceWithDebug });
+      mockPatch.mockResolvedValue(new Promise(resolve => resolve({ data: devWorkspaceWithDebug })));
 
       const devWorkspaceNoDebug = new DevWorkspaceBuilder()
         .withMetadata({
@@ -123,7 +127,7 @@ describe('DevWorkspaceClient debug mode', () => {
 
     it('if debug mode has changed to false, the patch "remove" request should be called', async () => {
       const mockPatch = mockAxios.patch as jest.Mock;
-      mockPatch.mockResolvedValue({ data: devWorkspaceNoDebug });
+      mockPatch.mockResolvedValue(new Promise(resolve => resolve({ data: devWorkspaceNoDebug })));
 
       expect(devWorkspaceClient.getDebugMode(devWorkspaceWithDebug)).toEqual(true);
 

@@ -15,29 +15,29 @@ import { AlertVariant } from '@patternfly/react-core';
 import { isEqual } from 'lodash';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { ToggleBarsContext } from '../../../../contexts/ToggleBars';
-import { WorkspaceParams } from '../../../../Routes/routes';
-import { delay } from '../../../../services/helpers/delay';
-import { DisposableCollection } from '../../../../services/helpers/disposable';
-import { findTargetWorkspace } from '../../../../services/helpers/factoryFlow/findTargetWorkspace';
-import { buildHomeLocation, buildIdeLoaderLocation } from '../../../../services/helpers/location';
-import { AlertItem, DevWorkspaceStatus, LoaderTab } from '../../../../services/helpers/types';
-import { Workspace } from '../../../../services/workspace-adapter';
-import { AppState } from '../../../../store';
-import { selectRunningWorkspacesLimit } from '../../../../store/ClusterConfig/selectors';
-import * as WorkspaceStore from '../../../../store/Workspaces';
-import { RunningWorkspacesExceededError } from '../../../../store/Workspaces/devWorkspaces';
-import { throwRunningWorkspacesExceededError } from '../../../../store/Workspaces/devWorkspaces/checkRunningWorkspacesLimit';
-import { selectRunningDevWorkspacesLimitExceeded } from '../../../../store/Workspaces/devWorkspaces/selectors';
+
+import { TIMEOUT_TO_STOP_SEC } from '@/components/WorkspaceProgress/const';
 import {
-  selectAllWorkspaces,
-  selectRunningWorkspaces,
-} from '../../../../store/Workspaces/selectors';
-import { MIN_STEP_DURATION_MS, TIMEOUT_TO_STOP_SEC } from '../../const';
-import { ProgressStep, ProgressStepProps, ProgressStepState } from '../../ProgressStep';
-import { ProgressStepTitle } from '../../StepTitle';
-import { TimeLimit } from '../../TimeLimit';
-import workspaceStatusIs from '../../workspaceStatusIs';
+  ProgressStep,
+  ProgressStepProps,
+  ProgressStepState,
+} from '@/components/WorkspaceProgress/ProgressStep';
+import { ProgressStepTitle } from '@/components/WorkspaceProgress/StepTitle';
+import { TimeLimit } from '@/components/WorkspaceProgress/TimeLimit';
+import workspaceStatusIs from '@/components/WorkspaceProgress/workspaceStatusIs';
+import { ToggleBarsContext } from '@/contexts/ToggleBars';
+import { WorkspaceParams } from '@/Routes/routes';
+import { findTargetWorkspace } from '@/services/helpers/factoryFlow/findTargetWorkspace';
+import { buildHomeLocation, buildIdeLoaderLocation } from '@/services/helpers/location';
+import { AlertItem, DevWorkspaceStatus, LoaderTab } from '@/services/helpers/types';
+import { Workspace } from '@/services/workspace-adapter';
+import { AppState } from '@/store';
+import { selectRunningWorkspacesLimit } from '@/store/ClusterConfig/selectors';
+import * as WorkspaceStore from '@/store/Workspaces';
+import { RunningWorkspacesExceededError } from '@/store/Workspaces/devWorkspaces';
+import { throwRunningWorkspacesExceededError } from '@/store/Workspaces/devWorkspaces/checkRunningWorkspacesLimit';
+import { selectRunningDevWorkspacesLimitExceeded } from '@/store/Workspaces/devWorkspaces/selectors';
+import { selectAllWorkspaces, selectRunningWorkspaces } from '@/store/Workspaces/selectors';
 
 export type Props = MappedProps &
   ProgressStepProps & {
@@ -53,8 +53,6 @@ class CommonStepCheckRunningWorkspacesLimit extends ProgressStep<Props, State> {
   static contextType = ToggleBarsContext;
   readonly context: React.ContextType<typeof ToggleBarsContext>;
 
-  protected readonly toDispose = new DisposableCollection();
-
   constructor(props: Props) {
     super(props);
 
@@ -69,8 +67,6 @@ class CommonStepCheckRunningWorkspacesLimit extends ProgressStep<Props, State> {
   }
 
   public async componentDidUpdate() {
-    this.toDispose.dispose();
-
     this.init();
   }
 
@@ -130,8 +126,6 @@ class CommonStepCheckRunningWorkspacesLimit extends ProgressStep<Props, State> {
    * The resolved boolean indicates whether to go to the next step or not
    */
   protected async runStep(): Promise<boolean> {
-    await delay(MIN_STEP_DURATION_MS);
-
     const { runningWorkspacesLimit } = this.props;
     const { shouldStop, redundantWorkspaceUID } = this.state;
 
@@ -244,8 +238,6 @@ class CommonStepCheckRunningWorkspacesLimit extends ProgressStep<Props, State> {
   }
 
   protected handleTimeout(redundantWorkspace: Workspace | undefined): void {
-    // eslint-disable-next-line no-debugger
-    debugger;
     const message = redundantWorkspace
       ? `The workspace status remains "${redundantWorkspace.status}" in the last ${TIMEOUT_TO_STOP_SEC} seconds.`
       : `Could not check running workspaces limit in the last ${TIMEOUT_TO_STOP_SEC} seconds.`;
@@ -309,16 +301,12 @@ class CommonStepCheckRunningWorkspacesLimit extends ProgressStep<Props, State> {
           title: 'Restart',
           callback: () => this.handleRestart(key),
         },
-        {
-          title: 'Open in Verbose mode',
-          callback: () => this.handleRestart(key, LoaderTab.Logs),
-        },
       ],
     };
   }
 
   render(): React.ReactNode {
-    const { distance } = this.props;
+    const { distance, hasChildren } = this.props;
     const { name, lastError } = this.state;
 
     const redundantWorkspace = this.findRedundantWorkspace(this.props, this.state);
@@ -335,7 +323,12 @@ class CommonStepCheckRunningWorkspacesLimit extends ProgressStep<Props, State> {
             onTimeout={() => this.handleTimeout(redundantWorkspace)}
           />
         )}
-        <ProgressStepTitle distance={distance} isError={isError} isWarning={isWarning}>
+        <ProgressStepTitle
+          distance={distance}
+          hasChildren={hasChildren}
+          isError={isError}
+          isWarning={isWarning}
+        >
           {name}
         </ProgressStepTitle>
       </React.Fragment>

@@ -22,6 +22,9 @@ components:
           path: /
           protocol: http
           targetPort: 8888
+      env:
+        - name: KUBEDOCK_ENABLED
+          value: "true"
 commands:
   - id: installdependencies
     exec:
@@ -37,7 +40,7 @@ commands:
       label: "[UD] build"
       component: tools
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "yarn build"
+      commandLine: "yarn install --non-interactive && yarn build"
       group:
         kind: build
   - id: watchfrontend
@@ -56,20 +59,12 @@ commands:
       commandLine: "yarn --cwd packages/dashboard-backend build:watch"
       group:
         kind: build
-  - id: prepare
+  - id: dogfoodingstart
     exec:
-      label: "[UD] prepare"
+      label: "[UD] dogfooding start"
       component: tools
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "yarn start:prepare"
-      group:
-        kind: build
-  - id: dogfoodingprepare
-    exec:
-      label: "[UD] dogfooding prepare"
-      component: tools
-      workingDir: ${PROJECT_SOURCE}
-      commandLine: "oc project dogfooding && export CHE_NAMESPACE='dogfooding' && export NAMESPACE='dogfooding' && yarn start:prepare"
+      commandLine: "oc project dogfooding && export CHE_NAMESPACE='dogfooding' && export NAMESPACE='dogfooding' && yarn start:prepare && yarn start -c"
       group:
         kind: build
   - id: startcheinche
@@ -77,15 +72,7 @@ commands:
       label: "[UD] start che-in-che"
       component: tools
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "oc project dogfooding && export CHE_NAMESPACE='dogfooding' && export NAMESPACE='dogfooding' && yarn start -c"
-      group:
-        kind: build
-  - id: start
-    exec:
-      label: "[UD] start"
-      component: tools
-      workingDir: ${PROJECT_SOURCE}
-      commandLine: "yarn start"
+      commandLine: "yarn start:prepare && yarn start -c"
       group:
         kind: build
   - id: runtests

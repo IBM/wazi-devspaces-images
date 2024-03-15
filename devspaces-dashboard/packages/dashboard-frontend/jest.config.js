@@ -14,22 +14,25 @@ const base = require('../../jest.config.base');
 
 module.exports = {
   ...base,
-  name: 'dashboard-frontend',
   displayName: 'Dashboard Frontend',
   moduleDirectories: ['node_modules', '../../node_modules', 'src'],
   moduleNameMapper: {
     '\\.(css|less|sass|scss|styl)$': 'identity-obj-proxy',
     '\\.(gif|ttf|eot|svg)$': '<rootDir>/__mocks__/fileMock.js',
-    'monaco-editor-core': 'monaco-editor-core/esm/vs/editor/editor.main',
-    'vscode-languageserver-protocol/lib/utils/is':
-      'vscode-languageserver-protocol/lib/common/utils/is',
-    'vscode-languageserver-protocol/lib/main': 'vscode-languageserver-protocol/lib/node/main',
+    // mapping for absolute imports (see tsconfig.json)
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.test.json',
-      diagnostics: true,
-    },
+  modulePathIgnorePatterns: [
+    '__mocks__/index.tsx',
+  ],
+  testEnvironment: 'jsdom',
+  transform: {
+    '^.*\\.tsx?$': [
+      'ts-jest',
+      {
+        diagnostics: true,
+      },
+    ],
   },
   setupFilesAfterEnv: ['./jest.setup.ts'],
   setupFiles: ['./src/inversify.config.ts'],
@@ -46,10 +49,10 @@ module.exports = {
   ],
   coverageThreshold: {
     global: {
-      statements: 80,
+      statements: 81,
       branches: 85,
       functions: 77,
-      lines: 80,
+      lines: 81,
     },
   },
 };

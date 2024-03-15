@@ -14,8 +14,9 @@
 
 import * as mockClient from '@kubernetes/client-node';
 import { CustomObjectsApi } from '@kubernetes/client-node';
-import { CustomResourceDefinition, CustomResourceDefinitionList } from '../..';
-import { ServerConfigApiService } from '../serverConfigApi';
+
+import { CheClusterCustomResource, CustomResourceDefinitionList } from '@/devworkspaceClient';
+import { ServerConfigApiService } from '@/devworkspaceClient/services/serverConfigApi';
 
 jest.mock('../../../helpers/getUserName.ts');
 
@@ -79,9 +80,22 @@ describe('Server Config API Service', () => {
     expect(res).toEqual([{ container: { image: 'component-image' }, name: 'component-name' }]);
   });
 
-  test('getting openVSXURL', () => {
-    const res = serverConfigService.getOpenVSXURL(buildCustomResource());
-    expect(res).toEqual('https://open-vsx.org');
+  test('getting openVSXURL from the CR', () => {
+    const openVSXURL = 'https://open-vsx.org';
+    const res = serverConfigService.getPluginRegistry(buildCustomResource(openVSXURL));
+    expect(res).toEqual({ openVSXURL: 'https://open-vsx.org' });
+  });
+
+  test('getting openVSXURL from the env var', () => {
+    process.env.CHE_DEFAULT_SPEC_COMPONENTS_PLUGINREGISTRY_OPENVSXURL = 'https://open-vsx.org';
+    const res = serverConfigService.getPluginRegistry(buildCustomResource());
+    expect(res).toEqual({ openVSXURL: 'https://open-vsx.org' });
+  });
+
+  test('getting empty openVSXURL from the env var', () => {
+    process.env.CHE_DEFAULT_SPEC_COMPONENTS_PLUGINREGISTRY_OPENVSXURL = '';
+    const res = serverConfigService.getPluginRegistry(buildCustomResource());
+    expect(res).toEqual({ openVSXURL: '' });
   });
 
   test('getting PVC strategy', () => {
@@ -134,7 +148,7 @@ describe('Server Config API Service', () => {
 
   test('getting default devfile registry URL', () => {
     const res = serverConfigService.getDefaultDevfileRegistryUrl(buildCustomResource());
-    expect(res).toEqual('http://devfile-registry.eclipse-che.svc');
+    expect(res).toEqual('http://devfile-registry.eclipse-che.svc/devfile-registry/');
   });
 });
 
@@ -148,7 +162,7 @@ function buildCustomResourceList(): { body: CustomResourceDefinitionList } {
   };
 }
 
-function buildCustomResource(): CustomResourceDefinition {
+function buildCustomResource(openVSXURL?: string): CheClusterCustomResource {
   return {
     apiVersion: 'org.eclipse.che/v2',
     kind: 'CheCluster',
@@ -165,7 +179,7 @@ function buildCustomResource(): CustomResourceDefinition {
           },
         },
         devWorkspace: {},
-        pluginRegistry: { openVSXURL: 'https://open-vsx.org' },
+        pluginRegistry: openVSXURL ? { openVSXURL } : {},
         devfileRegistry: {
           externalDevfileRegistries: [
             {
@@ -194,8 +208,8 @@ function buildCustomResource(): CustomResourceDefinition {
       },
     },
     status: {
-      devfileRegistryURL: 'http://devfile-registry.eclipse-che.svc',
+      devfileRegistryURL: 'http://devfile-registry.eclipse-che.svc/devfile-registry',
       pluginRegistryURL: 'http://plugin-registry.eclipse-che.svc/v3',
     },
-  } as CustomResourceDefinition;
+  } as CheClusterCustomResource;
 }

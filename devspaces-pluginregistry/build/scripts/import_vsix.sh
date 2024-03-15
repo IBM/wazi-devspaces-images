@@ -40,11 +40,17 @@ for i in $(seq 0 "$((numberOfExtensions - 1))"); do
     fi
 
     # publish the file
+    sleep 15
     ovsx publish "${vsixFilename}"
 
     # remove the downloaded file
     rm "${vsixFilename}"
 done;
 
+sleep 30
+
 # disable the personal access token
 psql -c "UPDATE personal_access_token SET active = false;"
+
+rm -rf /tmp/extension_*.vsix
+rm -rf /tmp/vsix

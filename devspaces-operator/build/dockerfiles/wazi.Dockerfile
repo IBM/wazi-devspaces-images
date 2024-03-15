@@ -17,7 +17,7 @@ ARG SKIP_TESTS="true"
 
 ENV \
     GOPATH=/go/ \
-    DEV_WORKSPACE_VERSION="v0.22.0" \
+    DEV_WORKSPACE_VERSION="v0.23.0" \
     TRAEFIK_VERSION="v0.1.2"
 
 WORKDIR /devspaces-operator
@@ -53,7 +53,7 @@ RUN \
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 
-ARG PRODUCT_VERSION="3.0.1"
+ARG PRODUCT_VERSION="4.0.0"
 
 COPY --from=operator-builder /tmp/devworkspace-operator/templates /tmp/devworkspace-operator/templates
 COPY --from=operator-builder /tmp/header-rewrite-traefik-plugin /tmp/header-rewrite-traefik-plugin

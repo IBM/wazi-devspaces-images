@@ -11,7 +11,8 @@
  */
 
 import * as k8s from '@kubernetes/client-node';
-import { retryableExec } from './retryableExec';
+
+import { retryableExec } from '@/devworkspaceClient/services/helpers/retryableExec';
 
 export type CoreV1API = Pick<
   k8s.CoreV1Api,
@@ -20,10 +21,13 @@ export type CoreV1API = Pick<
   | 'listNamespacedEvent'
   | 'listNamespacedPod'
   | 'listNamespacedSecret'
+  | 'patchNamespacedConfigMap'
+  | 'readNamespacedConfigMap'
   | 'readNamespacedPod'
   | 'readNamespacedSecret'
   | 'replaceNamespacedSecret'
   | 'deleteNamespacedSecret'
+  | 'listNamespacedConfigMap'
 >;
 
 export function prepareCoreV1API(kc: k8s.KubeConfig): CoreV1API {
@@ -39,6 +43,10 @@ export function prepareCoreV1API(kc: k8s.KubeConfig): CoreV1API {
       retryableExec(() => coreV1API.listNamespacedPod(...args)),
     listNamespacedSecret: (...args: Parameters<typeof coreV1API.listNamespacedSecret>) =>
       retryableExec(() => coreV1API.listNamespacedSecret(...args)),
+    patchNamespacedConfigMap: (...args: Parameters<typeof coreV1API.patchNamespacedConfigMap>) =>
+      retryableExec(() => coreV1API.patchNamespacedConfigMap(...args)),
+    readNamespacedConfigMap: (...args: Parameters<typeof coreV1API.readNamespacedConfigMap>) =>
+      retryableExec(() => coreV1API.readNamespacedConfigMap(...args)),
     readNamespacedPod: (...args: Parameters<typeof coreV1API.readNamespacedPod>) =>
       retryableExec(() => coreV1API.readNamespacedPod(...args)),
     readNamespacedSecret: (...args: Parameters<typeof coreV1API.readNamespacedSecret>) =>
@@ -47,5 +55,7 @@ export function prepareCoreV1API(kc: k8s.KubeConfig): CoreV1API {
       retryableExec(() => coreV1API.replaceNamespacedSecret(...args)),
     deleteNamespacedSecret: (...args: Parameters<typeof coreV1API.deleteNamespacedSecret>) =>
       retryableExec(() => coreV1API.deleteNamespacedSecret(...args)),
+    listNamespacedConfigMap: (...args: Parameters<typeof coreV1API.listNamespacedConfigMap>) =>
+      retryableExec(() => coreV1API.listNamespacedConfigMap(...args)),
   };
 }

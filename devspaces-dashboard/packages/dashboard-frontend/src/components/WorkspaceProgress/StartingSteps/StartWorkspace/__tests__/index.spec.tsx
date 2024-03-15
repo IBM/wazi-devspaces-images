@@ -18,16 +18,18 @@ import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Action, Store } from 'redux';
+
+import { MIN_STEP_DURATION_MS } from '@/components/WorkspaceProgress/const';
+import { WorkspaceParams } from '@/Routes/routes';
+import getComponentRenderer from '@/services/__mocks__/getComponentRenderer';
+import { getDefer } from '@/services/helpers/deferred';
+import { AlertItem } from '@/services/helpers/types';
+import { AppThunk } from '@/store';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
+import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+import { ActionCreators } from '@/store/Workspaces';
+
 import StartingStepStartWorkspace from '..';
-import { WorkspaceParams } from '../../../../../Routes/routes';
-import { getDefer } from '../../../../../services/helpers/deferred';
-import { AlertItem } from '../../../../../services/helpers/types';
-import getComponentRenderer from '../../../../../services/__mocks__/getComponentRenderer';
-import { AppThunk } from '../../../../../store';
-import { ActionCreators } from '../../../../../store/Workspaces';
-import { DevWorkspaceBuilder } from '../../../../../store/__mocks__/devWorkspaceBuilder';
-import { FakeStoreBuilder } from '../../../../../store/__mocks__/storeBuilder';
-import { MIN_STEP_DURATION_MS } from '../../../const';
 
 jest.mock('../../../TimeLimit');
 
@@ -125,7 +127,7 @@ describe('Starting steps, starting a workspace', () => {
     test('alert notification', async () => {
       renderComponent(store, paramsWithWrongName);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       const expectAlertItem = expect.objectContaining({
         title: 'Failed to open the workspace',
@@ -136,7 +138,7 @@ describe('Starting steps, starting a workspace', () => {
             callback: expect.any(Function),
           }),
           expect.objectContaining({
-            title: 'Open in Verbose mode',
+            title: 'Restart with default devfile',
             callback: expect.any(Function),
           }),
         ],
@@ -165,7 +167,7 @@ describe('Starting steps, starting a workspace', () => {
         }
       });
       renderComponent(store, paramsWithWrongName);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       await waitFor(() => expect(mockOnError).toHaveBeenCalled());
       mockOnError.mockClear();
@@ -176,11 +178,12 @@ describe('Starting steps, starting a workspace', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       // this mock is called from the action callback above
       await waitFor(() => expect(mockOnRestart).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
-      expect(mockOnError).not.toHaveBeenCalled();
+      expect(mockOnError).toHaveBeenCalled();
     });
   });
 
@@ -199,7 +202,7 @@ describe('Starting steps, starting a workspace', () => {
 
     renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // the workspace should be started
     await waitFor(() => expect(mockStartWorkspace).toHaveBeenCalled());
@@ -230,7 +233,7 @@ describe('Starting steps, starting a workspace', () => {
 
     renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // should call the workspace start mock
     await waitFor(() => expect(mockStartWorkspace).toHaveBeenCalled());
@@ -245,7 +248,7 @@ describe('Starting steps, starting a workspace', () => {
           callback: expect.any(Function),
         }),
         expect.objectContaining({
-          title: 'Open in Verbose mode',
+          title: 'Restart with default devfile',
           callback: expect.any(Function),
         }),
       ],
@@ -271,7 +274,7 @@ describe('Starting steps, starting a workspace', () => {
 
     renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // the workspace should be started
     await waitFor(() => expect(mockStartWorkspace).toHaveBeenCalled());
@@ -298,7 +301,7 @@ describe('Starting steps, starting a workspace', () => {
 
     renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // should switch to the next step
     await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
@@ -328,7 +331,7 @@ describe('Starting steps, starting a workspace', () => {
 
     const { reRenderComponent } = renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // no errors at this moment
     expect(mockOnError).not.toHaveBeenCalled();
@@ -348,7 +351,7 @@ describe('Starting steps, starting a workspace', () => {
       .build();
     reRenderComponent(nextStore);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // switch to the next step
     await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
@@ -372,7 +375,7 @@ describe('Starting steps, starting a workspace', () => {
 
     const { reRenderComponent } = renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // no errors at this moment
     expect(mockOnError).not.toHaveBeenCalled();
@@ -392,7 +395,7 @@ describe('Starting steps, starting a workspace', () => {
       .build();
     reRenderComponent(nextStore);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // should report the error
     const expectAlertItem = expect.objectContaining({
@@ -404,7 +407,7 @@ describe('Starting steps, starting a workspace', () => {
           callback: expect.any(Function),
         }),
         expect.objectContaining({
-          title: 'Open in Verbose mode',
+          title: 'Restart with default devfile',
           callback: expect.any(Function),
         }),
       ],
@@ -434,7 +437,7 @@ describe('Starting steps, starting a workspace', () => {
 
     const { reRenderComponent } = renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // no errors at this moment
     expect(mockOnError).not.toHaveBeenCalled();
@@ -452,7 +455,7 @@ describe('Starting steps, starting a workspace', () => {
       .build();
     reRenderComponent(nextStore);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // should report the error
     const expectAlertItem = expect.objectContaining({
@@ -464,7 +467,7 @@ describe('Starting steps, starting a workspace', () => {
           callback: expect.any(Function),
         }),
         expect.objectContaining({
-          title: 'Open in Verbose mode',
+          title: 'Restart with default devfile',
           callback: expect.any(Function),
         }),
       ],
@@ -494,7 +497,7 @@ describe('Starting steps, starting a workspace', () => {
 
     const { reRenderComponent } = renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // no errors at this moment
     expect(mockOnError).not.toHaveBeenCalled();
@@ -512,7 +515,7 @@ describe('Starting steps, starting a workspace', () => {
       .build();
     reRenderComponent(nextStore);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // should report the error
     const expectAlertItem = expect.objectContaining({
@@ -524,7 +527,7 @@ describe('Starting steps, starting a workspace', () => {
           callback: expect.any(Function),
         }),
         expect.objectContaining({
-          title: 'Open in Verbose mode',
+          title: 'Restart with default devfile',
           callback: expect.any(Function),
         }),
       ],
@@ -552,7 +555,7 @@ describe('Starting steps, starting a workspace', () => {
 
     const { reRenderComponent } = renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // no errors at this moment
     expect(mockOnError).not.toHaveBeenCalled();
@@ -570,7 +573,7 @@ describe('Starting steps, starting a workspace', () => {
       .build();
     reRenderComponent(nextStore);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // should report the error
     const expectAlertItem = expect.objectContaining({
@@ -582,7 +585,7 @@ describe('Starting steps, starting a workspace', () => {
           callback: expect.any(Function),
         }),
         expect.objectContaining({
-          title: 'Open in Verbose mode',
+          title: 'Restart with default devfile',
           callback: expect.any(Function),
         }),
       ],
@@ -611,7 +614,7 @@ describe('Starting steps, starting a workspace', () => {
 
     renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // should report the error
     const expectAlertItem = expect.objectContaining({
@@ -623,7 +626,7 @@ describe('Starting steps, starting a workspace', () => {
           callback: expect.any(Function),
         }),
         expect.objectContaining({
-          title: 'Open in Verbose mode',
+          title: 'Restart with default devfile',
           callback: expect.any(Function),
         }),
       ],
@@ -649,7 +652,7 @@ describe('Starting steps, starting a workspace', () => {
 
     renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // should report the error
     const expectAlertItem = expect.objectContaining({
@@ -661,7 +664,7 @@ describe('Starting steps, starting a workspace', () => {
           callback: expect.any(Function),
         }),
         expect.objectContaining({
-          title: 'Open in Verbose mode',
+          title: 'Restart with default devfile',
           callback: expect.any(Function),
         }),
       ],
@@ -687,7 +690,7 @@ describe('Starting steps, starting a workspace', () => {
 
     renderComponent(store);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     // should report the error
     const expectAlertItem = expect.objectContaining({
@@ -699,7 +702,7 @@ describe('Starting steps, starting a workspace', () => {
           callback: expect.any(Function),
         }),
         expect.objectContaining({
-          title: 'Open in Verbose mode',
+          title: 'Restart with default devfile',
           callback: expect.any(Function),
         }),
       ],
@@ -746,7 +749,7 @@ describe('Starting steps, starting a workspace', () => {
             callback: expect.any(Function),
           }),
           expect.objectContaining({
-            title: 'Open in Verbose mode',
+            title: 'Restart with default devfile',
             callback: expect.any(Function),
           }),
         ],
@@ -776,7 +779,7 @@ describe('Starting steps, starting a workspace', () => {
       });
 
       renderComponent(store);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       // trigger timeout
       const timeoutButton = screen.getByRole('button', {
@@ -793,6 +796,7 @@ describe('Starting steps, starting a workspace', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       await waitFor(() => expect(mockOnRestart).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
@@ -810,6 +814,7 @@ function getComponent(
     <Provider store={store}>
       <StartingStepStartWorkspace
         distance={0}
+        hasChildren={true}
         history={history}
         matchParams={params}
         onNextStep={mockOnNextStep}

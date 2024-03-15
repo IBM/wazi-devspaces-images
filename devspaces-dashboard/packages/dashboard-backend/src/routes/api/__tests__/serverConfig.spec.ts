@@ -11,15 +11,13 @@
  */
 
 import { FastifyInstance } from 'fastify';
-import { baseApiPath } from '../../../constants/config';
-import { setup, teardown } from '../../../helpers/tests/appBuilder';
+
+import { baseApiPath } from '@/constants/config';
+import { setup, teardown } from '@/utils/appBuilder';
 
 jest.mock('../helpers/getDevWorkspaceClient.ts');
 jest.mock('../helpers/getToken.ts');
 jest.mock('../helpers/getServiceAccountToken.ts');
-
-// mute the outputs
-console.log = jest.fn();
 
 describe('Server Config Route', () => {
   let app: FastifyInstance;
@@ -60,6 +58,10 @@ describe('Server Config Route', () => {
             url: 'https://devfile.registry.test.org/',
           },
         ],
+      },
+      dashboardLogo: {
+        base64data: 'base64-encoded-data',
+        mediatype: 'image/svg+xml',
       },
     });
   });

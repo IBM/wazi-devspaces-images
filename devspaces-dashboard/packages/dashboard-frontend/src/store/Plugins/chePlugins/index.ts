@@ -10,15 +10,15 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import axios from 'axios';
-import { Action, Reducer } from 'redux';
 import common from '@eclipse-che/common';
-import { AppThunk } from '../..';
-import { createObject } from '../../helpers';
-import { AUTHORIZED, SanityCheckAction } from '../../sanityCheckMiddleware';
+import { Action, Reducer } from 'redux';
 
-// create new instance of `axios` to avoid adding an authorization header
-const axiosInstance = axios.create();
+import { getAxiosInstance } from '@/services/axios-wrapper/getAxiosInstance';
+import { AppThunk } from '@/store';
+import { createObject } from '@/store/helpers';
+import { SanityCheckAction } from '@/store/sanityCheckMiddleware';
+
+const axiosInstance = getAxiosInstance();
 
 export interface State {
   isLoading: boolean;
@@ -50,13 +50,8 @@ export const actionCreators: ActionCreators = {
   requestPlugins:
     (registryUrl: string): AppThunk<KnownAction, Promise<che.Plugin[]>> =>
     async (dispatch): Promise<che.Plugin[]> => {
-      await dispatch({ type: 'REQUEST_PLUGINS', check: AUTHORIZED });
-
       try {
-        const response = await axiosInstance.request<che.Plugin[]>({
-          method: 'GET',
-          url: `${registryUrl}/plugins/`,
-        });
+        const response = await axiosInstance.get<che.Plugin[]>(`${registryUrl}/plugins/index.json`);
         const plugins = response.data;
 
         dispatch({
@@ -93,17 +88,17 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case 'REQUEST_PLUGINS':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         error: undefined,
       });
     case 'RECEIVE_PLUGINS':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         plugins: action.plugins,
       });
     case 'RECEIVE_PLUGINS_ERROR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         error: action.error,
       });

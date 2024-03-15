@@ -13,16 +13,18 @@
 import { api, helpers } from '@eclipse-che/common';
 import { V1Pod } from '@kubernetes/client-node';
 import { Action, Reducer } from 'redux';
+
+import { container } from '@/inversify.config';
+import { fetchPods } from '@/services/backend-client/podsApi';
+import { WebsocketClient } from '@/services/backend-client/websocketClient';
+import { getNewerResourceVersion } from '@/services/helpers/resourceVersion';
+import { createObject } from '@/store/helpers';
+import { selectDefaultNamespace } from '@/store/InfrastructureNamespaces/selectors';
+import isSamePod from '@/store/Pods/isSamePod';
+import { selectPodsResourceVersion } from '@/store/Pods/selectors';
+import { AUTHORIZED, SanityCheckAction } from '@/store/sanityCheckMiddleware';
+
 import { AppThunk } from '..';
-import { container } from '../../inversify.config';
-import { fetchPods } from '../../services/dashboard-backend-client/podsApi';
-import { WebsocketClient } from '../../services/dashboard-backend-client/websocketClient';
-import { getNewerResourceVersion } from '../../services/helpers/resourceVersion';
-import { createObject } from '../helpers';
-import { selectDefaultNamespace } from '../InfrastructureNamespaces/selectors';
-import { AUTHORIZED, SanityCheckAction } from '../sanityCheckMiddleware';
-import isSamePod from './isSamePod';
-import { selectPodsResourceVersion } from './selectors';
 
 export interface State {
   isLoading: boolean;
@@ -198,23 +200,23 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case Type.REQUEST_PODS:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         error: undefined,
       });
     case Type.RECEIVE_PODS:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         pods: action.pods,
         resourceVersion: getNewerResourceVersion(action.resourceVersion, state.resourceVersion),
       });
     case Type.RECEIVE_ERROR:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         error: action.error,
       });
     case Type.RECEIVE_POD:
-      return createObject(state, {
+      return createObject<State>(state, {
         pods: state.pods.concat([action.pod]),
         resourceVersion: getNewerResourceVersion(
           action.pod.metadata?.resourceVersion,
@@ -222,7 +224,7 @@ export const reducer: Reducer<State> = (
         ),
       });
     case Type.MODIFY_POD:
-      return createObject(state, {
+      return createObject<State>(state, {
         pods: state.pods.map(pod => (isSamePod(pod, action.pod) ? action.pod : pod)),
         resourceVersion: getNewerResourceVersion(
           action.pod.metadata?.resourceVersion,
@@ -230,7 +232,7 @@ export const reducer: Reducer<State> = (
         ),
       });
     case Type.DELETE_POD:
-      return createObject(state, {
+      return createObject<State>(state, {
         pods: state.pods.filter(pod => isSamePod(pod, action.pod) === false),
         resourceVersion: getNewerResourceVersion(
           action.pod.metadata?.resourceVersion,

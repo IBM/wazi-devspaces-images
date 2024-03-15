@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2021 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -9,6 +9,7 @@
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
 //
+
 package deploy
 
 import (
@@ -43,7 +44,7 @@ var DefaultDeploymentDiffOpts = cmp.Options{
 	cmpopts.IgnoreFields(appsv1.Deployment{}, "TypeMeta", "ObjectMeta", "Status"),
 	cmpopts.IgnoreFields(appsv1.DeploymentSpec{}, "Replicas", "RevisionHistoryLimit", "ProgressDeadlineSeconds"),
 	cmpopts.IgnoreFields(appsv1.DeploymentStrategy{}, "RollingUpdate"),
-	cmpopts.IgnoreFields(corev1.Container{}, "TerminationMessagePath", "TerminationMessagePolicy", "SecurityContext"),
+	cmpopts.IgnoreFields(corev1.Container{}, "ReadinessProbe", "LivenessProbe", "TerminationMessagePath", "TerminationMessagePolicy", "SecurityContext"),
 	cmpopts.IgnoreFields(corev1.PodSpec{}, "DNSPolicy", "SchedulerName", "SecurityContext", "DeprecatedServiceAccount"),
 	cmpopts.IgnoreFields(corev1.ConfigMapVolumeSource{}, "DefaultMode"),
 	cmpopts.IgnoreFields(corev1.SecretVolumeSource{}, "DefaultMode"),

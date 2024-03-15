@@ -49,7 +49,7 @@ var IDzEEAnnotations = map[string]string{
 	"productMetric":            "VU_VALUE_UNIT",
 	"productChargedContainers": "All",
 	"productCloudpakRatio":     "",
-	"productVersion":           "16.0.3",
+	"productVersion":           "16.0.4",
 }
 
 type LicenseUsage struct {

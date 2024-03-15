@@ -16,12 +16,12 @@ FROM registry.redhat.io/devspaces/udi-rhel8:latest AS core
 ###
 ###########################################
 
-ARG PRODUCT_VERSION="3.0.1"
+ARG PRODUCT_VERSION="4.0.0"
 USER 0
 
 ENV \
     JAVA_VERSION="17" \
-    SEMERU_VERSION="17.0.8.7_0.40.0-1"
+    SEMERU_VERSION="17.0.9.9_0.41.0-1"
 
 COPY LICENSE PRODUCT_LICENSE /licenses/
 COPY *.sh *.zip /tmp/
@@ -29,19 +29,19 @@ COPY *.sh *.zip /tmp/
 ### *** General *** ###
 RUN \
     echo $'alias ll=\'ls -l\'\nalias la=\'ls -la\'\nalias ld=\'ls -lad */\'\n' >> /home/user/.bashrc && \
-    ln -sf /home/user/.bashrc /home/user/.profile
+    ln -sf /home/user/.bashrc /home/user/.profile && \
+    DNF_PKGS="yum python39-wheel iputils libatomic libzip-tools cargo rust" && \
+    dnf -y update  --noplugins --nodocs --nobest && \
+    dnf -y clean all --enablerepo='*' && dnf -y clean packages && \
+    dnf -y clean all && rm -rf /var/cache/yum && \
+    dnf -y install --noplugins --nodocs ${DNF_PKGS}
 
 ### *** Java (Semeru) *** ###
 RUN \
     ARCH="$(uname -m)" && \
-    SEMERU_JDK="jdk-17.0.8%2B7_openj9-0.40.0" && \
+    SEMERU_JDK="jdk-17.0.9%2B9_openj9-0.41.0" && \
     SEMERU_RPM="https://github.com/ibmruntimes/semeru${JAVA_VERSION}-binaries/releases/download/${SEMERU_JDK}/ibm-semeru-open-${JAVA_VERSION}-jdk-${SEMERU_VERSION}.${ARCH}.rpm" && \
-    DNF_PKGS="yum python39-wheel iputils libatomic libzip-tools cargo rust" && \
     YUM_PKGS="${SEMERU_RPM}" && \
-    dnf -y update  --noplugins --nodocs --nobest && \
-    dnf -y clean all --enablerepo='*' && dnf -y clean packages && \
-    dnf -y clean all && rm -rf /var/cache/yum && \
-    dnf -y install --noplugins --nodocs ${DNF_PKGS} && \
     yum -y install --nodocs ${YUM_PKGS} && \
     find /home/user/.java/current -maxdepth 1 -type l -delete && \
     ln -s /usr/lib/jvm/ibm-semeru-open-${JAVA_VERSION}-jdk/* /home/user/.java/current && \
@@ -60,7 +60,13 @@ RUN \
     curl -skL https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/odo/latest/odo-linux-${ARCH} -o ${ODO_INSTALL_DIR} && \
     yum -y install --nodocs ${YUM_PKGS}
 
-FROM registry.redhat.io/ubi8/python-39:latest AS code-builder
+###########################################
+###
+###   Code Builder Instruction Set
+###
+###########################################
+
+FROM registry.redhat.io/ubi8/python-311:latest AS code-builder
 
 USER 0
 
@@ -86,7 +92,6 @@ FROM core AS code
 ENV \
     ZOWE_CLI_PLUGINS_DIR="/usr/local/lib/node_modules" \
     ZOWE_CLI_VERSION="zowe-v2-lts" \
-    # ZOWE_SECRETS_KUBE_CLI_VERSION="latest" \
     RSE_API_VERSION="latest" \
     NPM_VERSION="9.*"
 
@@ -113,17 +118,14 @@ RUN \
 RUN \
     --mount=type=secret,id=docker_secret,dst=/run/secrets/docker_secret source /run/secrets/docker_secret && \
     /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" && \
-    # NPM_PKGS=("@zowe/cli@${ZOWE_CLI_VERSION}" "@zowe/secrets-for-kubernetes-for-zowe-cli@${ZOWE_SECRETS_KUBE_CLI_VERSION}" "@ibm/rse-api-for-zowe-cli@${RSE_API_VERSION}") && \
     NPM_PKGS=("@zowe/cli@${ZOWE_CLI_VERSION}" "@ibm/rse-api-for-zowe-cli@${RSE_API_VERSION}") && \
     NODE_PATH=/usr/lib/node_modules && \
     for NPM_PKG in "${NPM_PKGS[@]}"; do \
         echo "Installing ${NPM_PKG} ..."; \
         npm install -g ${NPM_PKG} --ignore-scripts --no-audit --no-fund --no-update-notifier; \
     done && \
-    ls -la $NODE_PATH && \
     npm list -g --depth=0 && \
     zowe plugins install  "$NODE_PATH/@ibm/rse-api-for-zowe-cli" && \
-    # zowe plugins install  "$NODE_PATH/@zowe/secrets-for-kubernetes-for-zowe-cli" && \
     zowe plugins list && \
     rm -rfv "/home/user/.npmrc"
 

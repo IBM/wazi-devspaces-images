@@ -16,20 +16,26 @@ import { CoreV1Event, V1Pod } from '@kubernetes/client-node';
 import { AnyAction } from 'redux';
 import createMockStore, { MockStoreEnhanced } from 'redux-mock-store';
 import { ThunkDispatch } from 'redux-thunk';
+
+import { BrandingData } from '@/services/bootstrap/branding.constant';
+import devfileApi from '@/services/devfileApi';
+import mockThunk from '@/store/__mocks__/thunk';
+import { State as BrandingState } from '@/store/Branding';
+import { DevWorkspaceResources, State as DevfileRegistriesState } from '@/store/DevfileRegistries';
+import { RegistryEntry } from '@/store/DockerConfig/types';
+import {
+  ConvertedState,
+  ResolverState,
+  State as FactoryResolverState,
+} from '@/store/FactoryResolver';
+import { IGitOauth } from '@/store/GitOauthConfig/types';
+import { State as InfrastructureNamespaceState } from '@/store/InfrastructureNamespaces';
+import { State as PluginsState } from '@/store/Plugins/chePlugins';
+import { State as LogsState } from '@/store/Pods/Logs';
+import { State as UserProfileState } from '@/store/User/Profile';
+import { State as WorkspacesState } from '@/store/Workspaces';
+
 import { AppState } from '..';
-import { BrandingData } from '../../services/bootstrap/branding.constant';
-import devfileApi from '../../services/devfileApi';
-import { State as BrandingState } from '../Branding';
-import { DevWorkspaceResources, State as DevfileRegistriesState } from '../DevfileRegistries';
-import { RegistryEntry } from '../DockerConfig/types';
-import { ConvertedState, ResolverState, State as FactoryResolverState } from '../FactoryResolver';
-import { IGitOauth } from '../GitOauthConfig/types';
-import { State as InfrastructureNamespaceState } from '../InfrastructureNamespaces';
-import { State as PluginsState } from '../Plugins/chePlugins';
-import { State as LogsState } from '../Pods/Logs';
-import { State as UserProfileState } from '../User/Profile';
-import { State as WorkspacesState } from '../Workspaces';
-import mockThunk from './thunk';
 
 export class FakeStoreBuilder {
   private state: AppState = {
@@ -130,7 +136,6 @@ export class FakeStoreBuilder {
       filter: '',
       registries: {},
       devWorkspaceResources: {},
-      schema: {},
     } as DevfileRegistriesState,
     userId: {
       cheUserId: '',
@@ -161,6 +166,16 @@ export class FakeStoreBuilder {
     personalAccessToken: {
       isLoading: false,
       tokens: [],
+    },
+    gitConfig: {
+      config: undefined,
+      isLoading: false,
+      error: undefined,
+    },
+    sshKeys: {
+      isLoading: false,
+      keys: [],
+      error: undefined,
     },
   };
 
@@ -304,9 +319,6 @@ export class FakeStoreBuilder {
         options.devWorkspaceResources,
       );
     }
-    if (options.schema) {
-      this.state.devfileRegistries.schema = Object.assign({}, options.schema);
-    }
     this.state.devfileRegistries.isLoading = isLoading;
     return this;
   }
@@ -369,10 +381,12 @@ export class FakeStoreBuilder {
     },
     isLoading = false,
     defaultEditorError?: string,
+    defaultEditorName?: string,
   ) {
     this.state.dwPlugins.defaultEditorError = defaultEditorError;
     this.state.dwPlugins.plugins = Object.assign({}, plugins);
     this.state.dwPlugins.isLoading = isLoading;
+    this.state.dwPlugins.defaultEditorName = defaultEditorName;
 
     return this;
   }
@@ -434,6 +448,33 @@ export class FakeStoreBuilder {
     return this;
   }
 
+  public withGitConfig(
+    options: {
+      config?: api.IGitConfig;
+      error?: string;
+    },
+    isLoading = false,
+  ) {
+    this.state.gitConfig.config = options.config;
+    this.state.gitConfig.error = options.error;
+
+    this.state.gitConfig.isLoading = isLoading;
+    return this;
+  }
+
+  public withSshKeys(
+    options: {
+      keys?: api.SshKey[];
+      error?: string;
+    },
+    isLoading = false,
+  ) {
+    this.state.sshKeys.keys = options.keys || [];
+    this.state.sshKeys.error = options.error;
+
+    this.state.sshKeys.isLoading = isLoading;
+    return this;
+  }
   public build(): MockStoreEnhanced<AppState, ThunkDispatch<AppState, undefined, AnyAction>> {
     const middlewares = [mockThunk];
     const mockStore = createMockStore<AppState>(middlewares);

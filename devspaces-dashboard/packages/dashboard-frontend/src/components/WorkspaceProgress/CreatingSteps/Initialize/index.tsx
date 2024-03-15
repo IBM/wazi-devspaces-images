@@ -16,22 +16,24 @@ import isEqual from 'lodash/isEqual';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { ROUTE } from '../../../../Routes/routes';
+
+import {
+  ProgressStep,
+  ProgressStepProps,
+  ProgressStepState,
+} from '@/components/WorkspaceProgress/ProgressStep';
+import { ProgressStepTitle } from '@/components/WorkspaceProgress/StepTitle';
+import { ROUTE } from '@/Routes/routes';
 import {
   buildFactoryParams,
   FactoryParams,
   PoliciesCreate,
-} from '../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { delay } from '../../../../services/helpers/delay';
-import { DisposableCollection } from '../../../../services/helpers/disposable';
-import { AlertItem } from '../../../../services/helpers/types';
-import { AppState } from '../../../../store';
-import { selectAllWorkspacesLimit } from '../../../../store/ClusterConfig/selectors';
-import { selectInfrastructureNamespaces } from '../../../../store/InfrastructureNamespaces/selectors';
-import { selectAllWorkspaces } from '../../../../store/Workspaces/selectors';
-import { MIN_STEP_DURATION_MS } from '../../const';
-import { ProgressStep, ProgressStepProps, ProgressStepState } from '../../ProgressStep';
-import { ProgressStepTitle } from '../../StepTitle';
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { AlertItem } from '@/services/helpers/types';
+import { AppState } from '@/store';
+import { selectAllWorkspacesLimit } from '@/store/ClusterConfig/selectors';
+import { selectInfrastructureNamespaces } from '@/store/InfrastructureNamespaces/selectors';
+import { selectAllWorkspaces } from '@/store/Workspaces/selectors';
 
 export type Props = MappedProps &
   ProgressStepProps & {
@@ -43,7 +45,6 @@ export type State = ProgressStepState & {
 
 class CreatingStepInitialize extends ProgressStep<Props, State> {
   protected readonly name = 'Initializing';
-  protected readonly toDispose = new DisposableCollection();
 
   constructor(props: Props) {
     super(props);
@@ -71,8 +72,6 @@ class CreatingStepInitialize extends ProgressStep<Props, State> {
   }
 
   public componentDidUpdate() {
-    this.toDispose.dispose();
-
     this.init();
   }
 
@@ -91,8 +90,6 @@ class CreatingStepInitialize extends ProgressStep<Props, State> {
   }
 
   protected async runStep(): Promise<boolean> {
-    await delay(MIN_STEP_DURATION_MS);
-
     const { useDevworkspaceResources, sourceUrl, errorCode, policiesCreate, remotes } =
       this.state.factoryParams;
 
@@ -171,7 +168,7 @@ class CreatingStepInitialize extends ProgressStep<Props, State> {
   }
 
   render(): React.ReactElement {
-    const { distance } = this.props;
+    const { distance, hasChildren } = this.props;
     const { name, lastError } = this.state;
 
     const isError = lastError !== undefined;
@@ -179,7 +176,12 @@ class CreatingStepInitialize extends ProgressStep<Props, State> {
 
     return (
       <React.Fragment>
-        <ProgressStepTitle distance={distance} isError={isError} isWarning={isWarning}>
+        <ProgressStepTitle
+          distance={distance}
+          hasChildren={hasChildren}
+          isError={isError}
+          isWarning={isWarning}
+        >
           {name}
         </ProgressStepTitle>
       </React.Fragment>

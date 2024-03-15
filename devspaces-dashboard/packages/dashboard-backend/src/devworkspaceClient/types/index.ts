@@ -18,8 +18,8 @@ import {
 } from '@devfile/api';
 import { api } from '@eclipse-che/common';
 import * as k8s from '@kubernetes/client-node';
-import { MessageListener } from '../../services/types/Observer';
 import { IncomingHttpHeaders } from 'http';
+import { MessageListener } from '@/services/types/Observer';
 
 /**
  * Holds the methods for working with dockerconfig for devworkspace
@@ -35,6 +35,18 @@ export interface IDockerConfigApi {
    * Replace DockerConfig in the specified namespace
    */
   update(namespace: string, dockerCfg: api.IDockerConfig): Promise<api.IDockerConfig>;
+}
+
+export interface IGitConfigApi {
+  /**
+   * Read gitconfig from configmap in the specified namespace
+   */
+  read(namespace: string): Promise<api.IGitConfig>;
+
+  /**
+   * Replace gitconfig in configmap in the specified namespace
+   */
+  patch(namespace: string, gitconfig: api.IGitConfig): Promise<api.IGitConfig>;
 }
 
 export interface IDevWorkspaceApi extends IWatcherService<api.webSocket.SubscribeParams> {
@@ -100,13 +112,13 @@ export interface IDevWorkspaceTemplateApi {
 }
 
 export type CustomResourceDefinitionList = k8s.V1CustomResourceDefinitionList & {
-  items?: CustomResourceDefinition[];
+  items?: CheClusterCustomResource[];
 };
 
-export type CustomResourceDefinition = k8s.V1CustomResourceDefinition & {
+export type CheClusterCustomResource = k8s.V1CustomResourceDefinition & {
   spec: {
-    devEnvironments?: CustomResourceDefinitionSpecDevEnvironments;
-    components?: CustomResourceDefinitionSpecComponents;
+    devEnvironments?: CheClusterCustomResourceSpecDevEnvironments;
+    components?: CheClusterCustomResourceSpecComponents;
   };
   status: {
     devfileRegistryURL: string;
@@ -114,7 +126,21 @@ export type CustomResourceDefinition = k8s.V1CustomResourceDefinition & {
   };
 };
 
-export type CustomResourceDefinitionSpecDevEnvironments = {
+export function isCheClusterCustomResource(object: unknown): object is CheClusterCustomResource {
+  if (typeof object !== 'object' || object === null) {
+    return false;
+  }
+
+  const { spec, status } = object as CheClusterCustomResource;
+  return (
+    spec !== undefined &&
+    status !== undefined &&
+    (isCheClusterCustomResourceSpecDevEnvironments(spec.devEnvironments) ||
+      isCheClusterCustomResourceSpecComponent(spec.components))
+  );
+}
+
+export type CheClusterCustomResourceSpecDevEnvironments = {
   containerBuildConfiguration?: {
     openShiftSecurityContextConstraint?: string;
   };
@@ -122,122 +148,188 @@ export type CustomResourceDefinitionSpecDevEnvironments = {
   defaultEditor?: string;
   defaultPlugins?: api.IWorkspacesDefaultPlugins[];
   disableContainerBuildCapabilities?: boolean;
-  secondsOfInactivityBeforeIdling?: number;
+  secondsOfInactivityBeforeIdling: number;
   secondsOfRunBeforeIdling?: number;
   startTimeoutSeconds?: number;
   storage?: {
     pvcStrategy?: string;
   };
-  maxNumberOfRunningWorkspacesPerUser: number;
-  maxNumberOfWorkspacesPerUser: number;
+  maxNumberOfRunningWorkspacesPerUser?: number;
+  maxNumberOfWorkspacesPerUser?: number;
 };
 
-export type CustomResourceDefinitionSpecComponents = {
+export function isCheClusterCustomResourceSpecDevEnvironments(
+  object: unknown,
+): object is CheClusterCustomResourceSpecDevEnvironments {
+  if (typeof object !== 'object' || object === null) {
+    return false;
+  }
+
+  const {
+    containerBuildConfiguration,
+    defaultComponents,
+    defaultEditor,
+    defaultPlugins,
+    disableContainerBuildCapabilities,
+    secondsOfInactivityBeforeIdling,
+    secondsOfRunBeforeIdling,
+    startTimeoutSeconds,
+    storage,
+    maxNumberOfRunningWorkspacesPerUser,
+    maxNumberOfWorkspacesPerUser,
+  } = object as CheClusterCustomResourceSpecDevEnvironments;
+  return (
+    containerBuildConfiguration !== undefined ||
+    defaultComponents !== undefined ||
+    defaultEditor !== undefined ||
+    defaultPlugins !== undefined ||
+    disableContainerBuildCapabilities !== undefined ||
+    secondsOfInactivityBeforeIdling !== undefined ||
+    secondsOfRunBeforeIdling !== undefined ||
+    startTimeoutSeconds !== undefined ||
+    storage !== undefined ||
+    maxNumberOfRunningWorkspacesPerUser !== undefined ||
+    maxNumberOfWorkspacesPerUser !== undefined
+  );
+}
+
+export type CheClusterCustomResourceSpecComponents = {
+  cheServer?: Record<string, unknown>;
   dashboard?: {
+    branding?: {
+      logo?: {
+        base64data: string;
+        mediatype: string;
+      };
+    };
     headerMessage?: {
       show?: boolean;
       text?: string;
     };
+    logLevel?: string;
   };
   devWorkspace?: {
     runningLimit?: number;
   };
-  pluginRegistry?: {
-    openVSXURL?: string;
-  };
-  devfileRegistry: {
+  pluginRegistry?: api.IPluginRegistry;
+  devfileRegistry?: {
     disableInternalRegistry?: boolean;
     externalDevfileRegistries?: api.IExternalDevfileRegistry[];
   };
 };
 
+export function isCheClusterCustomResourceSpecComponent(
+  object: unknown,
+): object is CheClusterCustomResourceSpecComponents {
+  if (typeof object !== 'object' || object === null) {
+    return false;
+  }
+
+  const { cheServer, dashboard, devWorkspace, pluginRegistry, devfileRegistry } =
+    object as CheClusterCustomResourceSpecComponents;
+  return (
+    cheServer !== undefined ||
+    dashboard !== undefined ||
+    devWorkspace !== undefined ||
+    pluginRegistry !== undefined ||
+    devfileRegistry !== undefined
+  );
+}
+
 export interface IServerConfigApi {
   /**
    * Returns custom resource
    */
-  fetchCheCustomResource(): Promise<CustomResourceDefinition>;
+  fetchCheCustomResource(): Promise<CheClusterCustomResource>;
   /**
    * Returns the container build capabilities and configuration.
    */
   getContainerBuild(
-    cheCustomResource: CustomResourceDefinition,
+    cheCustomResource: CheClusterCustomResource,
   ): Pick<
-    CustomResourceDefinitionSpecDevEnvironments,
+    CheClusterCustomResourceSpecDevEnvironments,
     'containerBuildConfiguration' | 'disableContainerBuildCapabilities'
   >;
   /**
    * Returns default plugins
    */
-  getDefaultPlugins(cheCustomResource: CustomResourceDefinition): api.IWorkspacesDefaultPlugins[];
+  getDefaultPlugins(cheCustomResource: CheClusterCustomResource): api.IWorkspacesDefaultPlugins[];
   /**
    * Returns the default devfile registry URL.
    */
-  getDefaultDevfileRegistryUrl(cheCustomResource: CustomResourceDefinition): string;
+  getDefaultDevfileRegistryUrl(cheCustomResource: CheClusterCustomResource): string;
   /**
    * Returns the plugin registry URL.
    */
-  getDefaultPluginRegistryUrl(cheCustomResource: CustomResourceDefinition): string;
+  getDefaultPluginRegistryUrl(cheCustomResource: CheClusterCustomResource): string;
   /**
    * Returns the default editor to workspace create with. It could be a plugin ID or a URI.
    */
-  getDefaultEditor(cheCustomResource: CustomResourceDefinition): string | undefined;
+  getDefaultEditor(cheCustomResource: CheClusterCustomResource): string | undefined;
   /**
    * Returns the default components applied to DevWorkspaces.
    * These default components are meant to be used when a Devfile does not contain any components.
    */
-  getDefaultComponents(cheCustomResource: CustomResourceDefinition): V221DevfileComponents[];
+  getDefaultComponents(cheCustomResource: CheClusterCustomResource): V221DevfileComponents[];
   /**
-   * Returns the openVSX URL.
+   * Returns the plugin registry.
    */
-  getOpenVSXURL(cheCustomResource: CustomResourceDefinition): string;
+  getPluginRegistry(cheCustomResource: CheClusterCustomResource): api.IPluginRegistry;
   /**
    * Returns the internal registry disable status.
    */
-  getInternalRegistryDisableStatus(cheCustomResource: CustomResourceDefinition): boolean;
+  getInternalRegistryDisableStatus(cheCustomResource: CheClusterCustomResource): boolean;
   /**
    * Returns the external devfile registries.
    */
   getExternalDevfileRegistries(
-    cheCustomResource: CustomResourceDefinition,
+    cheCustomResource: CheClusterCustomResource,
   ): api.IExternalDevfileRegistry[];
   /**
    * Returns the PVC strategy if it is defined.
    */
-  getPvcStrategy(cheCustomResource: CustomResourceDefinition): string | undefined;
+  getPvcStrategy(cheCustomResource: CheClusterCustomResource): string | undefined;
   /**
    * Returns a maintenance warning.
    */
-  getDashboardWarning(cheCustomResource: CustomResourceDefinition): string | undefined;
+  getDashboardWarning(cheCustomResource: CheClusterCustomResource): string | undefined;
 
   /**
    * Returns limit of running workspaces per user.
    */
-  getRunningWorkspacesLimit(cheCustomResource: CustomResourceDefinition): number;
+  getRunningWorkspacesLimit(cheCustomResource: CheClusterCustomResource): number;
 
   /**
    * Returns the total number of workspaces, both stopped and running, that a user can keep.
    */
-  getAllWorkspacesLimit(cheCustomResource: CustomResourceDefinition): number;
+  getAllWorkspacesLimit(cheCustomResource: CheClusterCustomResource): number;
 
   /**
    * Returns the workspace inactivity timeout
    */
-  getWorkspaceInactivityTimeout(cheCustomResource: CustomResourceDefinition): number;
+  getWorkspaceInactivityTimeout(cheCustomResource: CheClusterCustomResource): number;
 
   /**
    * Returns the workspace run timeout
    */
-  getWorkspaceRunTimeout(cheCustomResource: CustomResourceDefinition): number;
+  getWorkspaceRunTimeout(cheCustomResource: CheClusterCustomResource): number;
 
   /**
    * Returns the workspace start timeout
    */
-  getWorkspaceStartTimeout(cheCustomResource: CustomResourceDefinition): number;
+  getWorkspaceStartTimeout(cheCustomResource: CheClusterCustomResource): number;
+
+  /**
+   * Returns the dashboard branding logo
+   */
+  getDashboardLogo(
+    cheCustomResource: CheClusterCustomResource,
+  ): { base64data: string; mediatype: string } | undefined;
 
   /**
    * Returns Wazi for Dev Spaces license usage
    */
-  getWaziLicenseUsage(): string;
+    getWaziLicenseUsage(): string;
 }
 
 export interface IKubeConfigApi {
@@ -300,6 +392,9 @@ export interface IDevWorkspaceClient {
   podApi: IPodApi;
   serverConfigApi: IServerConfigApi;
   userProfileApi: IUserProfileApi;
+  gitConfigApi: IGitConfigApi;
+  gettingStartedSampleApi: IGettingStartedSampleApi;
+  sshKeysApi: IShhKeysApi;
 }
 
 export interface IWatcherService<T = Record<string, unknown>> {
@@ -314,4 +409,17 @@ export interface IWatcherService<T = Record<string, unknown>> {
    * Stop watching objects changes in the given namespace
    */
   stopWatching(): void;
+}
+
+export interface IGettingStartedSampleApi {
+  /**
+   * Reads all the Getting Started Samples ConfigMaps.
+   */
+  list(): Promise<Array<api.IGettingStartedSample>>;
+}
+
+export interface IShhKeysApi {
+  list(namespace: string): Promise<Array<api.SshKey>>;
+  add(namespace: string, sshKey: api.SshKey): Promise<api.SshKey>;
+  delete(namespace: string, name: string): Promise<void>;
 }

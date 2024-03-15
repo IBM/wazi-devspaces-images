@@ -15,35 +15,38 @@ import { AlertVariant } from '@patternfly/react-core';
 import { isEqual } from 'lodash';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { delay } from '../../../../../services/helpers/delay';
-import { DisposableCollection } from '../../../../../services/helpers/disposable';
+
+import { TIMEOUT_TO_CREATE_SEC } from '@/components/WorkspaceProgress/const';
+import prepareResources from '@/components/WorkspaceProgress/CreatingSteps/Apply/Resources/prepareResources';
+import {
+  ProgressStep,
+  ProgressStepProps,
+  ProgressStepState,
+} from '@/components/WorkspaceProgress/ProgressStep';
+import { ProgressStepTitle } from '@/components/WorkspaceProgress/StepTitle';
+import { TimeLimit } from '@/components/WorkspaceProgress/TimeLimit';
 import {
   buildFactoryParams,
   FactoryParams,
-} from '../../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { findTargetWorkspace } from '../../../../../services/helpers/factoryFlow/findTargetWorkspace';
-import { buildIdeLoaderLocation } from '../../../../../services/helpers/location';
-import { AlertItem } from '../../../../../services/helpers/types';
-import { Workspace } from '../../../../../services/workspace-adapter';
-import { AppState } from '../../../../../store';
-import * as DevfileRegistriesStore from '../../../../../store/DevfileRegistries';
-import { DevWorkspaceResources } from '../../../../../store/DevfileRegistries';
-import { selectDevWorkspaceResources } from '../../../../../store/DevfileRegistries/selectors';
-import * as FactoryResolverStore from '../../../../../store/FactoryResolver';
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { findTargetWorkspace } from '@/services/helpers/factoryFlow/findTargetWorkspace';
+import { buildIdeLoaderLocation } from '@/services/helpers/location';
+import { AlertItem } from '@/services/helpers/types';
+import { Workspace } from '@/services/workspace-adapter';
+import { AppState } from '@/store';
+import * as DevfileRegistriesStore from '@/store/DevfileRegistries';
+import { DevWorkspaceResources } from '@/store/DevfileRegistries';
+import { selectDevWorkspaceResources } from '@/store/DevfileRegistries/selectors';
+import * as FactoryResolverStore from '@/store/FactoryResolver';
 import {
   selectFactoryResolver,
   selectFactoryResolverConverted,
-} from '../../../../../store/FactoryResolver/selectors';
-import { selectDefaultNamespace } from '../../../../../store/InfrastructureNamespaces/selectors';
-import * as WorkspacesStore from '../../../../../store/Workspaces';
-import * as DevWorkspacesStore from '../../../../../store/Workspaces/devWorkspaces';
-import { selectDevWorkspaceWarnings } from '../../../../../store/Workspaces/devWorkspaces/selectors';
-import { selectAllWorkspaces } from '../../../../../store/Workspaces/selectors';
-import { MIN_STEP_DURATION_MS, TIMEOUT_TO_CREATE_SEC } from '../../../const';
-import { ProgressStep, ProgressStepProps, ProgressStepState } from '../../../ProgressStep';
-import { ProgressStepTitle } from '../../../StepTitle';
-import { TimeLimit } from '../../../TimeLimit';
-import prepareResources from './prepareResources';
+} from '@/store/FactoryResolver/selectors';
+import { selectDefaultNamespace } from '@/store/InfrastructureNamespaces/selectors';
+import * as WorkspacesStore from '@/store/Workspaces';
+import * as DevWorkspacesStore from '@/store/Workspaces/devWorkspaces';
+import { selectDevWorkspaceWarnings } from '@/store/Workspaces/devWorkspaces/selectors';
+import { selectAllWorkspaces } from '@/store/Workspaces/selectors';
 
 export type Props = MappedProps &
   ProgressStepProps & {
@@ -59,7 +62,6 @@ export type State = ProgressStepState & {
 
 class CreatingStepApplyResources extends ProgressStep<Props, State> {
   protected readonly name = 'Applying resources';
-  protected readonly toDispose = new DisposableCollection();
 
   constructor(props: Props) {
     super(props);
@@ -76,8 +78,6 @@ class CreatingStepApplyResources extends ProgressStep<Props, State> {
   }
 
   public componentDidUpdate() {
-    this.toDispose.dispose();
-
     this.init();
   }
 
@@ -172,8 +172,6 @@ class CreatingStepApplyResources extends ProgressStep<Props, State> {
   }
 
   protected async runStep(): Promise<boolean> {
-    await delay(MIN_STEP_DURATION_MS);
-
     const { devWorkspaceResources } = this.props;
     const { factoryParams, shouldCreate, resources, warning } = this.state;
     const { cheEditor, factoryId, sourceUrl, storageType, policiesCreate } = factoryParams;
@@ -261,7 +259,7 @@ class CreatingStepApplyResources extends ProgressStep<Props, State> {
   }
 
   render(): React.ReactElement {
-    const { distance } = this.props;
+    const { distance, hasChildren } = this.props;
     const { name, lastError, warning } = this.state;
 
     const isActive = distance === 0;
@@ -273,7 +271,12 @@ class CreatingStepApplyResources extends ProgressStep<Props, State> {
         {isActive && (
           <TimeLimit timeLimitSec={TIMEOUT_TO_CREATE_SEC} onTimeout={() => this.handleTimeout()} />
         )}
-        <ProgressStepTitle distance={distance} isError={isError} isWarning={isWarning}>
+        <ProgressStepTitle
+          distance={distance}
+          hasChildren={hasChildren}
+          isError={isError}
+          isWarning={isWarning}
+        >
           {name}
         </ProgressStepTitle>
       </React.Fragment>

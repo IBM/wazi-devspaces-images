@@ -10,20 +10,18 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { container } from '../../../../inversify.config';
-import { DevWorkspaceBuilder } from '../../../../store/__mocks__/devWorkspaceBuilder';
 import mockAxios from 'axios';
-import { DevWorkspaceClient } from '../devWorkspaceClient';
+
+import { container } from '@/inversify.config';
+import { DevWorkspaceClient } from '@/services/workspace-client/devworkspace/devWorkspaceClient';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
 
 describe('DevWorkspace client', () => {
   let client: DevWorkspaceClient;
 
   beforeEach(() => {
+    mockAxios.get = jest.fn();
     client = container.get(DevWorkspaceClient);
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks();
   });
 
   it('should check for devworkspace error', () => {
@@ -79,14 +77,18 @@ describe('DevWorkspace client', () => {
         })
         .build(),
     ];
-    (mockAxios.get as jest.Mock).mockResolvedValueOnce({
-      data: {
-        items,
-        metadata: {
-          resourceVersion: 'test',
-        },
-      },
-    });
+    (mockAxios.get as jest.Mock).mockResolvedValueOnce(
+      new Promise(resolve =>
+        resolve({
+          data: {
+            items,
+            metadata: {
+              resourceVersion: 'test',
+            },
+          },
+        }),
+      ),
+    );
     const { workspaces } = await client.getAllWorkspaces('test');
     expect(workspaces.length).toEqual(3);
   });
@@ -98,9 +100,13 @@ describe('DevWorkspace client', () => {
       .withName(name)
       .withNamespace(namespace)
       .build();
-    (mockAxios.get as jest.Mock).mockResolvedValueOnce({
-      data: workspaceNotReady,
-    });
+    (mockAxios.get as jest.Mock).mockResolvedValueOnce(
+      new Promise(resolve =>
+        resolve({
+          data: workspaceNotReady,
+        }),
+      ),
+    );
     const workspaceReady = new DevWorkspaceBuilder()
       .withName(name)
       .withNamespace(namespace)
@@ -109,9 +115,13 @@ describe('DevWorkspace client', () => {
         mainUrl: 'main_url',
       })
       .build();
-    (mockAxios.get as jest.Mock).mockResolvedValueOnce({
-      data: workspaceReady,
-    });
+    (mockAxios.get as jest.Mock).mockResolvedValueOnce(
+      new Promise(resolve =>
+        resolve({
+          data: workspaceReady,
+        }),
+      ),
+    );
     const newWorkspace = await client.getWorkspaceByName(namespace, name);
     expect(newWorkspace).toEqual(workspaceReady);
   });

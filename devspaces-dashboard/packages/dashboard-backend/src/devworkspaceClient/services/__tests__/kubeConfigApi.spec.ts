@@ -14,8 +14,12 @@
 
 import * as mockClient from '@kubernetes/client-node';
 import { CoreV1Api, V1PodList } from '@kubernetes/client-node';
-import { KubeConfigApiService } from '../kubeConfigApi';
-import * as helper from '../helpers/exec';
+
+import * as helper from '@/devworkspaceClient/services/helpers/exec';
+import { KubeConfigApiService } from '@/devworkspaceClient/services/kubeConfigApi';
+
+// mute the output
+console.error = jest.fn();
 
 const homeUserDir = '/home/user';
 const kubeConfigDir = `${homeUserDir}/.kube`;
@@ -78,10 +82,6 @@ describe('Kubernetes Config API Service', () => {
   });
 
   test('injecting kubeconfig', async () => {
-    // mute output
-    console.error = jest.fn();
-    console.warn = jest.fn();
-
     await kubeConfigService.injectKubeConfig(namespace, 'wksp-id');
     expect(spyExec).toHaveBeenCalledTimes(4);
 

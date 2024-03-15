@@ -10,13 +10,14 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import React from 'react';
 import { TextContent } from '@patternfly/react-core';
-import DevworkspaceEditor from '../../../components/WorkspaceEditor';
-import EditorTools from '../../../components/EditorTools';
-import { Workspace } from '../../../services/workspace-adapter';
+import { dump } from 'js-yaml';
+import React from 'react';
 
-import styles from './index.module.css';
+import DevfileViewer from '@/components/DevfileViewer';
+import EditorTools from '@/components/EditorTools';
+import styles from '@/pages/WorkspaceDetails/DevworkspaceEditorTab/index.module.css';
+import { Workspace } from '@/services/workspace-adapter';
 
 export type Props = {
   workspace: Workspace;
@@ -41,18 +42,24 @@ export class DevworkspaceEditorTab extends React.PureComponent<Props, State> {
     const { isExpanded } = this.state;
     const { workspace } = this.props;
     const editorTabStyle = isExpanded ? styles.editorTabExpanded : styles.editorTab;
+    const devWorkspaceStr = dump(workspace.ref);
 
     return (
       <>
         <br />
         <TextContent className={editorTabStyle}>
           <EditorTools
-            content={workspace.ref}
+            devfileOrDevWorkspace={workspace.ref}
             handleExpand={isExpanded => {
               this.setState({ isExpanded });
             }}
           />
-          <DevworkspaceEditor workspace={workspace.ref} isActive={this.props.isActive} />
+          <DevfileViewer
+            isActive={this.props.isActive}
+            isExpanded={isExpanded}
+            value={devWorkspaceStr}
+            id="devWorkspaceViewerId"
+          />
         </TextContent>
       </>
     );

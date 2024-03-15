@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2021 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -9,6 +9,7 @@
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
 //
+
 package gateway
 
 import (
@@ -383,6 +384,10 @@ func getGatewayHeaderRewritePluginConfigSpec(instance *chev2.CheCluster) (*corev
 
 func getGatewayTraefikConfigSpec(instance *chev2.CheCluster) corev1.ConfigMap {
 	traefikPort := 8081
+	logLevel := constants.DefaultTraefikLogLevel
+	if instance.Spec.Networking.Auth.Gateway.Traefik != nil {
+		logLevel = utils.GetValue(instance.Spec.Networking.Auth.Gateway.Traefik.LogLevel, logLevel)
+	}
 	data := fmt.Sprintf(`
 entrypoints:
   http:
@@ -401,7 +406,7 @@ providers:
     directory: "/dynamic-config"
     watch: true
 log:
-  level: "INFO"`, traefikPort)
+  level: "%s"`, traefikPort, logLevel)
 
 	if instance.IsAccessTokenConfigured() {
 		data += `

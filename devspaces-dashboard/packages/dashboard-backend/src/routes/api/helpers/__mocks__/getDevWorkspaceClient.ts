@@ -20,20 +20,23 @@ import {
 } from '@devfile/api';
 import { api } from '@eclipse-che/common';
 import { IncomingHttpHeaders } from 'http';
+
 import {
   DevWorkspaceClient,
   IDevWorkspaceApi,
   IDevWorkspaceTemplateApi,
   IDockerConfigApi,
   IEventApi,
+  IGitConfigApi,
   IKubeConfigApi,
   ILogsApi,
   IPersonalAccessTokenApi,
   IPodApi,
   IServerConfigApi,
+  IShhKeysApi,
   IUserProfileApi,
-} from '../../../../devworkspaceClient';
-import { getDevWorkspaceClient as helper } from '../getDevWorkspaceClient';
+} from '@/devworkspaceClient';
+import { getDevWorkspaceClient as helper } from '@/routes/api/helpers/getDevWorkspaceClient';
 
 export const stubContainerBuild = {
   disableContainerBuildCapabilities: true,
@@ -42,7 +45,7 @@ export const stubDashboardWarning = 'Dashboard warning';
 export const stubDefaultComponents: V221DevfileComponents[] = [];
 export const stubDefaultEditor = undefined;
 export const stubDefaultPlugins: api.IWorkspacesDefaultPlugins[] = [];
-export const stubOpenVSXURL = 'openvsx-url';
+export const stubPluginRegistry = { openVSXURL: 'openvsx-url' };
 export const stubPvcStrategy = '';
 export const stubRunningWorkspacesLimit = 2;
 export const stubAllWorkspacesLimit = 1;
@@ -53,6 +56,10 @@ export const defaultDevfileRegistryUrl = 'http://devfile-registry.eclipse-che.sv
 export const defaultPluginRegistryUrl = 'http://plugin-registry.eclipse-che.svc/v3';
 export const internalRegistryDisableStatus = true;
 export const externalDevfileRegistries = [{ url: 'https://devfile.registry.test.org/' }];
+export const dashboardLogo = {
+  base64data: 'base64-encoded-data',
+  mediatype: 'image/svg+xml',
+};
 export const stubWaziLicenseUsage = '';
 
 export const stubDevWorkspacesList: api.IDevWorkspaceList = {
@@ -107,7 +114,22 @@ export const stubPodsList: api.IPodList = {
 
 export const stubPersonalAccessTokenList: api.PersonalAccessToken[] = [];
 
-export function getDevWorkspaceClient(_args: Parameters<typeof helper>): ReturnType<typeof helper> {
+export const stubSshKeysList: api.SshKey[] = [
+  {
+    name: 'key-1',
+    creationTimestamp: undefined,
+    keyPub: 'ssh-key-pub-data-1',
+  },
+  {
+    name: 'key-2',
+    creationTimestamp: undefined,
+    keyPub: 'ssh-key-pub-data-2',
+  },
+];
+
+export function getDevWorkspaceClient(
+  ..._args: Parameters<typeof helper>
+): ReturnType<typeof helper> {
   return {
     serverConfigApi: {
       fetchCheCustomResource: () => ({}),
@@ -116,7 +138,7 @@ export function getDevWorkspaceClient(_args: Parameters<typeof helper>): ReturnT
       getDefaultComponents: _cheCustomResource => stubDefaultComponents,
       getDefaultEditor: _cheCustomResource => stubDefaultEditor,
       getDefaultPlugins: _cheCustomResource => stubDefaultPlugins,
-      getOpenVSXURL: _cheCustomResource => stubOpenVSXURL,
+      getPluginRegistry: _cheCustomResource => stubPluginRegistry,
       getPvcStrategy: _cheCustomResource => stubPvcStrategy,
       getRunningWorkspacesLimit: _cheCustomResource => stubRunningWorkspacesLimit,
       getAllWorkspacesLimit: _cheCustomResource => stubAllWorkspacesLimit,
@@ -127,6 +149,7 @@ export function getDevWorkspaceClient(_args: Parameters<typeof helper>): ReturnT
       getDefaultPluginRegistryUrl: _cheCustomResource => defaultPluginRegistryUrl,
       getExternalDevfileRegistries: _cheCustomResource => externalDevfileRegistries,
       getInternalRegistryDisableStatus: _cheCustomResource => internalRegistryDisableStatus,
+      getDashboardLogo: _cheCustomResource => dashboardLogo,
       getWaziLicenseUsage: () => stubWaziLicenseUsage,
     } as IServerConfigApi,
     devworkspaceApi: {
@@ -174,5 +197,14 @@ export function getDevWorkspaceClient(_args: Parameters<typeof helper>): ReturnT
       listInNamespace: _namespace => Promise.resolve(stubPersonalAccessTokenList),
       replace: (_namespace, _token) => Promise.resolve({} as api.PersonalAccessToken),
     } as IPersonalAccessTokenApi,
+    gitConfigApi: {
+      read: _namespace => Promise.resolve({} as api.IGitConfig),
+      patch: (_namespace, _gitconfig) => Promise.resolve({} as api.IGitConfig),
+    } as IGitConfigApi,
+    sshKeysApi: {
+      add: (_namespace, _sshKey) => Promise.resolve({} as api.SshKey),
+      delete: (_namespace, _name) => Promise.resolve(),
+      list: _namespace => Promise.resolve(stubSshKeysList),
+    } as IShhKeysApi,
   } as DevWorkspaceClient;
 }

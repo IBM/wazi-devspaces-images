@@ -13,7 +13,8 @@
 import { api } from '@eclipse-che/common';
 import { Dropdown, DropdownItem, DropdownToggle, FormGroup } from '@patternfly/react-core';
 import React from 'react';
-import { DEFAULT_GIT_PROVIDER, GIT_PROVIDERS } from '../../../../const';
+
+import { DEFAULT_GIT_PROVIDER, GIT_PROVIDERS } from '@/pages/UserPreferences/const';
 
 export type Props = {
   provider: api.GitProvider | undefined;
@@ -86,10 +87,7 @@ export class GitProviderSelector extends React.PureComponent<Props, State> {
         <Dropdown
           onSelect={(...args) => this.onSelect(...args)}
           toggle={
-            <DropdownToggle
-              id={this.toggleElementId}
-              onToggle={(...args) => this.onToggle(...args)}
-            >
+            <DropdownToggle id={this.toggleElementId} onToggle={isOpen => this.onToggle(isOpen)}>
               {providerName}
             </DropdownToggle>
           }

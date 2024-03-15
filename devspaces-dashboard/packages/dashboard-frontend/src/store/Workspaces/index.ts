@@ -11,12 +11,14 @@
  */
 
 import { Reducer } from 'redux';
+
+import devfileApi from '@/services/devfileApi';
+import { FactoryParams } from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { Workspace } from '@/services/workspace-adapter';
+import { createObject } from '@/store/helpers';
+import * as DevWorkspacesStore from '@/store/Workspaces/devWorkspaces';
+
 import { AppThunk } from '..';
-import { FactoryParams } from '../../services/helpers/factoryFlow/buildFactoryParams';
-import devfileApi from '../../services/devfileApi';
-import { Workspace } from '../../services/workspace-adapter';
-import { createObject } from '../helpers';
-import * as DevWorkspacesStore from './devWorkspaces';
 
 // This state defines the type of data maintained in the Redux store.
 export interface State {
@@ -106,6 +108,7 @@ export type ActionCreators = {
   stopWorkspace: (workspace: Workspace) => AppThunk<KnownAction, Promise<void>>;
   deleteWorkspace: (workspace: Workspace) => AppThunk<KnownAction, Promise<void>>;
   updateWorkspace: (workspace: Workspace) => AppThunk<KnownAction, Promise<void>>;
+  updateWorkspaceWithDefaultDevfile: (workspace: Workspace) => AppThunk<KnownAction, Promise<void>>;
   createWorkspaceFromDevfile: (
     devfile: devfileApi.Devfile,
     attributes: Partial<FactoryParams>,
@@ -212,6 +215,23 @@ export const actionCreators: ActionCreators = {
       }
     },
 
+  updateWorkspaceWithDefaultDevfile:
+    (workspace: Workspace): AppThunk<KnownAction, Promise<void>> =>
+    async (dispatch): Promise<void> => {
+      dispatch({ type: 'REQUEST_WORKSPACES' });
+      try {
+        await dispatch(
+          DevWorkspacesStore.actionCreators.updateWorkspaceWithDefaultDevfile(
+            workspace.ref as devfileApi.DevWorkspace,
+          ),
+        );
+        dispatch({ type: 'UPDATE_WORKSPACE' });
+      } catch (e) {
+        dispatch({ type: 'RECEIVE_ERROR' });
+        throw e;
+      }
+    },
+
   createWorkspaceFromDevfile:
     (
       devfile: devfileApi.Devfile,
@@ -282,7 +302,7 @@ export const reducer: Reducer<State> = (state: State | undefined, action: KnownA
 
   switch (action.type) {
     case 'REQUEST_WORKSPACES':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
       });
     case 'RECEIVE_ERROR':
@@ -290,25 +310,25 @@ export const reducer: Reducer<State> = (state: State | undefined, action: KnownA
     case 'ADD_WORKSPACE':
     case 'DELETE_WORKSPACE':
     case 'RECEIVE_WORKSPACES':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
       });
     case 'SET_WORKSPACE_NAME':
-      return createObject(state, {
+      return createObject<State>(state, {
         namespace: action.namespace,
         workspaceName: action.workspaceName,
       });
     case 'CLEAR_WORKSPACE_NAME':
-      return createObject(state, {
+      return createObject<State>(state, {
         namespace: '',
         workspaceName: '',
       });
     case 'SET_WORKSPACE_UID':
-      return createObject(state, {
+      return createObject<State>(state, {
         workspaceUID: action.workspaceUID,
       });
     case 'CLEAR_WORKSPACE_UID':
-      return createObject(state, {
+      return createObject<State>(state, {
         workspaceUID: '',
       });
     default:

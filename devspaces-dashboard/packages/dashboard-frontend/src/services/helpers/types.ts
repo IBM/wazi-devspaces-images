@@ -10,9 +10,11 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
+import * as cheApi from '@eclipse-che/api';
 import { AlertVariant } from '@patternfly/react-core';
 import * as React from 'react';
-import devfileApi from '../devfileApi';
+
+import devfileApi from '@/services/devfileApi';
 
 export type ActionCallback = {
   title: string;
@@ -35,7 +37,7 @@ export interface FactoryResolver {
   devfile: devfileApi.Devfile | che.WorkspaceDevfile;
   location?: string;
   scm_info?: FactoryResolverScmInfo;
-  links: api.che.core.rest.Link[];
+  links: cheApi.che.core.rest.Link[];
 }
 
 export type FactoryResolverScmInfo = {
@@ -94,7 +96,7 @@ export enum WorkspaceDetailsTab {
 
 export enum WorkspaceAction {
   OPEN_IDE = 'Open',
-  START_DEBUG_AND_OPEN_LOGS = 'Open in verbose mode',
+  START_DEBUG_AND_OPEN_LOGS = 'Open in Debug mode',
   START_IN_BACKGROUND = 'Start in background',
   STOP_WORKSPACE = 'Stop Workspace',
   DELETE_WORKSPACE = 'Delete Workspace',
@@ -104,4 +106,9 @@ export enum WorkspaceAction {
   WORKSPACE_DETAILS = 'Workspace Details',
 }
 
-export type UserPreferencesTab = 'container-registries' | 'git-services' | 'personal-access-tokens';
+export type UserPreferencesTab =
+  | 'container-registries'
+  | 'git-services'
+  | 'gitconfig'
+  | 'personal-access-tokens'
+  | 'ssh-keys';

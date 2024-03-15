@@ -28,10 +28,7 @@ module.exports = () => {
           enforce: 'pre',
           test: /\.(ts|js)$/,
           use: ['source-map-loader'],
-          include: [
-            path.resolve(__dirname, '../common'),
-            path.resolve(__dirname, 'src'),
-          ],
+          include: [path.resolve(__dirname, '../common'), path.resolve(__dirname, 'src')],
         },
         {
           test: /\.ts$/,
@@ -40,10 +37,14 @@ module.exports = () => {
             transpileOnly: true,
           },
         },
-      ]
+      ],
     },
     resolve: {
       extensions: ['.ts', '.js'],
+      alias: {
+        // alias for absolute imports (see tsconfig.json)
+        '@': path.resolve(__dirname, 'src/'),
+      },
     },
     resolveLoader: {},
     plugins: [
@@ -51,27 +52,30 @@ module.exports = () => {
       new CopyPlugin({
         patterns: [
           {
-            from: path.resolve('..', '..', 'node_modules', '@fastify/swagger', 'static'),
-            to: 'static/',
-            transform(content, absoluteFrom) {
-              // it needs to hide the top bar(the definition URL path)
-              if (absoluteFrom.split('/').reverse()[0] === 'index.html') {
-                return content.toString().replace('layout: "StandaloneLayout"', '');
-              }
-              return content.toString();
-            },
-          }
-        ]
+            from: path.resolve(
+              '..',
+              '..',
+              'node_modules',
+              '@fastify/swagger-ui',
+              'static',
+              'logo.svg',
+            ),
+            to: 'server/static',
+          },
+        ],
+      }),
+      new CopyPlugin({
+        patterns: [
+          {
+            from: path.resolve('..', '..', 'node_modules', '@fastify/swagger-ui', 'static'),
+            to: 'static',
+          },
+        ],
       }),
     ],
-    target: 'node',
     node: {
       __dirname: false,
     },
-    externals: [
-      'long',
-      'pino-pretty',
-    ],
+    target: 'node',
   };
-
 };

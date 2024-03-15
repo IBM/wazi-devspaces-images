@@ -10,23 +10,25 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { History } from 'history';
-import React from 'react';
-import gravatarUrl from 'gravatar-url';
 import {
   Avatar,
   PageHeaderTools,
   PageHeaderToolsGroup,
   PageHeaderToolsItem,
 } from '@patternfly/react-core';
+import gravatarUrl from 'gravatar-url';
+import { History } from 'history';
+import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import { AppState } from '../../../store';
-import { selectBranding } from '../../../store/Branding/selectors';
-import { selectUserProfile } from '../../../store/User/Profile/selectors';
-import { AboutMenu } from './AboutMenu';
-import UserMenu from './UserMenu';
-import { ApplicationsMenu } from './ApplicationsMenu';
-import { selectApplications } from '../../../store/ClusterInfo/selectors';
+
+import { AboutMenu } from '@/Layout/Header/Tools/AboutMenu';
+import { ApplicationsMenu } from '@/Layout/Header/Tools/ApplicationsMenu';
+import UserMenu from '@/Layout/Header/Tools/UserMenu';
+import { AppState } from '@/store';
+import { selectBranding } from '@/store/Branding/selectors';
+import { selectApplications } from '@/store/ClusterInfo/selectors';
+import { selectDashboardLogo } from '@/store/ServerConfig/selectors';
+import { selectUserProfile } from '@/store/User/Profile/selectors';
 
 type Props = MappedProps & {
   history: History;
@@ -50,7 +52,11 @@ export class HeaderTools extends React.PureComponent<Props> {
           <PageHeaderToolsGroup>
             {applications.length !== 0 && <ApplicationsMenu applications={applications} />}
             <PageHeaderToolsItem>
-              <AboutMenu branding={this.props.branding} username={username} />
+              <AboutMenu
+                branding={this.props.branding}
+                dashboardLogo={this.props.dashboardLogo}
+                username={username}
+              />
             </PageHeaderToolsItem>
             {isUserAuthenticated && (
               <PageHeaderToolsItem>
@@ -73,6 +79,7 @@ export class HeaderTools extends React.PureComponent<Props> {
 const mapStateToProps = (state: AppState) => ({
   userProfile: selectUserProfile(state),
   branding: selectBranding(state),
+  dashboardLogo: selectDashboardLogo(state),
   applications: selectApplications(state),
 });
 

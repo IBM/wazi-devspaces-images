@@ -13,14 +13,19 @@
 import { PageSection, PageSectionVariants, Tab, Tabs } from '@patternfly/react-core';
 import { History } from 'history';
 import React from 'react';
-import Head from '../../components/Head';
-import Header from '../../components/Header';
-import WorkspaceEvents from '../../components/WorkspaceEvents';
-import WorkspaceLogs from '../../components/WorkspaceLogs';
-import { DevWorkspaceStatus, LoaderTab } from '../../services/helpers/types';
-import { Workspace } from '../../services/workspace-adapter';
-import styles from './index.module.css';
-import WorkspaceProgress from '../../components/WorkspaceProgress';
+
+import Head from '@/components/Head';
+import Header from '@/components/Header';
+import WorkspaceEvents from '@/components/WorkspaceEvents';
+import WorkspaceLogs from '@/components/WorkspaceLogs';
+import WorkspaceProgress from '@/components/WorkspaceProgress';
+import {
+  getRestartInDebugModeLocation,
+  getRestartInSafeModeLocation,
+} from '@/components/WorkspaceProgress/StartingSteps/StartWorkspace/prepareRestart';
+import styles from '@/pages/Loader/index.module.css';
+import { DevWorkspaceStatus, LoaderTab } from '@/services/helpers/types';
+import { Workspace } from '@/services/workspace-adapter';
 
 export type Props = {
   history: History;
@@ -35,6 +40,8 @@ export type State = {
 };
 
 export class LoaderPage extends React.PureComponent<Props, State> {
+  private readonly appliedSafeMode: { [key: string]: boolean };
+
   constructor(props: Props) {
     super(props);
 
@@ -44,6 +51,8 @@ export class LoaderPage extends React.PureComponent<Props, State> {
     this.state = {
       activeTabKey,
     };
+
+    this.appliedSafeMode = {};
   }
 
   private handleTabClick(tabIndex: React.ReactText): void {
@@ -60,8 +69,17 @@ export class LoaderPage extends React.PureComponent<Props, State> {
     const { history, searchParams, workspace } = this.props;
     const { activeTabKey } = this.state;
 
-    const pageTitle = workspace ? `Starting workspace ${workspace.name}` : 'Creating a workspace';
+    let pageTitle = workspace ? `Starting workspace ${workspace.name}` : 'Creating a workspace';
     const workspaceStatus = workspace?.status || DevWorkspaceStatus.STOPPED;
+    if (
+      getRestartInSafeModeLocation(this.props.history.location) ||
+      this.appliedSafeMode[this.props.history.location.pathname]
+    ) {
+      pageTitle += ' with default devfile';
+      this.appliedSafeMode[this.props.history.location.pathname] = true;
+    } else if (getRestartInDebugModeLocation(this.props.history.location)) {
+      pageTitle += ' in Debug mode';
+    }
     const showToastAlert = activeTabKey !== LoaderTab.Progress;
 
     return (

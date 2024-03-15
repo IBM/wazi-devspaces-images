@@ -12,23 +12,23 @@
 
 import { api, helpers } from '@eclipse-che/common';
 import { Action, Reducer } from 'redux';
-import { AppThunk } from '..';
-import { container } from '../../inversify.config';
+
+import { provisionKubernetesNamespace } from '@/services/backend-client/kubernetesNamespaceApi';
 import {
   addToken,
   fetchTokens,
   removeToken,
   updateToken,
-} from '../../services/dashboard-backend-client/personalAccessTokenApi';
-import { CheWorkspaceClient } from '../../services/workspace-client/cheworkspace/cheWorkspaceClient';
-import { createObject } from '../helpers';
-import { selectDefaultNamespace } from '../InfrastructureNamespaces/selectors';
-import { AUTHORIZED, SanityCheckAction } from '../sanityCheckMiddleware';
-import { State } from './state';
+} from '@/services/backend-client/personalAccessTokenApi';
+import { createObject } from '@/store/helpers';
+import { selectDefaultNamespace } from '@/store/InfrastructureNamespaces/selectors';
+import { State } from '@/store/PersonalAccessToken/state';
+import { selectAsyncIsAuthorized, selectSanityCheckError } from '@/store/SanityCheck/selectors';
+import { AUTHORIZED, SanityCheckAction } from '@/store/sanityCheckMiddleware';
+
+import { AppThunk } from '..';
 
 export * from './state';
-
-const WorkspaceClient = container.get(CheWorkspaceClient);
 
 export enum Type {
   RECEIVE_ERROR = 'RECEIVE_ERROR',
@@ -87,14 +87,21 @@ export const actionCreators: ActionCreators = {
   requestTokens:
     (): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
-      const state = getState();
-      const namespace = selectDefaultNamespace(state).name;
-
-      await dispatch({
+      dispatch({
         type: Type.REQUEST_TOKENS,
         check: AUTHORIZED,
       });
+      if (!(await selectAsyncIsAuthorized(getState()))) {
+        const error = selectSanityCheckError(getState());
+        dispatch({
+          type: Type.RECEIVE_ERROR,
+          error,
+        });
+        throw new Error(error);
+      }
 
+      const state = getState();
+      const namespace = selectDefaultNamespace(state).name;
       try {
         const tokens = await fetchTokens(namespace);
         dispatch({
@@ -114,14 +121,21 @@ export const actionCreators: ActionCreators = {
   addToken:
     (token: api.PersonalAccessToken): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
-      const state = getState();
-      const namespace = selectDefaultNamespace(state).name;
-
-      await dispatch({
+      dispatch({
         type: Type.REQUEST_TOKENS,
         check: AUTHORIZED,
       });
+      if (!(await selectAsyncIsAuthorized(getState()))) {
+        const error = selectSanityCheckError(getState());
+        dispatch({
+          type: Type.RECEIVE_ERROR,
+          error,
+        });
+        throw new Error(error);
+      }
 
+      const state = getState();
+      const namespace = selectDefaultNamespace(state).name;
       let newToken: api.PersonalAccessToken;
       try {
         newToken = await addToken(namespace, token);
@@ -135,8 +149,7 @@ export const actionCreators: ActionCreators = {
       }
 
       /* request namespace provision as it triggers tokens validation */
-
-      await WorkspaceClient.restApiClient.provisionKubernetesNamespace();
+      await provisionKubernetesNamespace();
 
       /* check if the new token is available */
 
@@ -161,14 +174,21 @@ export const actionCreators: ActionCreators = {
   updateToken:
     (token: api.PersonalAccessToken): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
-      const state = getState();
-      const namespace = selectDefaultNamespace(state).name;
-
-      await dispatch({
+      dispatch({
         type: Type.REQUEST_TOKENS,
         check: AUTHORIZED,
       });
+      if (!(await selectAsyncIsAuthorized(getState()))) {
+        const error = selectSanityCheckError(getState());
+        dispatch({
+          type: Type.RECEIVE_ERROR,
+          error,
+        });
+        throw new Error(error);
+      }
 
+      const state = getState();
+      const namespace = selectDefaultNamespace(state).name;
       try {
         const newToken = await updateToken(namespace, token);
         dispatch({
@@ -188,14 +208,21 @@ export const actionCreators: ActionCreators = {
   removeToken:
     (token: api.PersonalAccessToken): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
-      const state = getState();
-      const namespace = selectDefaultNamespace(state).name;
-
-      await dispatch({
+      dispatch({
         type: Type.REQUEST_TOKENS,
         check: AUTHORIZED,
       });
+      if (!(await selectAsyncIsAuthorized(getState()))) {
+        const error = selectSanityCheckError(getState());
+        dispatch({
+          type: Type.RECEIVE_ERROR,
+          error,
+        });
+        throw new Error(error);
+      }
 
+      const state = getState();
+      const namespace = selectDefaultNamespace(state).name;
       try {
         await removeToken(namespace, token);
         dispatch({
@@ -229,34 +256,34 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case Type.REQUEST_TOKENS:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         error: undefined,
       });
     case Type.RECEIVE_TOKENS:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         tokens: action.tokens,
       });
     case Type.ADD_TOKEN:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         tokens: [...state.tokens, action.token],
       });
     case Type.UPDATE_TOKEN:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         tokens: state.tokens.map(token =>
           token.tokenName === action.token.tokenName ? action.token : token,
         ),
       });
     case Type.REMOVE_TOKEN:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         tokens: state.tokens.filter(token => token.tokenName !== action.token.tokenName),
       });
     case Type.RECEIVE_ERROR:
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         error: action.error,
       });

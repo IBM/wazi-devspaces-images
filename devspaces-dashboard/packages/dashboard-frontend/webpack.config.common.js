@@ -19,7 +19,6 @@ const config = {
   entry: {
     client: path.join(__dirname, 'src/index.tsx'),
     'service-worker': path.join(__dirname, 'src/service-worker.ts'),
-    'editor.worker': 'monaco-editor-core/esm/vs/editor/editor.worker.js',
     'accept-factory-link': path.join(__dirname, 'src/preload/index.ts'),
   },
   output: {
@@ -29,7 +28,7 @@ const config = {
       if (pathData.chunk.name === 'accept-factory-link') {
         return 'static/preload/[name].js';
       }
-      if (pathData.chunk.name === 'service-worker' || pathData.chunk.name === 'editor.worker') {
+      if (pathData.chunk.name === 'service-worker') {
         return '[name].js';
       }
       return '[name].[hash].js';
@@ -39,31 +38,25 @@ const config = {
     clean: true,
   },
   optimization: {
-    chunkIds: 'deterministic',
     splitChunks: {
-      chunks: 'initial',
+      chunks: (chunk) => {
+        // exclude `accept-factory-link` from being split
+        return chunk.name !== 'accept-factory-link';
+      },
+      maxAsyncRequests: 30,
+      maxInitialRequests: 30,
+      minChunks: 1,
       cacheGroups: {
-        default: false,
-        vendors: false,
-        monaco: {
-          name: 'monaco',
-          chunks: 'all',
-          priority: 25,
-          test: /monaco/
-        },
-        vendor: {
-          name: 'vendor',
-          chunks: 'all',
-          test: /node_modules/,
-          priority: 20
+        vendors: {
+          name: 'vendors',
+          test: /[\\/]node_modules[\\/]/,
+          priority: -10,
+          reuseExistingChunk: true,
         },
         common: {
-          name: 'common',
           minChunks: 2,
-          chunks: 'async',
-          priority: 10,
+          priority: -10,
           reuseExistingChunk: true,
-          enforce: true
         },
       },
     },
@@ -93,22 +86,20 @@ const config = {
         use: ['null-loader']
       },
       {
-        test: /\.(jpg|svg|woff|woff2|ttf|eot|ico)$/,
-        use: [{
-          loader: 'file-loader',
-          options: {
-            name: '[name].[ext]',
-            outputPath: 'fonts/'
-          }
-        }]
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
+      },
+      {
+        test: /\.(woff|woff2|ttf|eot|ico)$/i,
+        type: 'asset/resource',
       },
     ]
   },
   resolve: {
     extensions: ['.js', '.ts', '.tsx'],
     alias: {
-      'vscode-languageserver-protocol/lib/utils/is': 'vscode-languageserver-protocol/lib/common/utils/is',
-      'vscode-languageserver-protocol/lib/main': 'vscode-languageserver-protocol/lib/node/main',
+      // alias for absolute imports (see tsconfig.json)
+      '@': path.resolve(__dirname, 'src/'),
     },
     fallback: {
       "fs": false,
@@ -134,7 +125,7 @@ const config = {
     }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, './index.html'),
-      chunks : ['client', 'service-worker', 'editor.worker'],
+      chunks : ['client', 'service-worker'],
       filename: 'index.html',
     }),
     new HtmlWebpackPlugin({

@@ -12,27 +12,31 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { FACTORY_LINK_ATTR } from '@eclipse-che/common';
 import { cleanup, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createMemoryHistory } from 'history';
+import { createMemoryHistory, MemoryHistory } from 'history';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Action, Store } from 'redux';
-import CreatingStepFetchDevfile from '..';
-import ExpandableWarning from '../../../../../ExpandableWarning';
-import devfileApi from '../../../../../../services/devfileApi';
+
+import ExpandableWarning from '@/components/ExpandableWarning';
+import { MIN_STEP_DURATION_MS, TIMEOUT_TO_RESOLVE_SEC } from '@/components/WorkspaceProgress/const';
+import getComponentRenderer from '@/services/__mocks__/getComponentRenderer';
+import devfileApi from '@/services/devfileApi';
+import { getDefer } from '@/services/helpers/deferred';
 import {
   FACTORY_URL_ATTR,
   OVERRIDE_ATTR_PREFIX,
   REMOTES_ATTR,
-} from '../../../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { getDefer } from '../../../../../../services/helpers/deferred';
-import { AlertItem } from '../../../../../../services/helpers/types';
-import getComponentRenderer from '../../../../../../services/__mocks__/getComponentRenderer';
-import { AppThunk } from '../../../../../../store';
-import { ActionCreators, OAuthResponse } from '../../../../../../store/FactoryResolver';
-import { FakeStoreBuilder } from '../../../../../../store/__mocks__/storeBuilder';
-import { MIN_STEP_DURATION_MS, TIMEOUT_TO_RESOLVE_SEC } from '../../../../const';
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { AlertItem } from '@/services/helpers/types';
+import OAuthService from '@/services/oauth';
+import { AppThunk } from '@/store';
+import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+import { ActionCreators, OAuthResponse } from '@/store/FactoryResolver';
+
+import CreatingStepFetchDevfile from '..';
 
 jest.mock('../../../../TimeLimit');
 
@@ -73,7 +77,12 @@ describe('Creating steps, fetching a devfile', () => {
           location: factoryUrl,
         },
         converted: {
-          devfileV2: {} as devfileApi.Devfile,
+          devfileV2: {
+            metadata: {
+              name: 'my-project',
+              generateName: 'my-project-',
+            },
+          } as devfileApi.Devfile,
         },
       })
       .build();
@@ -94,7 +103,7 @@ describe('Creating steps, fetching a devfile', () => {
   test('devfile is already resolved', async () => {
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
     expect(mockOnError).not.toHaveBeenCalled();
@@ -111,7 +120,7 @@ describe('Creating steps, fetching a devfile', () => {
 
     renderComponent(store, searchParams);
 
-    jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+    await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
     await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
     expect(mockOnError).not.toHaveBeenCalled();
@@ -129,7 +138,7 @@ describe('Creating steps, fetching a devfile', () => {
 
     test('notification alert', async () => {
       renderComponent(emptyStore, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       const expectAlertItem = expect.objectContaining({
         title: 'Warning',
@@ -143,7 +152,7 @@ describe('Creating steps, fetching a devfile', () => {
         ),
         actionCallbacks: [
           expect.objectContaining({
-            title: 'Continue with the default devfile',
+            title: 'Continue with default devfile',
             callback: expect.any(Function),
           }),
           expect.objectContaining({
@@ -158,11 +167,11 @@ describe('Creating steps, fetching a devfile', () => {
       expect(mockOnRestart).not.toHaveBeenCalled();
     });
 
-    test('action callback to continue with the default devfile"', async () => {
+    test('action callback to continue with default devfile"', async () => {
       // this deferred object will help run the callback at the right time
       const deferred = getDefer();
 
-      const actionTitle = 'Continue with the default devfile';
+      const actionTitle = 'Continue with default devfile';
       mockOnError.mockImplementationOnce((alertItem: AlertItem) => {
         const action = alertItem.actionCallbacks?.find(action =>
           action.title.startsWith(actionTitle),
@@ -177,7 +186,7 @@ describe('Creating steps, fetching a devfile', () => {
       });
 
       renderComponent(emptyStore, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       await waitFor(() => expect(mockOnError).toHaveBeenCalled());
       expect(mockOnRestart).not.toHaveBeenCalled();
@@ -189,6 +198,7 @@ describe('Creating steps, fetching a devfile', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
       expect(mockOnRestart).not.toHaveBeenCalled();
@@ -214,11 +224,14 @@ describe('Creating steps, fetching a devfile', () => {
       });
 
       renderComponent(emptyStore, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       await waitFor(() => expect(mockOnError).toHaveBeenCalled());
       expect(mockOnRestart).not.toHaveBeenCalled();
       expect(mockOnNextStep).not.toHaveBeenCalled();
+
+      // first call resolves with error
+      expect(mockRequestFactoryResolver).toHaveBeenCalledTimes(1);
 
       mockOnError.mockClear();
 
@@ -226,13 +239,11 @@ describe('Creating steps, fetching a devfile', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       await waitFor(() => expect(mockOnRestart).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
       expect(mockOnError).not.toHaveBeenCalled();
-
-      // first call resolves with error
-      expect(mockRequestFactoryResolver).toHaveBeenCalledTimes(1);
 
       // should request the factory resolver for the second time
       await waitFor(() => expect(mockRequestFactoryResolver).toHaveBeenCalledTimes(2));
@@ -260,6 +271,10 @@ describe('Creating steps, fetching a devfile', () => {
         title: 'Failed to create the workspace',
         children: `Devfile hasn't been resolved in the last ${TIMEOUT_TO_RESOLVE_SEC} seconds.`,
         actionCallbacks: [
+          expect.objectContaining({
+            title: 'Continue with default devfile',
+            callback: expect.any(Function),
+          }),
           expect.objectContaining({
             title: 'Click to try again',
             callback: expect.any(Function),
@@ -291,7 +306,7 @@ describe('Creating steps, fetching a devfile', () => {
       });
 
       renderComponent(emptyStore, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       // trigger timeout
       const timeoutButton = screen.getByRole('button', {
@@ -308,6 +323,7 @@ describe('Creating steps, fetching a devfile', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       await waitFor(() => expect(mockOnRestart).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
@@ -327,13 +343,13 @@ describe('Creating steps, fetching a devfile', () => {
     test('alert title', async () => {
       renderComponent(emptyStore, searchParams);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       const expectAlertItem = expect.objectContaining({
         title: 'Warning',
         actionCallbacks: [
           expect.objectContaining({
-            title: 'Continue with the default devfile',
+            title: 'Continue with default devfile',
             callback: expect.any(Function),
           }),
           expect.objectContaining({
@@ -347,11 +363,11 @@ describe('Creating steps, fetching a devfile', () => {
       expect(mockOnNextStep).not.toHaveBeenCalled();
     });
 
-    test('action "Continue with the default devfile"', async () => {
+    test('action "Continue with default devfile"', async () => {
       // this deferred object will help run the callback at the right time
       const deferred = getDefer();
 
-      const actionTitle = 'Continue with the default devfile';
+      const actionTitle = 'Continue with default devfile';
       mockOnError.mockImplementationOnce((alertItem: AlertItem) => {
         const action = alertItem.actionCallbacks?.find(_action =>
           _action.title.startsWith(actionTitle),
@@ -366,7 +382,7 @@ describe('Creating steps, fetching a devfile', () => {
       });
 
       renderComponent(emptyStore, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       await waitFor(() => expect(mockOnError).toHaveBeenCalled());
       expect(mockOnRestart).not.toHaveBeenCalled();
@@ -378,6 +394,7 @@ describe('Creating steps, fetching a devfile', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
       expect(mockOnRestart).not.toHaveBeenCalled();
@@ -403,7 +420,7 @@ describe('Creating steps, fetching a devfile', () => {
       });
 
       renderComponent(emptyStore, searchParams);
-      jest.runAllTimers();
+      await jest.runAllTimersAsync();
 
       await waitFor(() => expect(mockOnError).toHaveBeenCalled());
       expect(mockOnRestart).not.toHaveBeenCalled();
@@ -418,6 +435,7 @@ describe('Creating steps, fetching a devfile', () => {
 
       // resolve deferred to trigger the callback
       deferred.resolve();
+      await jest.runOnlyPendingTimersAsync();
 
       await waitFor(() => expect(mockOnRestart).toHaveBeenCalled());
       expect(mockOnNextStep).not.toHaveBeenCalled();
@@ -438,7 +456,7 @@ describe('Creating steps, fetching a devfile', () => {
       const emptyStore = new FakeStoreBuilder().build();
       renderComponent(emptyStore, searchParams);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() => expect(mockRequestFactoryResolver).toHaveBeenCalled());
     });
@@ -453,7 +471,7 @@ describe('Creating steps, fetching a devfile', () => {
 
       renderComponent(emptyStore, searchParams);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() =>
         expect(mockRequestFactoryResolver).toHaveBeenCalledWith(
@@ -470,7 +488,7 @@ describe('Creating steps, fetching a devfile', () => {
 
       const { reRenderComponent } = renderComponent(emptyStore, searchParams);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() => expect(mockRequestFactoryResolver).toHaveBeenCalled());
       expect(mockOnError).not.toHaveBeenCalled();
@@ -478,7 +496,7 @@ describe('Creating steps, fetching a devfile', () => {
 
       // wait a bit less than the devfile resolving timeout
       const time = (TIMEOUT_TO_RESOLVE_SEC - 1) * 1000;
-      jest.advanceTimersByTime(time);
+      await jest.advanceTimersByTimeAsync(time);
 
       // build next store
       const nextStore = new FakeStoreBuilder()
@@ -487,13 +505,18 @@ describe('Creating steps, fetching a devfile', () => {
             location: factoryUrl,
           },
           converted: {
-            devfileV2: {} as devfileApi.Devfile,
+            devfileV2: {
+              metadata: {
+                name: 'my-project',
+                generateName: 'my-project-',
+              },
+            } as devfileApi.Devfile,
           },
         })
         .build();
       reRenderComponent(nextStore, searchParams);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
       expect(mockOnError).not.toHaveBeenCalled();
@@ -505,6 +528,8 @@ describe('Creating steps, fetching a devfile', () => {
     const host = 'che-host';
     const protocol = 'http://';
     let spyWindowLocation: jest.SpyInstance;
+    let spyOpenOAuthPage: jest.SpyInstance;
+    let history: MemoryHistory;
 
     beforeEach(() => {
       mockIsOAuthResponse.mockReturnValue(true);
@@ -516,25 +541,39 @@ describe('Creating steps, fetching a devfile', () => {
       } as OAuthResponse);
 
       spyWindowLocation = createWindowLocationSpy(host, protocol);
+      spyOpenOAuthPage = jest
+        .spyOn(OAuthService, 'openOAuthPage')
+        .mockImplementation(() => jest.fn());
+
+      history = createMemoryHistory({
+        initialEntries: [
+          {
+            search: searchParams.toString(),
+          },
+        ],
+      });
     });
 
     afterEach(() => {
       sessionStorage.clear();
       spyWindowLocation.mockClear();
+      spyOpenOAuthPage.mockClear();
     });
 
     test('redirect to an authentication URL', async () => {
       const emptyStore = new FakeStoreBuilder().build();
 
-      renderComponent(emptyStore, searchParams);
+      renderComponent(emptyStore, searchParams, history);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
-      const expectedRedirectUrl = `${oauthAuthenticationUrl}/&redirect_after_login=${protocol}${host}/f?url=${encodeURIComponent(
-        factoryUrl,
+      const expectedRedirectUrl = `${protocol}${host}/f?${FACTORY_LINK_ATTR}=${encodeURIComponent(
+        'url=' + encodeURIComponent(factoryUrl),
       )}`;
 
-      await waitFor(() => expect(spyWindowLocation).toHaveBeenCalledWith(expectedRedirectUrl));
+      await waitFor(() =>
+        expect(spyOpenOAuthPage).toHaveBeenCalledWith(oauthAuthenticationUrl, expectedRedirectUrl),
+      );
 
       expect(mockOnError).not.toHaveBeenCalled();
       expect(mockOnNextStep).not.toHaveBeenCalled();
@@ -543,25 +582,29 @@ describe('Creating steps, fetching a devfile', () => {
     test('authentication fails', async () => {
       const emptyStore = new FakeStoreBuilder().build();
 
-      renderComponent(emptyStore, searchParams);
+      renderComponent(emptyStore, searchParams, history);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
-      const expectedRedirectUrl = `${oauthAuthenticationUrl}/&redirect_after_login=${protocol}${host}/f?url=${encodeURIComponent(
-        factoryUrl,
+      const expectedRedirectUrl = `${protocol}${host}/f?${FACTORY_LINK_ATTR}=${encodeURIComponent(
+        'url=' + encodeURIComponent(factoryUrl),
       )}`;
 
-      await waitFor(() => expect(spyWindowLocation).toHaveBeenCalledWith(expectedRedirectUrl));
+      await waitFor(() =>
+        expect(spyOpenOAuthPage).toHaveBeenCalledWith(oauthAuthenticationUrl, expectedRedirectUrl),
+      );
 
       // cleanup previous render
       cleanup();
 
       // first unsuccessful try to resolve devfile after authentication
-      renderComponent(emptyStore, searchParams);
+      renderComponent(emptyStore, searchParams, history);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
-      await waitFor(() => expect(spyWindowLocation).toHaveBeenCalledWith(expectedRedirectUrl));
+      await waitFor(() =>
+        expect(spyOpenOAuthPage).toHaveBeenCalledWith(oauthAuthenticationUrl, expectedRedirectUrl),
+      );
 
       await waitFor(() => expect(mockOnError).not.toHaveBeenCalled());
 
@@ -569,17 +612,23 @@ describe('Creating steps, fetching a devfile', () => {
       cleanup();
 
       // second unsuccessful try to resolve devfile after authentication
-      renderComponent(emptyStore, searchParams);
+      renderComponent(emptyStore, searchParams, history);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
-      await waitFor(() => expect(spyWindowLocation).toHaveBeenCalledWith(expectedRedirectUrl));
+      await waitFor(() =>
+        expect(spyOpenOAuthPage).toHaveBeenCalledWith(oauthAuthenticationUrl, expectedRedirectUrl),
+      );
 
       const expectAlertItem = expect.objectContaining({
         title: 'Failed to create the workspace',
         children:
           'The Dashboard reached a limit of reloads while trying to resolve a devfile in a private repo. Please contact admin to check if OAuth is configured correctly.',
         actionCallbacks: [
+          expect.objectContaining({
+            title: 'Continue with default devfile',
+            callback: expect.any(Function),
+          }),
           expect.objectContaining({
             title: 'Click to try again',
             callback: expect.any(Function),
@@ -596,7 +645,7 @@ describe('Creating steps, fetching a devfile', () => {
 
       renderComponent(emptyStore, searchParams);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() => expect(mockRequestFactoryResolver).toHaveBeenCalled());
 
@@ -609,7 +658,7 @@ describe('Creating steps, fetching a devfile', () => {
       // redirect after authentication
       const { reRenderComponent } = renderComponent(emptyStore, searchParams);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() => expect(mockRequestFactoryResolver).toHaveBeenCalled());
 
@@ -620,13 +669,18 @@ describe('Creating steps, fetching a devfile', () => {
             location: factoryUrl,
           },
           converted: {
-            devfileV2: {} as devfileApi.Devfile,
+            devfileV2: {
+              metadata: {
+                name: 'my-project',
+                generateName: 'my-project-',
+              },
+            } as devfileApi.Devfile,
           },
         })
         .build();
       reRenderComponent(nextStore, searchParams);
 
-      jest.advanceTimersByTime(MIN_STEP_DURATION_MS);
+      await jest.advanceTimersByTimeAsync(MIN_STEP_DURATION_MS);
 
       await waitFor(() => expect(mockOnNextStep).toHaveBeenCalled());
       expect(mockOnError).not.toHaveBeenCalled();
@@ -639,6 +693,7 @@ function createWindowLocationSpy(host: string, protocol: string): jest.SpyInstan
   (window.location as any) = {
     host,
     protocol,
+    origin: protocol + host,
   };
   Object.defineProperty(window.location, 'href', {
     set: () => {
@@ -649,12 +704,16 @@ function createWindowLocationSpy(host: string, protocol: string): jest.SpyInstan
   return jest.spyOn(window.location, 'href', 'set');
 }
 
-function getComponent(store: Store, searchParams: URLSearchParams): React.ReactElement {
-  const history = createMemoryHistory();
+function getComponent(
+  store: Store,
+  searchParams: URLSearchParams,
+  history = createMemoryHistory(),
+): React.ReactElement {
   return (
     <Provider store={store}>
       <CreatingStepFetchDevfile
         distance={0}
+        hasChildren={false}
         history={history}
         searchParams={searchParams}
         onNextStep={mockOnNextStep}

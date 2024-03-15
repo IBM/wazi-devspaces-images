@@ -12,8 +12,8 @@
 #
 
 # Builder: check meta.yamls and create index.json
-# https://registry.access.redhat.com/ubi8/python-38
-FROM ubi8/python-38:1-129 as builder
+# https://registry.access.redhat.com/ubi8/python-311
+FROM registry.access.redhat.com/ubi8/python-311:1-36 as builder
 USER 0
 
 ################# 
@@ -74,7 +74,7 @@ COPY ./build/dockerfiles/rhel.cache_projects.sh resources.tgz /tmp/
 RUN /tmp/rhel.cache_projects.sh /build/ && rm -rf /tmp/rhel.cache_projects.sh /tmp/resources.tgz && ./swap_yamlfiles.sh devfiles 
 
 # Cache projects in DS 
-RUN ./index.sh > /build/devfiles/index.json && \
+RUN ./index.sh > /build/devfiles/index.json && cp /build/devfiles/index.json /build/index && \
     ./list_referenced_images.sh devfiles > /build/devfiles/external_images.txt && \
     ./list_referenced_images_by_file.sh devfiles > /build/devfiles/external_images_by_devfile.txt && \
     chmod -R g+rwX /build/devfiles /build/resources
@@ -84,8 +84,8 @@ RUN ./index.sh > /build/devfiles/index.json && \
 ################# 
 
 # Build registry, copying meta.yamls and index.json from builder
-# https://registry.access.redhat.com/rhel8/httpd-24
-FROM rhel8/httpd-24:1-268.1689584944 AS registry
+# https://registry.access.redhat.com/ubi8/httpd-24
+FROM registry.access.redhat.com/ubi8/httpd-24:1-294 AS registry
 USER 0
 
 # latest httpd container doesn't include ssl cert, so generate one
@@ -113,7 +113,7 @@ RUN sed -i /etc/httpd/conf/httpd.conf \
     chmod a+rwX /etc/httpd/conf /run/httpd /etc/httpd/logs/
 STOPSIGNAL SIGWINCH
 
-ARG DS_BRANCH=devspaces-3.8-rhel-8
+ARG DS_BRANCH=devspaces-3.10-rhel-8
 ENV DS_BRANCH=${DS_BRANCH}
 
 WORKDIR /var/www/html
@@ -122,6 +122,7 @@ RUN mkdir -m 777 /var/www/html/devfiles
 COPY README.md .htaccess /var/www/html/
 COPY --from=builder /build/devfiles /var/www/html/devfiles
 COPY --from=builder /build/resources /var/www/html/resources
+COPY --from=builder /build/devfiles/index.json /var/www/html/index
 COPY ./images /var/www/html/images
 COPY ./build/dockerfiles/rhel.entrypoint.sh ./build/dockerfiles/entrypoint.sh /usr/local/bin/
 RUN chmod g+rwX /usr/local/bin/entrypoint.sh /usr/local/bin/rhel.entrypoint.sh && \
@@ -137,6 +138,7 @@ CMD ["/usr/local/bin/rhel.entrypoint.sh"]
 
 # FROM registry AS offline-registry
 # COPY --from=offline-builder /build/devfiles /var/www/html/devfiles
+# COPY --from=offline-builder /build/devfiles/index.json /var/www/html/index
 # COPY --from=offline-builder /build/resources /var/www/html/resources
 
 # append Brew metadata here
@@ -151,7 +153,7 @@ LABEL summary="$SUMMARY" \
       io.openshift.tags="$PRODNAME,$COMPNAME" \
       com.redhat.component="$PRODNAME-$COMPNAME-container" \
       name="$PRODNAME/$COMPNAME" \
-      version="3.8" \
+      version="3.10" \
       license="EPLv2" \
       maintainer="Valerii Svydenko <vsvydenk@redhat.com>, Nick Boldt <nboldt@redhat.com>" \
       io.openshift.expose-services="" \

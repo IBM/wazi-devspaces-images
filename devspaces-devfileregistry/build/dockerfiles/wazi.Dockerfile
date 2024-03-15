@@ -12,8 +12,8 @@
 #
 
 # Builder: check meta.yamls and create index.json
-# https://registry.access.redhat.com/ubi8/python-38
-FROM registry.access.redhat.com/ubi8/python-38:latest as devfile-builder
+# https://registry.access.redhat.com/ubi8/python-311
+FROM registry.access.redhat.com/ubi8/python-311:latest as devfile-builder
 USER 0
 
 ################# 
@@ -55,6 +55,7 @@ RUN \
 # Cache projects in DS 
 RUN \
     ./index.sh > /build/devfiles/index.json && \
+    cp /build/devfiles/index.json /build/index && \
     ./list_referenced_images.sh devfiles > /build/devfiles/external_images.txt && \
     ./list_referenced_images_by_file.sh devfiles > /build/devfiles/external_images_by_devfile.txt && \
     chmod -R g+rwX /build/devfiles /build/resources
@@ -99,7 +100,7 @@ RUN \
 
 STOPSIGNAL SIGWINCH
 
-ARG DS_BRANCH=devspaces-3.5-rhel-8
+ARG DS_BRANCH=devspaces-3.10-rhel-8
 ENV DS_BRANCH=${DS_BRANCH}
 
 WORKDIR /var/www/html
@@ -108,6 +109,7 @@ RUN mkdir -m 777 /var/www/html/devfiles
 COPY README.md .htaccess /var/www/html/
 COPY --from=devfile-builder /build/devfiles /var/www/html/devfiles
 COPY --from=devfile-builder /build/resources /var/www/html/resources
+COPY --from=devfile-builder /build/devfiles/index.json /var/www/html/index
 COPY ./images /var/www/html/images
 COPY ./LICENSE /licenses/
 COPY ./build/dockerfiles/rhel.entrypoint.sh ./build/dockerfiles/entrypoint.sh /usr/local/bin/
@@ -117,7 +119,7 @@ RUN chmod g+rwX /usr/local/bin/entrypoint.sh /usr/local/bin/rhel.entrypoint.sh &
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/usr/local/bin/rhel.entrypoint.sh"]
 
-ARG PRODUCT_VERSION="3.0.1"
+ARG PRODUCT_VERSION="4.0.0"
 ENV \
     SUMMARY="IBM Wazi for Dev Spaces" \
     DESCRIPTION="IBM Wazi for Dev Spaces" \
@@ -161,6 +163,7 @@ RUN ./cache_projects.sh devfiles resources && \
 
 FROM devfile-registry AS offline-registry
 COPY --from=offline-builder /build/devfiles /var/www/html/devfiles
+COPY --from=offline-builder /build/devfiles/index.json /var/www/html/index
 COPY --from=offline-builder /build/resources /var/www/html/resources
 
 # append Brew metadata here

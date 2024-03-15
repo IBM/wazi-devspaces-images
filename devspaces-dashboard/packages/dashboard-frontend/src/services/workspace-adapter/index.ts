@@ -10,15 +10,19 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import devfileApi, { isDevfileV2, isDevWorkspace } from '../devfileApi';
-import { DEVWORKSPACE_UPDATING_TIMESTAMP_ANNOTATION } from '../devfileApi/devWorkspace/metadata';
-import { DEVWORKSPACE_STORAGE_TYPE_ATTR } from '../devfileApi/devWorkspace/spec/template';
-import { DeprecatedWorkspaceStatus, DevWorkspaceStatus, WorkspaceStatus } from '../helpers/types';
+import devfileApi, { isDevfileV2, isDevWorkspace } from '@/services/devfileApi';
+import { DEVWORKSPACE_UPDATING_TIMESTAMP_ANNOTATION } from '@/services/devfileApi/devWorkspace/metadata';
+import { DEVWORKSPACE_STORAGE_TYPE_ATTR } from '@/services/devfileApi/devWorkspace/spec/template';
+import {
+  DeprecatedWorkspaceStatus,
+  DevWorkspaceStatus,
+  WorkspaceStatus,
+} from '@/services/helpers/types';
 import {
   devfileToDevWorkspace,
   devWorkspaceToDevfile,
-} from '../workspace-client/devworkspace/converters';
-import { DEVWORKSPACE_NEXT_START_ANNOTATION } from '../workspace-client/devworkspace/devWorkspaceClient';
+} from '@/services/workspace-client/devworkspace/converters';
+import { DEVWORKSPACE_NEXT_START_ANNOTATION } from '@/services/workspace-client/devworkspace/devWorkspaceClient';
 
 export interface Workspace {
   readonly ref: devfileApi.DevWorkspace;
@@ -99,6 +103,17 @@ export class WorkspaceAdapter<T extends devfileApi.DevWorkspace> implements Work
     }
 
     return workspace.status.phase as DevWorkspaceStatus;
+  }
+
+  static buildClusterConsoleUrl(
+    workspace: devfileApi.DevWorkspace,
+    clusterConsoleUrl: string,
+  ): string {
+    const workspaceName = workspace.metadata.name;
+    const userNamespace = workspace.metadata.namespace;
+    const resourcePath = workspace.apiVersion.replace('/', '~') + '~' + workspace.kind;
+
+    return `${clusterConsoleUrl}/k8s/ns/${userNamespace}/${resourcePath}/${workspaceName}`;
   }
 
   get ref(): T {

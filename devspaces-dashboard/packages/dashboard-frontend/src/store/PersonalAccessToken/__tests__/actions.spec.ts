@@ -12,33 +12,37 @@
 
 import { MockStoreEnhanced } from 'redux-mock-store';
 import { ThunkDispatch } from 'redux-thunk';
-import * as testStore from '..';
-import { AppState } from '../..';
-import { AUTHORIZED } from '../../sanityCheckMiddleware';
-import { FakeStoreBuilder } from '../../__mocks__/storeBuilder';
-import { token1, token2 } from './stub';
-import * as PersonalAccessTokenApi from '../../../services/dashboard-backend-client/personalAccessTokenApi';
-import { container } from '../../../inversify.config';
-import { CheWorkspaceClient } from '../../../services/workspace-client/cheworkspace/cheWorkspaceClient';
 
-const cheWorkspaceClient = container.get(CheWorkspaceClient);
-jest
-  .spyOn(cheWorkspaceClient.restApiClient, 'provisionKubernetesNamespace')
-  .mockImplementation(() => Promise.resolve({} as che.KubernetesNamespace));
+import * as KubernetesNamespaceApi from '@/services/backend-client/kubernetesNamespaceApi';
+import * as PersonalAccessTokenApi from '@/services/backend-client/personalAccessTokenApi';
+import { AppState } from '@/store';
+import { FakeStoreBuilder } from '@/store/__mocks__/storeBuilder';
+import { token1, token2 } from '@/store/PersonalAccessToken/__tests__/stub';
+import { AUTHORIZED } from '@/store/sanityCheckMiddleware';
+
+import * as testStore from '..';
+
+jest.mock(
+  '../../../services/backend-client/kubernetesNamespaceApi',
+  () =>
+    ({
+      provisionKubernetesNamespace: () => Promise.resolve({} as che.KubernetesNamespace),
+    }) as typeof KubernetesNamespaceApi,
+);
 
 const mockFetchTokens = jest.fn();
 const mockAddToken = jest.fn();
 const mockUpdateToken = jest.fn();
 const mockRemoveToken = jest.fn();
 jest.mock(
-  '../../../services/dashboard-backend-client/personalAccessTokenApi',
+  '../../../services/backend-client/personalAccessTokenApi',
   () =>
     ({
       fetchTokens: (...args) => mockFetchTokens(...args),
       addToken: (...args) => mockAddToken(...args),
       updateToken: (...args) => mockUpdateToken(...args),
       removeToken: (...args) => mockRemoveToken(...args),
-    } as typeof PersonalAccessTokenApi),
+    }) as typeof PersonalAccessTokenApi,
 );
 
 // mute the outputs

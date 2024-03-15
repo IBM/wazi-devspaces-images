@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2022 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -9,12 +9,14 @@
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
 //
+
 package utils
 
 import (
 	"os"
 	"regexp"
 	"runtime"
+	"sort"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -60,6 +62,11 @@ func doGetEnvsByRegExp(regExp string, isArchitectureDependentEnvNameNeeded bool)
 			env = append(env, corev1.EnvVar{Name: envName, Value: pair[1]})
 		}
 	}
+
+	sort.Slice(env, func(i, j int) bool {
+		return strings.Compare(env[i].Name, env[j].Name) < 0
+	})
+
 	return env
 }
 

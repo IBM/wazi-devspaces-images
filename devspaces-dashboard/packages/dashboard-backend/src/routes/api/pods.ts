@@ -11,25 +11,28 @@
  */
 
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { baseApiPath } from '../../constants/config';
-import { namespacedSchema } from '../../constants/schemas';
-import { restParams } from '../../models';
-import { getSchema } from '../../services/helpers';
-import { getDevWorkspaceClient } from './helpers/getDevWorkspaceClient';
-import { getToken } from './helpers/getToken';
+
+import { baseApiPath } from '@/constants/config';
+import { namespacedSchema } from '@/constants/schemas';
+import { restParams } from '@/models';
+import { getDevWorkspaceClient } from '@/routes/api/helpers/getDevWorkspaceClient';
+import { getToken } from '@/routes/api/helpers/getToken';
+import { getSchema } from '@/services/helpers';
 
 const tags = ['Pod'];
 
-export function registerPodsRoutes(server: FastifyInstance) {
-  server.get(
-    `${baseApiPath}/namespace/:namespace/pods`,
-    getSchema({ tags, params: namespacedSchema }),
-    async function (request: FastifyRequest) {
-      const { namespace } = request.params as restParams.INamespacedParams;
-      const token = getToken(request);
+export function registerPodsRoutes(instance: FastifyInstance) {
+  instance.register(async server => {
+    server.get(
+      `${baseApiPath}/namespace/:namespace/pods`,
+      getSchema({ tags, params: namespacedSchema }),
+      async function (request: FastifyRequest) {
+        const { namespace } = request.params as restParams.INamespacedParams;
+        const token = getToken(request);
 
-      const { podApi } = getDevWorkspaceClient(token);
-      return await podApi.listInNamespace(namespace);
-    },
-  );
+        const { podApi } = getDevWorkspaceClient(token);
+        return await podApi.listInNamespace(namespace);
+      },
+    );
+  });
 }

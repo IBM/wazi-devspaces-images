@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2022 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -125,8 +125,21 @@ type CheClusterDevEnvironments struct {
 	// +kubebuilder:default:=-1
 	SecondsOfRunBeforeIdling *int32 `json:"secondsOfRunBeforeIdling,omitempty"`
 	// Disables the container build capabilities.
+	// When set to `false` (the default value), the devEnvironments.security.containerSecurityContext
+	// field is ignored, and the following container SecurityContext is applied:
+	//
+	//  containerSecurityContext:
+	//    allowPrivilegeEscalation: true
+	//    capabilities:
+	//      add:
+	//      - SETGID
+	//      - SETUID
+	//
 	// +optional
 	DisableContainerBuildCapabilities *bool `json:"disableContainerBuildCapabilities,omitempty"`
+	// Workspace security configuration.
+	// +optional
+	Security WorkspaceSecurityConfig `json:"security,omitempty"`
 	// Container build configuration.
 	// +optional
 	ContainerBuildConfiguration *ContainerBuildConfiguration `json:"containerBuildConfiguration,omitempty"`
@@ -172,6 +185,10 @@ type CheClusterDevEnvironments struct {
 	// User configuration.
 	// +optional
 	User *UserConfiguration `json:"user,omitempty"`
+	// ImagePullPolicy defines the imagePullPolicy used for containers in a DevWorkspace.
+	// +optional
+	// +kubebuilder:validation:Enum=Always;IfNotPresent;Never
+	ImagePullPolicy corev1.PullPolicy `json:"imagePullPolicy,omitempty"`
 }
 
 // Che components configuration.
@@ -294,6 +311,11 @@ type CheServer struct {
 // Configuration settings related to the Dashaboard used by the Che installation.
 // +k8s:openapi-gen=true
 type Dashboard struct {
+	// The log level for the Dashboard.
+	// +optional
+	// +kubebuilder:default:="ERROR"
+	// +kubebuilder:validation:Enum=DEBUG;INFO;WARN;ERROR;FATAL;TRACE;SILENT
+	LogLevel string `json:"logLevel,omitempty"`
 	// Deployment override options.
 	// +optional
 	Deployment *Deployment `json:"deployment,omitempty"`
@@ -456,6 +478,19 @@ type WorkspaceDefaultPlugins struct {
 	Plugins []string `json:"plugins,omitempty"`
 }
 
+// Workspace security configuration
+type WorkspaceSecurityConfig struct {
+	// PodSecurityContext used by all workspace-related pods.
+	// If set, defined values are merged into the default PodSecurityContext configuration.
+	// +optional
+	PodSecurityContext *corev1.PodSecurityContext `json:"podSecurityContext,omitempty"`
+	// Container SecurityContext used by all workspace-related containers.
+	// If set, defined values are merged into the default Container SecurityContext configuration.
+	// Requires devEnvironments.disableContainerBuildCapabilities to be set to `true` in order to take effect.
+	// +optional
+	ContainerSecurityContext *corev1.SecurityContext `json:"containerSecurityContext,omitempty"`
+}
+
 // Authentication settings.
 type Auth struct {
 	// Public URL of the Identity Provider server.
@@ -505,6 +540,23 @@ type Gateway struct {
 	// +optional
 	// +kubebuilder:default:={app: che, component: che-gateway-config}
 	ConfigLabels map[string]string `json:"configLabels,omitempty"`
+	// Configuration for Traefik within the Che gateway pod.
+	// +optional
+	Traefik *Traefik `json:"traefik,omitempty"`
+	// Configuration for kube-rbac-proxy within the Che gateway pod.
+	// +optional
+	KubeRbacProxy *KubeRbacProxy `json:"kubeRbacProxy,omitempty"`
+	// Configuration for oauth-proxy within the Che gateway pod.
+	// +optional
+	OAuthProxy *OAuthProxy `json:"oAuthProxy,omitempty"`
+}
+
+type OAuthProxy struct {
+	// Expire timeframe for cookie. If set to 0, cookie becomes a session-cookie which will expire when the browser is closed.
+	// +optional
+	// +kubebuilder:default:=86400
+	// +kubebuilder:validation:Minimum:=0
+	CookieExpireSeconds *int32 `json:"cookieExpireSeconds,omitempty"`
 }
 
 // Proxy server configuration.
@@ -704,6 +756,24 @@ type ContainerBuildConfiguration struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:default:=container-build
 	OpenShiftSecurityContextConstraint string `json:"openShiftSecurityContextConstraint,omitempty"`
+}
+
+// Configuration for Traefik within the Che gateway pod.
+type Traefik struct {
+	// The log level for the Traefik container within the gateway pod: `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, or `PANIC`. The default value is `INFO`
+	// +optional
+	// +kubebuilder:default:="INFO"
+	// +kubebuilder:validation:Enum=DEBUG;INFO;WARN;ERROR;FATAL;PANIC
+	LogLevel string `json:"logLevel,omitempty"`
+}
+
+// Configuration for kube-rbac-proxy within the Che gateway pod.
+type KubeRbacProxy struct {
+	// The glog log level for the kube-rbac-proxy container within the gateway pod. Larger values represent a higher verbosity. The default value is `0`.
+	// +optional
+	// +kubebuilder:default:=0
+	// +kubebuilder:validation:Minimum:=0
+	LogLevel *int32 `json:"logLevel,omitempty"`
 }
 
 // GatewayPhase describes the different phases of the Che gateway lifecycle.

@@ -13,16 +13,17 @@
 import { V221DevfileComponents } from '@devfile/api';
 import { dump } from 'js-yaml';
 import { cloneDeep } from 'lodash';
-import { FactoryParams } from '../../services/helpers/factoryFlow/buildFactoryParams';
-import { DevfileAdapter } from '../../services/devfile/adapter';
-import devfileApi from '../../services/devfileApi';
-import { generateWorkspaceName } from '../../services/helpers/generateName';
-import { getProjectName } from '../../services/helpers/getProjectName';
-import { DevfileV2ProjectSource, FactoryResolver } from '../../services/helpers/types';
+
+import { DevfileAdapter } from '@/services/devfile/adapter';
+import devfileApi from '@/services/devfileApi';
+import { FactoryParams } from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { generateWorkspaceName } from '@/services/helpers/generateName';
+import { getProjectName } from '@/services/helpers/getProjectName';
+import { DevfileV2ProjectSource, FactoryResolver } from '@/services/helpers/types';
 import {
   DEVWORKSPACE_DEVFILE_SOURCE,
   DEVWORKSPACE_METADATA_ANNOTATION,
-} from '../../services/workspace-client/devworkspace/devWorkspaceClient';
+} from '@/services/workspace-client/devworkspace/devWorkspaceClient';
 
 /**
  * Returns a devfile from the FactoryResolver object.
@@ -45,10 +46,13 @@ export default function normalizeDevfileV2(
   const scmInfo = data['scm_info'];
 
   const projectName = getProjectName(scmInfo?.clone_url || location);
-  const prefix = devfileLike.metadata?.generateName
+  if (!devfileLike.metadata) {
+    devfileLike.metadata = {};
+  }
+  const prefix = devfileLike.metadata.generateName
     ? devfileLike.metadata.generateName
     : projectName;
-  const name = devfileLike.metadata?.name || generateWorkspaceName(prefix);
+  const name = devfileLike.metadata.name || generateWorkspaceName(prefix);
 
   // set mandatory fields
   const devfile = cloneDeep(devfileLike) as devfileApi.Devfile;

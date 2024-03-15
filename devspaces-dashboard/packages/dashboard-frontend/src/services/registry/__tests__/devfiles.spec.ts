@@ -10,9 +10,15 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { fetchRegistryMetadata, resolveLinks, resolveTags, updateObjectLinks } from '../devfiles';
-import SessionStorageService, { SessionStorageKey } from '../../session-storage';
 import common from '@eclipse-che/common';
+
+import {
+  fetchRegistryMetadata,
+  resolveLinks,
+  resolveTags,
+  updateObjectLinks,
+} from '@/services/registry/devfiles';
+import SessionStorageService, { SessionStorageKey } from '@/services/session-storage';
 
 const mockFetchData = jest.fn();
 jest.mock('../fetchData', () => {
@@ -64,6 +70,20 @@ describe('fetch registry metadata', () => {
   describe('external registry', () => {
     const baseUrl = 'https://eclipse-che.github.io/che-devfile-registry/7.71.0/';
 
+    it('should fetch the deprecated indexUrl as a second try', async () => {
+      mockSessionStorageServiceGet.mockReturnValue(undefined);
+
+      mockFetchData.mockRejectedValueOnce(new Error('Unsupported index URL'));
+      mockFetchData.mockResolvedValueOnce([]);
+
+      await fetchRegistryMetadata(baseUrl, true);
+
+      expect(mockFetchData.mock.calls).toEqual([
+        [`https://eclipse-che.github.io/che-devfile-registry/7.71.0/index`],
+        [`https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json`],
+      ]);
+    });
+
     it('should fetch registry metadata', async () => {
       const metadata = {
         displayName: 'java-maven',
@@ -83,18 +103,43 @@ describe('fetch registry metadata', () => {
         SessionStorageKey.EXTERNAL_REGISTRIES,
       );
       expect(mockFetchData).toBeCalledWith(
-        'https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json',
+        'https://eclipse-che.github.io/che-devfile-registry/7.71.0/index',
       );
       expect(mockSessionStorageServiceUpdate).toHaveBeenCalledWith(
         SessionStorageKey.EXTERNAL_REGISTRIES,
         JSON.stringify({
-          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json': {
+          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/index': {
             metadata: [metadata],
             lastFetched: 1555555555555,
           },
         }),
       );
       expect(resolved).toEqual([metadata]);
+    });
+
+    describe('getting started samples', () => {
+      const baseUrl = 'http://this.is.my.base.url';
+
+      it('should fetch getting started samples', async () => {
+        const metadata = {
+          displayName: 'java-maven',
+          tags: ['Java'],
+          url: 'some-url',
+          icon: { mediatype: 'image/png', base64data: 'some-data' },
+        } as che.DevfileMetaData;
+        mockFetchData.mockResolvedValue([metadata]);
+
+        const resolved = await fetchRegistryMetadata(
+          `${baseUrl}/dashboard/api/getting-started-sample`,
+          false,
+        );
+
+        expect(mockSessionStorageServiceGet).not.toHaveBeenCalled();
+        expect(mockFetchData).toHaveBeenCalledTimes(1);
+        expect(mockFetchData).toBeCalledWith(`${baseUrl}/dashboard/api/getting-started-sample`);
+        expect(mockSessionStorageServiceUpdate).not.toHaveBeenCalled();
+        expect(resolved).toEqual([metadata]);
+      });
     });
 
     it('should throw an error if fetched data is not array', async () => {
@@ -113,14 +158,14 @@ describe('fetch registry metadata', () => {
         SessionStorageKey.EXTERNAL_REGISTRIES,
       );
       expect(mockFetchData).toBeCalledWith(
-        'https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json',
+        'https://eclipse-che.github.io/che-devfile-registry/7.71.0/index',
       );
       expect(mockSessionStorageServiceUpdate).not.toHaveBeenCalled();
       expect(errorMessage).toEqual(
-        'Failed to fetch devfiles metadata from registry URL: https://eclipse-che.github.io/che-devfile-registry/7.71.0/, reason: Error: Returns type is not array.',
+        'Failed to fetch devfiles metadata from registry URL: https://eclipse-che.github.io/che-devfile-registry/7.71.0/, reason: Returned value is not array.',
       );
       expect(console.error).toBeCalledWith(
-        'Failed to fetch devfiles metadata from registry URL: https://eclipse-che.github.io/che-devfile-registry/7.71.0/, reason: Error: Returns type is not array.',
+        'Failed to fetch devfiles metadata from registry URL: https://eclipse-che.github.io/che-devfile-registry/7.71.0/, reason: Returned value is not array.',
       );
     });
 
@@ -152,13 +197,13 @@ describe('fetch registry metadata', () => {
         SessionStorageKey.EXTERNAL_REGISTRIES,
       );
       expect(mockFetchData).toBeCalledWith(
-        'https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json',
+        'https://eclipse-che.github.io/che-devfile-registry/7.71.0/index',
       );
       expect(console.warn).toBeCalledTimes(2);
       expect(mockSessionStorageServiceUpdate).toHaveBeenCalledWith(
         SessionStorageKey.EXTERNAL_REGISTRIES,
         JSON.stringify({
-          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json': {
+          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/index': {
             metadata: [metadata],
             lastFetched: 1555555555555,
           },
@@ -182,7 +227,7 @@ describe('fetch registry metadata', () => {
       mockFetchData.mockResolvedValue([metadata]);
       mockSessionStorageServiceGet.mockReturnValue(
         JSON.stringify({
-          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json': {
+          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/index': {
             metadata: [metadata],
             lastFetched: time,
           },
@@ -214,7 +259,7 @@ describe('fetch registry metadata', () => {
       mockFetchData.mockResolvedValue([metadata]);
       mockSessionStorageServiceGet.mockReturnValue(
         JSON.stringify({
-          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json': {
+          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/index': {
             metadata: [metadata],
             lastFetched: time,
           },
@@ -227,12 +272,12 @@ describe('fetch registry metadata', () => {
         SessionStorageKey.EXTERNAL_REGISTRIES,
       );
       expect(mockFetchData).toBeCalledWith(
-        'https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json',
+        'https://eclipse-che.github.io/che-devfile-registry/7.71.0/index',
       );
       expect(mockSessionStorageServiceUpdate).toHaveBeenCalledWith(
         SessionStorageKey.EXTERNAL_REGISTRIES,
         JSON.stringify({
-          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/devfiles/index.json': {
+          'https://eclipse-che.github.io/che-devfile-registry/7.71.0/index': {
             metadata: [metadata],
             lastFetched: time + elapsedTime,
           },
@@ -294,10 +339,10 @@ describe('fetch registry metadata', () => {
       expect(mockFetchData).toBeCalledWith('https://registry.devfile.io/index');
       expect(mockSessionStorageServiceUpdate).not.toHaveBeenCalled();
       expect(errorMessage).toEqual(
-        'Failed to fetch devfiles metadata from registry URL: https://registry.devfile.io/, reason: Error: Returns type is not array.',
+        'Failed to fetch devfiles metadata from registry URL: https://registry.devfile.io/, reason: Returned value is not array.',
       );
       expect(console.error).toBeCalledWith(
-        'Failed to fetch devfiles metadata from registry URL: https://registry.devfile.io/, reason: Error: Returns type is not array.',
+        'Failed to fetch devfiles metadata from registry URL: https://registry.devfile.io/, reason: Returned value is not array.',
       );
     });
 

@@ -10,28 +10,28 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { Action, Reducer } from 'redux';
-import axios from 'axios';
+import * as cheApi from '@eclipse-che/api';
 import common from '@eclipse-che/common';
-import { FactoryResolver } from '../../services/helpers/types';
-import { container } from '../../inversify.config';
-import { CheWorkspaceClient } from '../../services/workspace-client/cheworkspace/cheWorkspaceClient';
-import { AppThunk } from '../index';
-import { createObject } from '../helpers';
-import { selectDefaultComponents, selectPvcStrategy } from '../ServerConfig/selectors';
-import devfileApi, { isDevfileV2 } from '../../services/devfileApi';
-import { convertDevfileV1toDevfileV2 } from '../../services/devfile/converters';
-import normalizeDevfileV2 from './normalizeDevfileV2';
-import normalizeDevfileV1 from './normalizeDevfileV1';
-import { selectDefaultNamespace } from '../InfrastructureNamespaces/selectors';
-import { getYamlResolver } from '../../services/dashboard-backend-client/yamlResolverApi';
-import { DEFAULT_REGISTRY } from '../DevfileRegistries';
-import { isOAuthResponse } from '../../services/oauth';
-import { AUTHORIZED, SanityCheckAction } from '../sanityCheckMiddleware';
-import { CHE_EDITOR_YAML_PATH } from '../../services/workspace-client';
-import { FactoryParams } from '../../services/helpers/factoryFlow/buildFactoryParams';
+import axios from 'axios';
+import { Action, Reducer } from 'redux';
 
-const WorkspaceClient = container.get(CheWorkspaceClient);
+import { getFactoryResolver } from '@/services/backend-client/factoryApi';
+import { getYamlResolver } from '@/services/backend-client/yamlResolverApi';
+import { convertDevfileV1toDevfileV2 } from '@/services/devfile/converters';
+import devfileApi, { isDevfileV2 } from '@/services/devfileApi';
+import { FactoryParams } from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { FactoryResolver } from '@/services/helpers/types';
+import { isOAuthResponse } from '@/services/oauth';
+import { CHE_EDITOR_YAML_PATH } from '@/services/workspace-client/helpers';
+import { DEFAULT_REGISTRY } from '@/store/DevfileRegistries';
+import normalizeDevfileV1 from '@/store/FactoryResolver/normalizeDevfileV1';
+import normalizeDevfileV2 from '@/store/FactoryResolver/normalizeDevfileV2';
+import { createObject } from '@/store/helpers';
+import { AppThunk } from '@/store/index';
+import { selectDefaultNamespace } from '@/store/InfrastructureNamespaces/selectors';
+import { selectAsyncIsAuthorized, selectSanityCheckError } from '@/store/SanityCheck/selectors';
+import { AUTHORIZED, SanityCheckAction } from '@/store/sanityCheckMiddleware';
+import { selectDefaultComponents, selectPvcStrategy } from '@/store/ServerConfig/selectors';
 
 export type OAuthResponse = {
   attributes: {
@@ -90,7 +90,7 @@ export type ActionCreators = {
 };
 
 export async function grabLink(
-  links: api.che.core.rest.Link,
+  links: cheApi.che.core.rest.Link[],
   filename: string,
 ): Promise<string | undefined> {
   // handle servers not yet providing links
@@ -98,16 +98,22 @@ export async function grabLink(
     return undefined;
   }
   // grab the one matching
-  const foundLink = links.find(link => link.href.includes(`file=${filename}`));
-  if (!foundLink) {
+  const foundLink = links.find(link => link.href?.includes(`file=${filename}`));
+  if (!foundLink || !foundLink.href) {
     return undefined;
   }
 
   const url = new URL(foundLink.href);
+  let search = '?';
+  url.searchParams.forEach((value, key) => {
+    search += `${key}=${encodeURIComponent(encodeURI(value))}&`;
+  });
+  search = search.slice(0, -1);
+
   try {
     // load it in raw format
     // see https://github.com/axios/axios/issues/907
-    const response = await axios.get<string>(`${url.pathname}${url.search}`, {
+    const response = await axios.get<string>(`${url.pathname}${search}`, {
       responseType: 'text',
       transformResponse: [
         data => {
@@ -132,7 +138,6 @@ export const actionCreators: ActionCreators = {
       factoryParams: Partial<FactoryParams> = {},
     ): AppThunk<KnownAction, Promise<void>> =>
     async (dispatch, getState): Promise<void> => {
-      await dispatch({ type: 'REQUEST_FACTORY_RESOLVER', check: AUTHORIZED });
       const state = getState();
       const namespace = selectDefaultNamespace(state).name;
       const optionalFilesContent = {};
@@ -160,14 +165,16 @@ export const actionCreators: ActionCreators = {
       };
 
       try {
+        await dispatch({ type: 'REQUEST_FACTORY_RESOLVER', check: AUTHORIZED });
+        if (!(await selectAsyncIsAuthorized(getState()))) {
+          const error = selectSanityCheckError(getState());
+          throw new Error(error);
+        }
         let data: FactoryResolver;
         if (isDevfileRegistryLocation(location)) {
           data = await getYamlResolver(namespace, location);
         } else {
-          data = await WorkspaceClient.restApiClient.getFactoryResolver<FactoryResolver>(
-            location,
-            overrideParams,
-          );
+          data = await getFactoryResolver(location, overrideParams);
           const cheEditor = await grabLink(data.links, CHE_EDITOR_YAML_PATH);
           if (cheEditor) {
             optionalFilesContent[CHE_EDITOR_YAML_PATH] = cheEditor;
@@ -251,18 +258,18 @@ export const reducer: Reducer<State> = (
   const action = incomingAction as KnownAction;
   switch (action.type) {
     case 'REQUEST_FACTORY_RESOLVER':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: true,
         error: undefined,
       });
     case 'RECEIVE_FACTORY_RESOLVER':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         resolver: action.resolver,
         converted: action.converted,
       });
     case 'RECEIVE_FACTORY_RESOLVER_ERROR':
-      return createObject(state, {
+      return createObject<State>(state, {
         isLoading: false,
         error: action.error,
       });

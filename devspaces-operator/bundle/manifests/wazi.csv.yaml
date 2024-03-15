@@ -103,8 +103,8 @@ metadata:
     capabilities: Seamless Upgrades
     categories: Developer Tools
     certified: "true"
-    containerImage: icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:fdb0f760476c76fba149164c51626b0e3518470b5e87da3db3139d4c81880608
-    createdAt: "2023-08-17T21:27:46+00:00"
+    containerImage: icr.io/cpopen/ibm-wazi-for-devspaces-operator:latest
+    createdAt: "2023-12-18T22:26:39+00:00"
     description: Personal z/OS cloud IDE for development and testing.
     operatorframework.io/suggested-namespace: openshift-operators
     operatorframework.io/cluster-monitoring: "true"
@@ -114,8 +114,8 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     repository: https://github.com/IBM/wazi-devspaces-images
     support: IBM
-    skipRange: '>=3.0.0 <3.0.1'
-  name: ibm-wazi-code.v3.0.1
+    skipRange: '>=3.0.0 <4.0.0'
+  name: ibm-wazi-code.v4.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -1009,6 +1009,8 @@ spec:
                   value: ''
                 - name: CHE_DEFAULT_SPEC_COMPONENTS_PLUGINREGISTRY_OPENVSXURL
                   value: ''
+                - name: CHE_DEFAULT_SPEC_DEVENVIRONMENTS_CONTAINERSECURITYCONTEXT
+                  value: '{"allowPrivilegeEscalation": true,"capabilities": {"add": ["SETGID", "SETUID"]}}'
                 - name: CHE_DEFAULT_SPEC_DEVENVIRONMENTS_DEFAULTCOMPONENTS
                   value: '[{"name": "universal-developer-image", "container": {"image": "registry.redhat.io/devspaces/udi-rhel8:latest"}}]'
                 - name: CHE_DEFAULT_SPEC_DEVENVIRONMENTS_DEFAULTEDITOR
@@ -1018,7 +1020,7 @@ spec:
                 - name: CHE_FLAVOR
                   value: wazi-devspaces
                 - name: CHE_VERSION
-                  value: 3.8.0
+                  value: 3.10.1
                 - name: CONSOLE_LINK_DISPLAY_NAME
                   value: IBM Wazi for Dev Spaces
                 - name: CONSOLE_LINK_IMAGE
@@ -1036,48 +1038,48 @@ spec:
                     fieldRef:
                       fieldPath: metadata.name
                 - name: RELATED_IMAGE_che_server
-                  value: registry.redhat.io/devspaces/server-rhel8@sha256:5e269c7743838cb64c3f3b87203a3a0821f8b1e680aa6a61e023e706d7a31e0d
+                  value: registry.redhat.io/devspaces/server-rhel8@sha256:be915b54c049c2e84ea63eb0d550b0859f861257beac5d15d96d8c8e8373168b
                 - name: RELATED_IMAGE_dashboard
-                  value: icr.io/wazi-code/ibm-wazi-for-devspaces-dashboard@sha256:29c31c0d86bd9b7e1ccd0bd3b8f061b85c462423d04385990a8b22faefcce855
+                  value: icr.io/wazi-code/ibm-wazi-for-devspaces-dashboard:latest
                 - name: RELATED_IMAGE_devfile_registry
-                  value: icr.io/wazi-code/ibm-wazi-for-devspaces-devfile@sha256:4aa84761217f03b1e2375b52e89ba661cdf75754c1061c4261fb4740f297c93b
+                  value: icr.io/wazi-code/ibm-wazi-for-devspaces-devfile:latest
                 - name: RELATED_IMAGE_devworkspace_controller
                   value: registry.redhat.io/devworkspace/devworkspace-rhel8-operator:latest
-                - name: RELATED_IMAGE_devspaces_code_devfile_registry_image_GMXDQCQ_
-                  value: registry.redhat.io/devspaces/code-rhel8@sha256:ceb424b356efceaa7b5c3de54d4b1da0b28a4694d171bf9c151e90081c2a6d5d
-                - name: RELATED_IMAGE_devspaces_code_plugin_registry_image_GMXDQCQ_
-                  value: registry.redhat.io/devspaces/code-rhel8@sha256:ceb424b356efceaa7b5c3de54d4b1da0b28a4694d171bf9c151e90081c2a6d5d
-                - name: RELATED_IMAGE_devspaces_idea_devfile_registry_image_GMXDQCQ_
-                  value: registry.redhat.io/devspaces/idea-rhel8@sha256:e878a4d5dd0b7ea2ec20846f2b34c8f11f4df8d3c67a1a0ed2f5835dc744bdc4
-                - name: RELATED_IMAGE_devspaces_idea_plugin_registry_image_GMXDQCQ_
-                  value: registry.redhat.io/devspaces/idea-rhel8@sha256:e878a4d5dd0b7ea2ec20846f2b34c8f11f4df8d3c67a1a0ed2f5835dc744bdc4
-                - name: RELATED_IMAGE_devspaces_udi_devfile_registry_image_GMXDQCQ_
+                - name: RELATED_IMAGE_devspaces_code_devfile_registry_image_GMXDCMAK
+                  value: registry.redhat.io/devspaces/code-rhel8@sha256:2ce9d9134addd68611f9bc6504f52e2680e76ca282f5b163d441e50b5a2eebe8
+                - name: RELATED_IMAGE_devspaces_code_plugin_registry_image_GMXDCMAK
+                  value: registry.redhat.io/devspaces/code-rhel8@sha256:2ce9d9134addd68611f9bc6504f52e2680e76ca282f5b163d441e50b5a2eebe8
+                - name: RELATED_IMAGE_devspaces_idea_devfile_registry_image_GMXDCMAK
+                  value: registry.redhat.io/devspaces/idea-rhel8@sha256:cfba12084bc50a4026ca7995c96d6eaa406fae3763494250d2df6f9558fe93b9
+                - name: RELATED_IMAGE_devspaces_idea_plugin_registry_image_GMXDCMAK
+                  value: registry.redhat.io/devspaces/idea-rhel8@sha256:cfba12084bc50a4026ca7995c96d6eaa406fae3763494250d2df6f9558fe93b9
+                - name: RELATED_IMAGE_devspaces_udi_devfile_registry_image_GMXDCMAK
                   value: registry.redhat.io/devspaces/udi-rhel8:latest
-                - name: RELATED_IMAGE_devspaces_udi_plugin_registry_image_GMXDQCQ_
+                - name: RELATED_IMAGE_devspaces_udi_plugin_registry_image_GMXDCMAK
                   value: registry.redhat.io/devspaces/udi-rhel8:latest
                 - name: RELATED_IMAGE_gateway_authentication_sidecar
-                  value: registry.redhat.io/openshift4/ose-oauth-proxy@sha256:1fd22917794c160b62d3edd4f2e35596ff03c9b6b9abe8586776f5578c6a9eaf
+                  value: registry.redhat.io/openshift4/ose-oauth-proxy@sha256:badd1ba02b799872d1539e4894280a9e827aa727344bed9226da76716549c890
                 - name: RELATED_IMAGE_gateway_authorization_sidecar
-                  value: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:53d3620bb0490d83aaf6a356bb7d3b9e7147222d1a2017f8317f05fa90cd3de9
+                  value: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:48cf6065279581d33647ab384b9b22c444cab82d3da729f51b34af29cd8987ec
                 - name: RELATED_IMAGE_plugin_registry
-                  value: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin@sha256:8b26548fc4edb4a2b01fce9f1fe4016efacfa640bd3a4c33e76c8980280993ac
+                  value: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin:latest
                 - name: RELATED_IMAGE_pvc_jobs
-                  value: registry.redhat.io/ubi8/ubi-minimal@sha256:8d43664c250c72d35af8498c7ff76a9f0d42f16b9b3b29f0caa747121778de0e
+                  value: registry.redhat.io/ubi8/ubi-minimal@sha256:b93deceb59a58588d5b16429fc47f98920f84740a1f2ed6454e33275f0701b59
                 - name: RELATED_IMAGE_rhscl_mongodb_36_rhel7_devfile_registry_image_GEWTKMAK
                   value: registry.redhat.io/rhscl/mongodb-36-rhel7@sha256:9f799d356d7d2e442bde9d401b720600fd9059a3d8eefea6f3b2ffa721c0dc73
                 - name: RELATED_IMAGE_rhscl_mongodb_36_rhel7_plugin_registry_image_GEWTKMAK
                   value: registry.redhat.io/rhscl/mongodb-36-rhel7@sha256:9f799d356d7d2e442bde9d401b720600fd9059a3d8eefea6f3b2ffa721c0dc73
                 - name: RELATED_IMAGE_single_host_gateway
-                  value: registry.redhat.io/devspaces/traefik-rhel8@sha256:0d6e0a38b020459bd083f0d3047ad8620240b2511dbab1466e771bb4f97683dc
+                  value: registry.redhat.io/devspaces/traefik-rhel8@sha256:f10ddd0e836be6d4cce38453025956a5d041b4841039734ab30c6b7bf1fc7e7e
                 - name: RELATED_IMAGE_single_host_gateway_config_sidecar
-                  value: registry.redhat.io/devspaces/configbump-rhel8@sha256:79bd0ba6d17ffffcb9ff94f7e57ce8f2eb2281bb29f06229999761dea403e80f
+                  value: registry.redhat.io/devspaces/configbump-rhel8@sha256:b00e49d6f778a43e335673d64cd0805fd83b1ee7203bf9ad1314c9115fec73dd
                 - name: RELATED_IMAGE_wazi_sidecar
-                  value: icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:db900a79c010bcea2886183d62f02f9fdca6ab382c0a06c536cba89b6bc0b5cf
+                  value: icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar:latest
                 - name: WATCH_NAMESPACE
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.annotations['olm.targetNamespaces']
-                image: icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:fdb0f760476c76fba149164c51626b0e3518470b5e87da3db3139d4c81880608
+                image: icr.io/cpopen/ibm-wazi-for-devspaces-operator:latest
                 imagePullPolicy: Always
                 livenessProbe:
                   failureThreshold: 10
@@ -1107,10 +1109,10 @@ spec:
                 resources:
                   limits:
                     cpu: 500m
-                    memory: 256Mi
+                    memory: 1Gi
                   requests:
                     cpu: 100m
-                    memory: 64Mi
+                    memory: 128Mi
                 securityContext:
                   allowPrivilegeEscalation: false
                   capabilities:
@@ -1377,8 +1379,7 @@ spec:
   minKubeVersion: 1.19.0
   provider:
     name: IBM
-  replaces: ibm-wazi-code.v3.0.0
-  version: 3.0.1
+  version: 4.0.0
   webhookdefinitions:
   - admissionReviewVersions:
     - v1
@@ -1435,45 +1436,45 @@ spec:
     type: ConversionWebhook
     webhookPath: /convert
   relatedImages:
-  - name: devspaces-rhel8-operator-2955ad076591e1e4b3dd073d49f19d0ca280da63b7a53371d50776b7e490092c-annotation
-    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:fdb0f760476c76fba149164c51626b0e3518470b5e87da3db3139d4c81880608
+  - name: devspaces-rhel8-operator-2bf8690aeeb2d4caa7f733505b2e3966f223b38def94097ea85a0a5f9a0f6d53-annotation
+    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator:latest
   - name: devspaces-operator
-    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator@sha256:fdb0f760476c76fba149164c51626b0e3518470b5e87da3db3139d4c81880608
+    image: icr.io/cpopen/ibm-wazi-for-devspaces-operator:latest
   - name: che_server
-    image: registry.redhat.io/devspaces/server-rhel8@sha256:5e269c7743838cb64c3f3b87203a3a0821f8b1e680aa6a61e023e706d7a31e0d
+    image: registry.redhat.io/devspaces/server-rhel8@sha256:be915b54c049c2e84ea63eb0d550b0859f861257beac5d15d96d8c8e8373168b
   - name: dashboard
-    image: icr.io/wazi-code/ibm-wazi-for-devspaces-dashboard@sha256:29c31c0d86bd9b7e1ccd0bd3b8f061b85c462423d04385990a8b22faefcce855
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-dashboard:latest
   - name: devfile_registry
-    image: icr.io/wazi-code/ibm-wazi-for-devspaces-devfile@sha256:4aa84761217f03b1e2375b52e89ba661cdf75754c1061c4261fb4740f297c93b
-  - name: devspaces_code_devfile_registry_image_gmxdqcq_
-    image: registry.redhat.io/devspaces/code-rhel8@sha256:ceb424b356efceaa7b5c3de54d4b1da0b28a4694d171bf9c151e90081c2a6d5d
-  - name: devspaces_code_plugin_registry_image_gmxdqcq_
-    image: registry.redhat.io/devspaces/code-rhel8@sha256:ceb424b356efceaa7b5c3de54d4b1da0b28a4694d171bf9c151e90081c2a6d5d
-  - name: devspaces_idea_devfile_registry_image_gmxdqcq_
-    image: registry.redhat.io/devspaces/idea-rhel8@sha256:e878a4d5dd0b7ea2ec20846f2b34c8f11f4df8d3c67a1a0ed2f5835dc744bdc4
-  - name: devspaces_idea_plugin_registry_image_gmxdqcq_
-    image: registry.redhat.io/devspaces/idea-rhel8@sha256:e878a4d5dd0b7ea2ec20846f2b34c8f11f4df8d3c67a1a0ed2f5835dc744bdc4
-  - name: devspaces_udi_devfile_registry_image_gmxdmcq_
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-devfile:latest
+  - name: devspaces_code_devfile_registry_image_gmxdcmak
+    image: registry.redhat.io/devspaces/code-rhel8@sha256:2ce9d9134addd68611f9bc6504f52e2680e76ca282f5b163d441e50b5a2eebe8
+  - name: devspaces_code_plugin_registry_image_gmxdcmak
+    image: registry.redhat.io/devspaces/code-rhel8@sha256:2ce9d9134addd68611f9bc6504f52e2680e76ca282f5b163d441e50b5a2eebe8
+  - name: devspaces_idea_devfile_registry_image_gmxdcmak
+    image: registry.redhat.io/devspaces/idea-rhel8@sha256:cfba12084bc50a4026ca7995c96d6eaa406fae3763494250d2df6f9558fe93b9
+  - name: devspaces_idea_plugin_registry_image_gmxdcmak
+    image: registry.redhat.io/devspaces/idea-rhel8@sha256:cfba12084bc50a4026ca7995c96d6eaa406fae3763494250d2df6f9558fe93b9
+  - name: devspaces_udi_devfile_registry_image_gmxdcmak
     image: registry.redhat.io/devspaces/udi-rhel8:latest
-  - name: devspaces_udi_plugin_registry_image_gmxdmcq_
+  - name: devspaces_udi_plugin_registry_image_gmxdcmak
     image: registry.redhat.io/devspaces/udi-rhel8:latest
   - name: devworkspace_controller
     image: registry.redhat.io/devworkspace/devworkspace-rhel8-operator:latest
   - name: gateway_authentication_sidecar
-    image: registry.redhat.io/openshift4/ose-oauth-proxy@sha256:1fd22917794c160b62d3edd4f2e35596ff03c9b6b9abe8586776f5578c6a9eaf
+    image: registry.redhat.io/openshift4/ose-oauth-proxy@sha256:badd1ba02b799872d1539e4894280a9e827aa727344bed9226da76716549c890
   - name: gateway_authorization_sidecar
-    image: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:53d3620bb0490d83aaf6a356bb7d3b9e7147222d1a2017f8317f05fa90cd3de9
+    image: registry.redhat.io/openshift4/ose-kube-rbac-proxy@sha256:48cf6065279581d33647ab384b9b22c444cab82d3da729f51b34af29cd8987ec
   - name: plugin_registry
-    image: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin@sha256:8b26548fc4edb4a2b01fce9f1fe4016efacfa640bd3a4c33e76c8980280993ac
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-plugin:latest
   - name: pvc_jobs
-    image: registry.redhat.io/ubi8/ubi-minimal@sha256:8d43664c250c72d35af8498c7ff76a9f0d42f16b9b3b29f0caa747121778de0e
+    image: registry.redhat.io/ubi8/ubi-minimal@sha256:b93deceb59a58588d5b16429fc47f98920f84740a1f2ed6454e33275f0701b59
   - name: rhscl_mongodb_36_rhel7_devfile_registry_image_gewtkmak
     image: registry.redhat.io/rhscl/mongodb-36-rhel7@sha256:9f799d356d7d2e442bde9d401b720600fd9059a3d8eefea6f3b2ffa721c0dc73
   - name: rhscl_mongodb_36_rhel7_plugin_registry_image_gewtkmak
     image: registry.redhat.io/rhscl/mongodb-36-rhel7@sha256:9f799d356d7d2e442bde9d401b720600fd9059a3d8eefea6f3b2ffa721c0dc73
   - name: single_host_gateway
-    image: registry.redhat.io/devspaces/traefik-rhel8@sha256:0d6e0a38b020459bd083f0d3047ad8620240b2511dbab1466e771bb4f97683dc
+    image: registry.redhat.io/devspaces/traefik-rhel8@sha256:f10ddd0e836be6d4cce38453025956a5d041b4841039734ab30c6b7bf1fc7e7e
   - name: single_host_gateway_config_sidecar
-    image: registry.redhat.io/devspaces/configbump-rhel8@sha256:79bd0ba6d17ffffcb9ff94f7e57ce8f2eb2281bb29f06229999761dea403e80f
+    image: registry.redhat.io/devspaces/configbump-rhel8@sha256:b00e49d6f778a43e335673d64cd0805fd83b1ee7203bf9ad1314c9115fec73dd
   - name: RELATED_IMAGE_wazi_sidecar
-    image: icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:db900a79c010bcea2886183d62f02f9fdca6ab382c0a06c536cba89b6bc0b5cf
+    image: icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar:latest

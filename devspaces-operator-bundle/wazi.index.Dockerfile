@@ -15,7 +15,7 @@ FROM registry.redhat.io/openshift4/ose-operator-registry@sha256:ecef9cded6d99990
 
 FROM registry.redhat.io/ubi8/ubi-minimal:latest
 
-ARG PRODUCT_VERSION=3.0.1
+ARG PRODUCT_VERSION="4.0.0"
 LABEL operators.operatorframework.io.index.database.v1=/database/index.db
 
 COPY LICENSE /licenses/

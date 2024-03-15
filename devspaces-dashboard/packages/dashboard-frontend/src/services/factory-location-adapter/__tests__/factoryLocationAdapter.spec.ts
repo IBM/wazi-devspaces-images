@@ -10,8 +10,9 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { FactoryLocation, FactoryLocationAdapter } from '../';
 import common from '@eclipse-che/common';
+
+import { FactoryLocation, FactoryLocationAdapter } from '@/services/factory-location-adapter';
 
 describe('FactoryLocationAdapter Service', () => {
   let factoryLocation: FactoryLocation;
@@ -22,7 +23,7 @@ describe('FactoryLocationAdapter Service', () => {
 
       factoryLocation = new FactoryLocationAdapter(location);
 
-      expect(factoryLocation.isFullPathUrl).toBeTruthy();
+      expect(factoryLocation.isHttpLocation).toBeTruthy();
       expect(factoryLocation.isSshLocation).toBeFalsy();
     });
     it('should determine the SSH location', () => {
@@ -30,7 +31,15 @@ describe('FactoryLocationAdapter Service', () => {
 
       factoryLocation = new FactoryLocationAdapter(location);
 
-      expect(factoryLocation.isFullPathUrl).toBeFalsy();
+      expect(factoryLocation.isHttpLocation).toBeFalsy();
+      expect(factoryLocation.isSshLocation).toBeTruthy();
+    });
+    it('should determine the Bitbucket-Server SSH location', () => {
+      const location = 'ssh://git@bitbucket-server.com:7999/~user/repo.git';
+
+      factoryLocation = new FactoryLocationAdapter(location);
+
+      expect(factoryLocation.isHttpLocation).toBeFalsy();
       expect(factoryLocation.isSshLocation).toBeTruthy();
     });
     it('should determine unsupported factory location', () => {
@@ -100,6 +109,22 @@ describe('FactoryLocationAdapter Service', () => {
       expect(factoryLocation.searchParams.toString()).toEqual(
         'che-editor=che-incubator%2Fchecode%2Finsiders',
       );
+    });
+  });
+
+  describe('test FactoryLocationAdapter.isHttpLocation', () => {
+    it('should return true for https git url', () => {
+      const location = 'https://git-test.com/dummy.git';
+      expect(FactoryLocationAdapter.isHttpLocation(location)).toBeTruthy();
+    });
+    it('should return true when git remote specified', () => {
+      const location = 'https://git-test.com/dummy.git?remotes={https://git-test.com/remote.git}';
+      expect(FactoryLocationAdapter.isHttpLocation(location)).toBeTruthy();
+    });
+    it('should return true when git remotes and remote names are specified', () => {
+      const location =
+        'https://git-test.com/dummy.git?remotes={{origin,https://git-test.com/origin.git},{upstream,https://git-test.com/upstream.git}}';
+      expect(FactoryLocationAdapter.isHttpLocation(location)).toBeTruthy();
     });
   });
 

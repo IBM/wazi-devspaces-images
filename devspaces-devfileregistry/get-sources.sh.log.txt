@@ -14,7 +14,7 @@
 
 # Builder: check meta.yamls and create index.json
 # https://registry.access.redhat.com/ubi8/python-38
-FROM registry.access.redhat.com/ubi8/python-38:1-129 as builder
+FROM registry.access.redhat.com/ubi8/python-38:1-131 as builder
 #FROM registry-proxy.engineering.redhat.com/ubi8/python-38:1 as builder
 USER 0
 
@@ -59,111 +59,96 @@ RUN ./index.sh > /build/devfiles/index.json && \
 
 <======= BOOTSTRAP DOCKERFILE =======
 ======= START BOOTSTRAP BUILD =======>
-STEP 1/23: FROM registry.access.redhat.com/ubi8/python-38:1-129 AS builder
+STEP 1/23: FROM registry.access.redhat.com/ubi8/python-38:1-131 AS builder
 STEP 2/23: USER 0
---> 9cd6394dfee
+--> 81b2de4581a5
 STEP 3/23: ARG BOOTSTRAP=true
---> 8692659ecd7
+--> bc67f41c73cd
 STEP 4/23: ENV BOOTSTRAP=${BOOTSTRAP}
---> 7e72163b93d
+--> 7b19fded710d
 STEP 5/23: ARG ALLOWED_REGISTRIES=""
---> 036ea773138
+--> cf28c4a140ff
 STEP 6/23: ENV ALLOWED_REGISTRIES=${ALLOWED_REGISTRIES}
---> 7f03fe9b167
+--> 6a56928f1ce9
 STEP 7/23: ARG ALLOWED_TAGS=""
---> c8db69ccf4e
+--> 82d8f08676a0
 STEP 8/23: ENV ALLOWED_TAGS=${ALLOWED_TAGS}
---> 38cf587a5ba
+--> 47c11778fecc
 STEP 9/23: COPY ./build/dockerfiles/content_sets_rhel8.repo /etc/yum.repos.d/
---> a9f51524dc5
+--> 55fee725d190
 STEP 10/23: COPY ./build/dockerfiles/rhel.install.sh /tmp
---> bbf7ae90b3f
+--> 9ebe4b657424
 STEP 11/23: RUN /tmp/rhel.install.sh && rm -f /tmp/rhel.install.sh
 
+Upgraded:
+  dnf-4.7.0-19.el8.noarch                dnf-data-4.7.0-19.el8.noarch          
+  findutils-1:4.6.0-21.el8.x86_64        python3-dnf-4.7.0-19.el8.noarch       
+  yum-4.7.0-19.el8.noarch               
 Installed:
-  containers-common-2:1-64.module+el8.8.0+18571+eed59fc4.x86_64                 
-  criu-3.15-4.module+el8.8.0+19044+f9982fd8.x86_64                              
-  fuse-common-3.3.0-16.el8.x86_64                                               
-  fuse-overlayfs-1.11-1.module+el8.8.0+18634+9a268292.x86_64                    
-  fuse3-3.3.0-16.el8.x86_64                                                     
-  fuse3-libs-3.3.0-16.el8.x86_64                                                
-  iptables-libs-1.8.4-24.el8.x86_64                                             
-  jansson-2.14-1.el8.x86_64                                                     
-  jq-1.6-6.el8.x86_64                                                           
+  containers-common-2:1-70.module+el8.9.0+20326+387084d0.x86_64                 
+  criu-3.18-4.module+el8.9.0+20326+387084d0.x86_64                              
+  fuse-common-3.3.0-17.el8.x86_64                                               
+  fuse-overlayfs-1.12-1.module+el8.9.0+20326+387084d0.x86_64                    
+  fuse3-3.3.0-17.el8.x86_64                                                     
+  fuse3-libs-3.3.0-17.el8.x86_64                                                
+  jq-1.6-7.el8.x86_64                                                           
   kmod-25-19.el8.x86_64                                                         
-  libibverbs-44.0-2.el8.1.x86_64                                                
-  libmnl-1.0.4-6.el8.x86_64                                                     
   libnet-1.1.6-15.el8.x86_64                                                    
-  libnftnl-1.1.5-5.el8.x86_64                                                   
-  libpcap-14:1.9.1-5.el8.x86_64                                                 
-  libslirp-4.4.0-1.module+el8.8.0+18060+3f21f2cc.x86_64                         
+  libslirp-4.4.0-1.module+el8.9.0+20326+387084d0.x86_64                         
   mpdecimal-2.5.1-3.el8.x86_64                                                  
-  nftables-1:0.9.3-26.el8.x86_64                                                
   oniguruma-6.8.2-2.el8.x86_64                                                  
-  protobuf-c-1.3.0-6.el8.x86_64                                                 
-  python3.11-3.11.2-2.el8_8.1.x86_64                                            
-  python3.11-devel-3.11.2-2.el8_8.1.x86_64                                      
-  python3.11-libs-3.11.2-2.el8_8.1.x86_64                                       
-  python3.11-pip-22.3.1-2.el8.noarch                                            
-  python3.11-pip-wheel-22.3.1-2.el8.noarch                                      
+  protobuf-c-1.3.0-8.el8.x86_64                                                 
+  python3.11-3.11.5-1.el8_9.x86_64                                              
+  python3.11-devel-3.11.5-1.el8_9.x86_64                                        
+  python3.11-libs-3.11.5-1.el8_9.x86_64                                         
+  python3.11-pip-22.3.1-4.el8.noarch                                            
+  python3.11-pip-wheel-22.3.1-4.el8.noarch                                      
   python3.11-setuptools-65.5.1-2.el8.noarch                                     
   python3.11-setuptools-wheel-65.5.1-2.el8.noarch                               
-  runc-1:1.1.4-1.module+el8.8.0+18060+3f21f2cc.x86_64                           
-  skopeo-2:1.11.2-0.2.module+el8.8.0+18251+ad5b274c.x86_64                      
-  slirp4netns-1.2.0-2.module+el8.8.0+18060+3f21f2cc.x86_64                      
+  runc-1:1.1.9-1.module+el8.9.0+20326+387084d0.x86_64                           
+  skopeo-2:1.13.3-1.module+el8.9.0+20326+387084d0.x86_64                        
+  slirp4netns-1.2.1-1.module+el8.9.0+20326+387084d0.x86_64                      
 
 Collecting yq
-  Downloading yq-3.2.2-py3-none-any.whl (17 kB)
+  Downloading yq-3.2.3-py3-none-any.whl (17 kB)
 Collecting argcomplete
-  Downloading argcomplete-3.1.1-py3-none-any.whl (41 kB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 41.5/41.5 kB 3.9 MB/s eta 0:00:00
+  Downloading argcomplete-3.1.6-py3-none-any.whl (41 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 41.7/41.7 kB 3.0 MB/s eta 0:00:00
 Requirement already satisfied: pip in /usr/lib/python3.11/site-packages (22.3.1)
 Collecting pip
-  Downloading pip-23.2.1-py3-none-any.whl (2.1 MB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 37.0 MB/s eta 0:00:00
+  Downloading pip-23.3.1-py3-none-any.whl (2.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 36.1 MB/s eta 0:00:00
 Collecting PyYAML>=5.3.1
   Downloading PyYAML-6.0.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (757 kB)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 757.7/757.7 kB 437.4 MB/s eta 0:00:00
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 757.7/757.7 kB 306.7 MB/s eta 0:00:00
 Collecting xmltodict>=0.11.0
   Downloading xmltodict-0.13.0-py2.py3-none-any.whl (10.0 kB)
 Collecting tomlkit>=0.11.6
-  Downloading tomlkit-0.12.1-py3-none-any.whl (37 kB)
+  Downloading tomlkit-0.12.3-py3-none-any.whl (37 kB)
 Installing collected packages: xmltodict, tomlkit, PyYAML, pip, argcomplete, yq
-Successfully installed PyYAML-6.0.1 argcomplete-3.1.1 pip-23.2.1 tomlkit-0.12.1 xmltodict-0.13.0 yq-3.2.2
+Successfully installed PyYAML-6.0.1 argcomplete-3.1.6 pip-23.3.1 tomlkit-0.12.3 xmltodict-0.13.0 yq-3.2.3
 python: Python 3.8.16
-yq: yq 3.2.2
+yq: yq 3.2.3
 jq: jq-1.6
---> e205248a378
+--> 3005157d3ee6
 STEP 12/23: COPY ./build/scripts ./versions.json /build/
---> b319ef3d8e8
+--> b2073a38162b
 STEP 13/23: COPY ./build/scripts/clone_and_zip.sh /build/build/scripts/
---> a49c2fde861
+--> 6235a01d7c5f
 STEP 14/23: COPY ./VERSION /
---> f26b5dbc266
+--> e6619fcadb54
 STEP 15/23: COPY ./devfiles /build/devfiles
---> 74d9634f056
+--> 2009bbc18077
 STEP 16/23: WORKDIR /build/
---> 6f03411e2e6
+--> 6f282ed5337e
 STEP 17/23: RUN ./generate_devworkspace_templates.sh
-
-> core-js@2.6.12 postinstall /build/node_modules/core-js
-> node -e "try{require('./postinstall')}catch(e){}"
-
-[96mThank you for using core-js ([94m https://github.com/zloirock/core-js [96m) for polyfilling JavaScript standard library![0m
-
-[96mThe project needs your help! Please consider supporting of core-js on Open Collective or Patreon: [0m
-[96m>[94m https://opencollective.com/core-js [0m
-[96m>[94m https://www.patreon.com/zloirock [0m
-
-[96mAlso, the author of core-js ([94m https://github.com/zloirock [96m) is looking for a good job -)[0m
-
 + @eclipse-che/che-devworkspace-generator@0.0.1-99986b8
-added 119 packages from 183 contributors and audited 119 packages in 8.083s
+added 31 packages from 84 contributors and audited 31 packages in 5.006s
 
-5 packages are looking for funding
+1 package is looking for funding
   run `npm fund` for details
 
-found 3 vulnerabilities (2 moderate, 1 high)
+found 1 moderate severity vulnerability
   run `npm audit fix` to fix them, or `npm audit` for details
 DevWorkspace che-code-ansible-demo was generated.
 DevWorkspace che-code-ansible-demo was generated.
@@ -195,21 +180,21 @@ DevWorkspace che-idea-golang was generated.
 DevWorkspace che-code-php-hello-world was generated.
 DevWorkspace che-code-php-hello-world was generated.
 DevWorkspace che-idea-php-hello-world was generated.
---> 25c181c1ecc
+--> 9ef5723445bc
 STEP 18/23: RUN chmod -R g+rwX /build/resources
---> 7d3ae1940b0
+--> 48bc5d1c7684
 STEP 19/23: RUN ./check_referenced_images.sh devfiles --registries "${ALLOWED_REGISTRIES}" --tags "${ALLOWED_TAGS}"
- = quay.io/devspaces/ansible-creator-ee@sha256:3ff5d2d5f17c9c1e4a352d9922e27be09641647ac028a56845aaab6f6e3c7958 PASS
- + registry.redhat.io/devspaces/code-rhel8:3.8 PASS - registry.redhat.io allowed
- + registry.redhat.io/devspaces/idea-rhel8:3.8 PASS - registry.redhat.io allowed
- + registry.redhat.io/devspaces/udi-rhel8:3.8 PASS - registry.redhat.io allowed
+ = quay.io/devspaces/ansible-creator-ee@sha256:5f8235b17caced952ebc663ffcf2398653aec4e72d93779a5e72021b549f0a9e PASS
+ + registry.redhat.io/devspaces/code-rhel8:3.10 PASS - registry.redhat.io allowed
+ + registry.redhat.io/devspaces/idea-rhel8:3.10 PASS - registry.redhat.io allowed
+ + registry.redhat.io/devspaces/udi-rhel8:3.10 PASS - registry.redhat.io allowed
  + registry.redhat.io/rhscl/mongodb-36-rhel7:1-50 PASS - registry.redhat.io allowed
- = quay.io/devspaces/ansible-creator-ee@sha256:3ff5d2d5f17c9c1e4a352d9922e27be09641647ac028a56845aaab6f6e3c7958 PASS
- + registry.redhat.io/devspaces/code-rhel8:3.8 PASS - 3.8 allowed
- + registry.redhat.io/devspaces/idea-rhel8:3.8 PASS - 3.8 allowed
- + registry.redhat.io/devspaces/udi-rhel8:3.8 PASS - 3.8 allowed
+ = quay.io/devspaces/ansible-creator-ee@sha256:5f8235b17caced952ebc663ffcf2398653aec4e72d93779a5e72021b549f0a9e PASS
+ + registry.redhat.io/devspaces/code-rhel8:3.10 PASS - 3.10 allowed
+ + registry.redhat.io/devspaces/idea-rhel8:3.10 PASS - 3.10 allowed
+ + registry.redhat.io/devspaces/udi-rhel8:3.10 PASS - 3.10 allowed
  = registry.redhat.io/rhscl/mongodb-36-rhel7:1-50 PASS
---> 9d3a9eb4dd3
+--> 7c04e6cb6a88
 STEP 20/23: RUN ./check_mandatory_fields.sh devfiles
 Checking devfile 'devfiles/TP__cpp__c-plus-plus/meta.yaml'
 Checking devfile 'devfiles/TP__dotnet__dotnet-web-simple/meta.yaml'
@@ -221,42 +206,42 @@ Checking devfile 'devfiles/java11-maven-quarkus__quarkus-quickstarts/meta.yaml'
 Checking devfile 'devfiles/nodejs__nodejs-mongodb-sample/meta.yaml'
 Checking devfile 'devfiles/nodejs__web-nodejs-sample/meta.yaml'
 Checking devfile 'devfiles/python__python-hello-world/meta.yaml'
---> ba6e95a78ab
+--> 36be87b3d85e
 STEP 21/23: COPY ./build/dockerfiles/rhel.cache_projects.sh /tmp/ 
---> 1d8dbab6ebd
+--> 8bd4806973be
 STEP 22/23: RUN /tmp/rhel.cache_projects.sh /build/ && rm -rf /tmp/rhel.cache_projects.sh /tmp/resources.tgz 
---> 48c2778ade9
+--> 5bcbfbf81e70
 STEP 23/23: RUN ./index.sh > /build/devfiles/index.json &&     ./list_referenced_images.sh devfiles > /build/devfiles/external_images.txt &&     ./list_referenced_images_by_file.sh devfiles > /build/devfiles/external_images_by_devfile.txt &&     chmod -R g+rwX /build/devfiles
 COMMIT devfileregistry:tmp
---> 51b96c391d7
+--> 489d46d59975
 Successfully tagged localhost/devfileregistry:tmp
-51b96c391d7929373ad6ef774c098495d7824ff3c5018258d8b7ff88fcd281b8
+489d46d599754b2a3f59176e9e84cb0b827fffa8728a1f4be376ad7088021794
 <======= END BOOTSTRAP BUILD =======
 Downloading root-local.tgz
 Downloading resources.tgz
 Untagged: localhost/devfileregistry:tmp
-Deleted: 51b96c391d7929373ad6ef774c098495d7824ff3c5018258d8b7ff88fcd281b8
-Deleted: 48c2778ade9fe0ede0a85e5ba1f196af81e2bea448a61ccd46c87c8c43d25c85
-Deleted: 1d8dbab6ebd869e91516c876437128220c4d6a17b676fada8ac962fbdf67eb3a
-Deleted: ba6e95a78abc45c1ba327792d53bf333954074d56e87c3b083d506129a363d3e
-Deleted: 9d3a9eb4dd38eb72575ab9efc4d8ed73a3d831823523f4dc3a62a1513c702d0f
-Deleted: 7d3ae1940b0c05aaa2fc0bad532c816524a25ba7ac0f311a5c77d7e5557a33c6
-Deleted: 25c181c1ecc053822b16f996a3d7c11eb70ab77de13e3545185794a24d92fa24
-Deleted: 6f03411e2e691b165d01c83d5bfebe0812928033b73103745cf6ca3320b3777d
-Deleted: 74d9634f056a04aef822bdb3e4fc3e221f17562b3d77aa11c03938d5446e7133
-Deleted: f26b5dbc2663b47da1e1e7f6d8759cc73020bd2091860f6109417c45d4abcdd3
-Deleted: a49c2fde861c9a521f109bb22f608d437c8aed0f364f48fdb3ba6c1e4913a15e
-Deleted: b319ef3d8e82d4cd051a5a770e39f1d2c1cb1e8c27a310d51cf1d158630315b1
-Deleted: e205248a3784364fec5dc12f2d3c88a64412e55f286489f4506c6b75412efc1f
-Deleted: bbf7ae90b3fa2a9a5e5b77bc5a86937c8dd652fefeab9e510baac4c3f3b7f611
-Deleted: a9f51524dc5d9b192646ed86c54afdd6cc753014e393b6bb2f739390f98a61e2
-Deleted: 38cf587a5ba90121f57442c5bf904c2acdd2c2a0edc03a8f7b791302f2982d21
-Deleted: c8db69ccf4e5a680d561b9b639d52ae608a9c51e75ca128c3e9a1aafa69d547c
-Deleted: 7f03fe9b167a1e750fd18b9dec7c2479c456c12177197733d62f93c1c3445692
-Deleted: 036ea7731381bd39eea9c28de61634edb1551f5365dbeb15cf2dc60b7d901656
-Deleted: 7e72163b93decb8434a2ef48f779cab945e7e2f5949d67ea2f84a04a02dae2f4
-Deleted: 8692659ecd708ae7034d52bd51487b7ea84ee906213d6114db71bdf3be957da6
-Deleted: 9cd6394dfee8e1306a0ee6b85f31fc4aaf47bf6c46777ff5c4935849e9b0049d
+Deleted: 489d46d599754b2a3f59176e9e84cb0b827fffa8728a1f4be376ad7088021794
+Deleted: 5bcbfbf81e70ca680a883735a0321d865ef4c9cfb816db1f00ca0fcd1be5b45b
+Deleted: 8bd4806973be12bdf7f0bd18a4494665877b581964c3024511e1a6503c7f0683
+Deleted: 36be87b3d85e453fde9cd0cd7a71fc7c4dd9d4fa0c08b0028b46b7d9973c4b63
+Deleted: 7c04e6cb6a88ceef881c05467d6ba1791ba53b1d5127b56a31930768f3e41000
+Deleted: 48bc5d1c768405a5c086ff624a77d13626dfa539f48674971a0b2d92fd45edab
+Deleted: 9ef5723445bc02c62fcca285e693d0d11a59a45c148f729f374f84278f89d72b
+Deleted: 6f282ed5337ed54c2fb5746e2375573d66c13fd64f785bf44510e75859207c52
+Deleted: 2009bbc18077580b7706b7435ab5fa15cf9c0fcac21bdea3c547f7129cda956b
+Deleted: e6619fcadb548b82da019c58b48cf0eca62cbdf6010fc7491dcfe7566068f26f
+Deleted: 6235a01d7c5f97f40a80bdb4b3cf01606c7980661652f7374dc7e30e7d53af86
+Deleted: b2073a38162baa191b115b82e782d3aabca8fd45781c5317559c298013d0deec
+Deleted: 3005157d3ee640ddec66f8ed0fe6f5b6d4364f1321972019bfe84e2b1c05c945
+Deleted: 9ebe4b65742497b516269384c8055aa4818c750d711c16a950cb6f5ef5bd79d1
+Deleted: 55fee725d190346f420bf9aed50ec0696d9e50ba6ef023e575057df746cbbb45
+Deleted: 47c11778fecca49c56d5fb1d6551eba50014615d72ef37a6815d994ec956b914
+Deleted: 82d8f08676a0c075953e13a0375a301f18003b1bbf84e4dae7992c7d223aff4d
+Deleted: 6a56928f1ce95f2aeeb8cc109663b0886c32d6a55007a6efa466233242159d44
+Deleted: cf28c4a140ffaae0a8dda78896799462f371663cd409471adf69d08314bd8cfd
+Deleted: 7b19fded710dfd930c1e1cd65544c387d5dc1ca363ba654f32c3271551518593
+Deleted: bc67f41c73cd5ae9b6ae9451eab906e5eb6d726bc2e17121b93a45f1c40e2cbc
+Deleted: 81b2de4581a5d33a2925d83b24e3118f47489a4b123fbe72c0c93344445c0d6c
 File already uploaded: root-local.tgz
 File already uploaded: resources.tgz
 All sources were already uploaded.

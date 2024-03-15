@@ -10,12 +10,12 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { sanitizeLocation } from '../helpers/location';
+import { helpers } from '@eclipse-che/common';
 import { Location } from 'history';
 
 export interface FactoryLocation {
   readonly searchParams: URLSearchParams;
-  readonly isFullPathUrl: boolean;
+  readonly isHttpLocation: boolean;
   readonly isSshLocation: boolean;
   readonly toString: () => string;
 }
@@ -31,12 +31,12 @@ export class FactoryLocationAdapter implements FactoryLocation {
       href = href.replace('&', '?');
     }
     const [pathname, search] = href.split('?');
-    const sanitizedLocation = sanitizeLocation({ search, pathname } as Location);
+    const sanitizedLocation = helpers.sanitizeLocation({ search, pathname } as Location);
 
     this.pathname = sanitizedLocation.pathname;
     this.search = new window.URLSearchParams(sanitizedLocation.search);
 
-    if (FactoryLocationAdapter.isFullPathUrl(sanitizedLocation.pathname)) {
+    if (FactoryLocationAdapter.isHttpLocation(sanitizedLocation.pathname)) {
       this.fullPathUrl = sanitizedLocation.pathname;
       if (sanitizedLocation.search) {
         this.fullPathUrl += sanitizedLocation.search;
@@ -51,19 +51,19 @@ export class FactoryLocationAdapter implements FactoryLocation {
     }
   }
 
-  public static isFullPathUrl(href: string): boolean {
-    return /^(https?:\/\/.)[-a-zA-Z0-9@:%._+~#=]{2,}\b([-a-zA-Z0-9@:%_+.~#?&/=]*)$/.test(href);
+  public static isHttpLocation(href: string): boolean {
+    return /^(https?:\/\/.)[-a-zA-Z0-9@:%._+~#=]{2,}\b([-a-zA-Z0-9@:%_+.~#?&/={},]*)$/.test(href);
   }
 
   public static isSshLocation(href: string): boolean {
-    return /^git@[^:]+:.*\/[^/]+$/.test(href);
+    return /^(ssh:\/\/)?git@[^:]+:.*\/[^/]+$/.test(href);
   }
 
   get searchParams(): URLSearchParams {
     return this.search;
   }
 
-  get isFullPathUrl(): boolean {
+  get isHttpLocation(): boolean {
     return this.fullPathUrl !== undefined;
   }
 

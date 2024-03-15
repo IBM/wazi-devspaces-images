@@ -11,24 +11,22 @@
  */
 
 import 'reflect-metadata';
+
 import { Container } from 'inversify';
 import getDecorators from 'inversify-inject-decorators';
-import { Debounce } from './services/helpers/debounce';
-import { CheWorkspaceClient } from './services/workspace-client/cheworkspace/cheWorkspaceClient';
-import { AppAlerts } from './services/alerts/appAlerts';
-import { IssuesReporterService } from './services/bootstrap/issuesReporter';
-import { DevWorkspaceClient } from './services/workspace-client/devworkspace/devWorkspaceClient';
-import { DevWorkspaceDefaultPluginsHandler } from './services/workspace-client/devworkspace/DevWorkspaceDefaultPluginsHandler';
-import { WorkspaceStoppedDetector } from './services/bootstrap/workspaceStoppedDetector';
-import { WebsocketClient } from './services/dashboard-backend-client/websocketClient';
+
+import { AppAlerts } from '@/services/alerts/appAlerts';
+import { WebsocketClient } from '@/services/backend-client/websocketClient';
+import { IssuesReporterService } from '@/services/bootstrap/issuesReporter';
+import { WorkspaceStoppedDetector } from '@/services/bootstrap/workspaceStoppedDetector';
+import { DevWorkspaceClient } from '@/services/workspace-client/devworkspace/devWorkspaceClient';
+import { DevWorkspaceDefaultPluginsHandler } from '@/services/workspace-client/devworkspace/DevWorkspaceDefaultPluginsHandler';
 
 const container = new Container();
 const { lazyInject } = getDecorators(container);
 
 container.bind(IssuesReporterService).toSelf().inSingletonScope();
-container.bind(Debounce).toSelf();
 container.bind(WebsocketClient).toSelf().inSingletonScope();
-container.bind(CheWorkspaceClient).toSelf().inSingletonScope();
 container.bind(DevWorkspaceClient).toSelf().inSingletonScope();
 container.bind(AppAlerts).toSelf().inSingletonScope();
 container.bind(DevWorkspaceDefaultPluginsHandler).toSelf().inSingletonScope();

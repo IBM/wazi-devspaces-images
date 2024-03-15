@@ -11,25 +11,28 @@
  */
 
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { baseApiPath } from '../../constants/config';
-import { namespacedSchema } from '../../constants/schemas';
-import { getSchema } from '../../services/helpers';
-import { restParams } from '../../models';
-import { getDevWorkspaceClient } from './helpers/getDevWorkspaceClient';
-import { getToken } from './helpers/getToken';
+
+import { baseApiPath } from '@/constants/config';
+import { namespacedSchema } from '@/constants/schemas';
+import { restParams } from '@/models';
+import { getDevWorkspaceClient } from '@/routes/api/helpers/getDevWorkspaceClient';
+import { getToken } from '@/routes/api/helpers/getToken';
+import { getSchema } from '@/services/helpers';
 
 const tags = ['Event'];
 
-export function registerEventsRoutes(server: FastifyInstance) {
-  server.get(
-    `${baseApiPath}/namespace/:namespace/events`,
-    getSchema({ tags, params: namespacedSchema }),
-    async function (request: FastifyRequest) {
-      const { namespace } = request.params as restParams.INamespacedParams;
-      const token = getToken(request);
+export function registerEventsRoutes(instance: FastifyInstance) {
+  instance.register(async server => {
+    server.get(
+      `${baseApiPath}/namespace/:namespace/events`,
+      getSchema({ tags, params: namespacedSchema }),
+      async function (request: FastifyRequest) {
+        const { namespace } = request.params as restParams.INamespacedParams;
+        const token = getToken(request);
 
-      const { eventApi } = getDevWorkspaceClient(token);
-      return await eventApi.listInNamespace(namespace);
-    },
-  );
+        const { eventApi } = getDevWorkspaceClient(token);
+        return await eventApi.listInNamespace(namespace);
+      },
+    );
+  });
 }

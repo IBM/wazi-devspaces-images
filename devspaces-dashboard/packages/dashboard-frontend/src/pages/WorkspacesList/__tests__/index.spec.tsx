@@ -12,16 +12,18 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import React from 'react';
-import { createHashHistory } from 'history';
-import { render, screen, RenderResult, waitFor } from '@testing-library/react';
-import { Router } from 'react-router';
+import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+
+import { BrandingData } from '@/services/bootstrap/branding.constant';
+import { WorkspaceAction } from '@/services/helpers/types';
+import { constructWorkspace, Workspace } from '@/services/workspace-adapter';
+import { DevWorkspaceBuilder } from '@/store/__mocks__/devWorkspaceBuilder';
+
 import WorkspacesList from '..';
-import { BrandingData } from '../../../services/bootstrap/branding.constant';
-import { WorkspaceAction } from '../../../services/helpers/types';
-import { constructWorkspace, Workspace } from '../../../services/workspace-adapter';
-import { DevWorkspaceBuilder } from '../../../store/__mocks__/devWorkspaceBuilder';
 
 jest.mock('../../../components/Head', () => {
   const FakeHead = () => {
@@ -237,7 +239,7 @@ describe('Workspaces List Page', () => {
       // click the kebab button on the first workspace row
       userEvent.click(actionButtons[0]);
 
-      const deleteAction = screen.getByRole('button', { name: /delete workspace/i });
+      const deleteAction = screen.getByRole('menuitem', { name: /delete workspace/i });
       userEvent.click(deleteAction);
 
       // wait for the workspace is deleted
@@ -294,19 +296,19 @@ describe('Workspaces List Page', () => {
       expect(menuItems.length).toEqual(5);
 
       // check state of action buttons
-      const startDebugAction = screen.getByRole('button', { name: /verbose mode/i });
+      const startDebugAction = screen.getByRole('menuitem', { name: /debug mode/i });
       expect(startDebugAction).toBeEnabled();
 
-      const openInBackgroundAction = screen.getByRole('button', { name: /background/i });
+      const openInBackgroundAction = screen.getByRole('menuitem', { name: /background/i });
       expect(openInBackgroundAction).toBeEnabled();
 
-      const restartAction = screen.getByRole('button', { name: /restart/i });
+      const restartAction = screen.getByRole('menuitem', { name: /restart/i });
       expect(restartAction).toHaveAttribute('aria-disabled', 'true');
 
-      const stopAction = screen.getByRole('button', { name: /stop workspace/i });
+      const stopAction = screen.getByRole('menuitem', { name: /stop workspace/i });
       expect(stopAction).toHaveAttribute('aria-disabled', 'true');
 
-      const deleteAction = screen.getByRole('button', { name: /delete workspace/i });
+      const deleteAction = screen.getByRole('menuitem', { name: /delete workspace/i });
       expect(deleteAction).toBeEnabled();
     });
 
@@ -321,14 +323,14 @@ describe('Workspaces List Page', () => {
       expect(actionButtons[0]).toBeDisabled();
     });
 
-    it('should handle "Open in Verbose mode" action', () => {
+    it('should handle "Restart in Debug mode" action', () => {
       renderComponent();
 
       const actionButtons = screen.getAllByRole('button', { name: /actions/i });
       // click the kebab button on the first workspace row
       userEvent.click(actionButtons[0]);
 
-      const startDebugAction = screen.getByRole('button', { name: /verbose mode/i });
+      const startDebugAction = screen.getByRole('menuitem', { name: /debug mode/i });
       userEvent.click(startDebugAction);
 
       expect(mockOnAction).toHaveBeenCalledWith(
@@ -344,7 +346,7 @@ describe('Workspaces List Page', () => {
       // click the kebab button on the first workspace row
       userEvent.click(actionButtons[0]);
 
-      const openInBackgroundAction = screen.getByRole('button', { name: /background/i });
+      const openInBackgroundAction = screen.getByRole('menuitem', { name: /background/i });
       userEvent.click(openInBackgroundAction);
 
       expect(mockOnAction).toHaveBeenCalledWith(
@@ -369,7 +371,7 @@ describe('Workspaces List Page', () => {
       // click the kebab button on the first workspace row
       userEvent.click(actionButtons[0]);
 
-      const stopAction = screen.getByRole('button', { name: /stop workspace/i });
+      const stopAction = screen.getByRole('menuitem', { name: /stop workspace/i });
       userEvent.click(stopAction);
 
       expect(mockOnAction).toHaveBeenCalledWith(WorkspaceAction.STOP_WORKSPACE, workspaces[0].uid);
@@ -382,7 +384,7 @@ describe('Workspaces List Page', () => {
       // click the kebab button on the first workspace row
       userEvent.click(actionButtons[0]);
 
-      const deleteAction = screen.getByRole('button', { name: /delete workspace/i });
+      const deleteAction = screen.getByRole('menuitem', { name: /delete workspace/i });
       userEvent.click(deleteAction);
 
       await waitFor(() => expect(mockOnAction).toHaveBeenCalled());
@@ -423,7 +425,7 @@ describe('Workspaces List Page', () => {
 });
 
 function getComponent(_workspaces = workspaces): React.ReactElement {
-  const history = createHashHistory();
+  const history = createMemoryHistory();
   return (
     <Router history={history}>
       <WorkspacesList

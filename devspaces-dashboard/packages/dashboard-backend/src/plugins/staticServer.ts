@@ -10,13 +10,15 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { DoneFuncWithErrOrRes, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fastifyStatic from '@fastify/static';
+import { DoneFuncWithErrOrRes, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import path from 'path';
+
+import { logger } from '@/utils/logger';
 
 export function registerStaticServer(publicFolder: string, server: FastifyInstance) {
   const rootPath = path.resolve(__dirname, publicFolder);
-  console.log(`Static server's serving "${rootPath}" on 0.0.0.0:8080/`);
+  logger.info(`Static server's serving "${rootPath}" on 0.0.0.0:8080/`);
 
   server.register(fastifyStatic, {
     root: rootPath,
@@ -29,7 +31,6 @@ export function registerStaticServer(publicFolder: string, server: FastifyInstan
     '/dashboard/',
     '/dashboard/index.html',
     '/dashboard/service-worker.js',
-    '/dashboard/editor.worker.js',
     '/dashboard/assets/branding/product.json',
   ];
   server.addHook(

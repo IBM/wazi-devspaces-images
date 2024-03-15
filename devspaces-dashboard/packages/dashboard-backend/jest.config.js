@@ -14,21 +14,28 @@ const base = require('../../jest.config.base');
 
 module.exports = {
   ...base,
-  name: 'dashboard-backend',
   displayName: 'Dashboard backend',
   moduleDirectories: [
     'node_modules',
   ],
+  moduleNameMapper: {
+    // mapping for absolute imports (see tsconfig.json)
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
   collectCoverageFrom: [
     ...base.collectCoverageFrom,
 
     '!src/localRun/**',
+    '!src/utils/**',
+    '!src/server.ts',
   ],
+  testEnvironment: 'node',
+  setupFilesAfterEnv: ['./jest.setup.js'],
   coverageThreshold: {
     global: {
       statements: 81,
       branches: 78,
-      functions: 79,
+      functions: 78,
       lines: 81,
     },
   },

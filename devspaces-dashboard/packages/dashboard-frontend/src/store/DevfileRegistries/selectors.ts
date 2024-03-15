@@ -10,12 +10,14 @@
  *   Red Hat, Inc. - initial API and implementation
  */
 
-import { createSelector } from 'reselect';
-import { AppState } from '..';
-import match from '../../services/helpers/filter';
 import { load } from 'js-yaml';
-import devfileApi from '../../services/devfileApi';
-import { selectDefaultComponents } from '../ServerConfig/selectors';
+import { createSelector } from 'reselect';
+
+import devfileApi from '@/services/devfileApi';
+import match from '@/services/helpers/filter';
+import { selectDefaultComponents } from '@/store/ServerConfig/selectors';
+
+import { AppState } from '..';
 
 export const EMPTY_WORKSPACE_TAG = 'Empty';
 
@@ -107,10 +109,6 @@ function mergeRegistriesMetadata(
 function filterDevfileV2Metadata(metadata: Array<che.DevfileMetaData>): Array<che.DevfileMetaData> {
   return metadata.filter(metadata => metadata.links?.v2);
 }
-
-export const selectDevfileSchema = createSelector(selectState, state => state.schema.schema);
-
-export const selectDevfileSchemaError = createSelector(selectState, state => state.schema.error);
 
 export const selectDevWorkspaceResources = createSelector(
   selectState,

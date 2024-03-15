@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2021 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -9,6 +9,7 @@
 // Contributors:
 //   Red Hat, Inc. - initial API and implementation
 //
+
 package expose
 
 import (
@@ -29,7 +30,7 @@ const (
 	gatewayConfigComponentName = "che-gateway-config"
 )
 
-//Expose exposes the specified component according to the configured exposure strategy rules
+// Expose exposes the specified component according to the configured exposure strategy rules
 func Expose(
 	deployContext *chetypes.DeployContext,
 	componentName string,
@@ -38,9 +39,9 @@ func Expose(
 	return ExposeWithHostPath(deployContext, componentName, "", "", gatewayConfig)
 }
 
-//Expose exposes the specified component on the specified host and domain.
-//Empty host or path will be evaluated according to the configured strategy rules.
-//Note: path may be prefixed according to the configured strategy rules.
+// Expose exposes the specified component on the specified host and domain.
+// Empty host or path will be evaluated according to the configured strategy rules.
+// Note: path may be prefixed according to the configured strategy rules.
 func ExposeWithHostPath(
 	deployContext *chetypes.DeployContext,
 	component string,

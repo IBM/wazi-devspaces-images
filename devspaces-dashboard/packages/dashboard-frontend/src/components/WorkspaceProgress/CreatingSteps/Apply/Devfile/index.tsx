@@ -16,35 +16,39 @@ import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import devfileApi from '../../../../../services/devfileApi';
-import { delay } from '../../../../../services/helpers/delay';
-import { DisposableCollection } from '../../../../../services/helpers/disposable';
+
+import ExpandableWarning from '@/components/ExpandableWarning';
+import { TIMEOUT_TO_CREATE_SEC } from '@/components/WorkspaceProgress/const';
+import { configureProjectRemotes } from '@/components/WorkspaceProgress/CreatingSteps/Apply/Devfile/getGitRemotes';
+import { getProjectFromLocation } from '@/components/WorkspaceProgress/CreatingSteps/Apply/Devfile/getProjectFromLocation';
+import { prepareDevfile } from '@/components/WorkspaceProgress/CreatingSteps/Apply/Devfile/prepareDevfile';
+import {
+  ProgressStep,
+  ProgressStepProps,
+  ProgressStepState,
+} from '@/components/WorkspaceProgress/ProgressStep';
+import { ProgressStepTitle } from '@/components/WorkspaceProgress/StepTitle';
+import { TimeLimit } from '@/components/WorkspaceProgress/TimeLimit';
+import devfileApi from '@/services/devfileApi';
 import {
   buildFactoryParams,
   FactoryParams,
-} from '../../../../../services/helpers/factoryFlow/buildFactoryParams';
-import { findTargetWorkspace } from '../../../../../services/helpers/factoryFlow/findTargetWorkspace';
-import { buildIdeLoaderLocation } from '../../../../../services/helpers/location';
-import { AlertItem } from '../../../../../services/helpers/types';
-import { Workspace } from '../../../../../services/workspace-adapter';
-import { AppState } from '../../../../../store';
-import { selectDefaultDevfile } from '../../../../../store/DevfileRegistries/selectors';
+  USE_DEFAULT_DEVFILE,
+} from '@/services/helpers/factoryFlow/buildFactoryParams';
+import { findTargetWorkspace } from '@/services/helpers/factoryFlow/findTargetWorkspace';
+import { buildIdeLoaderLocation } from '@/services/helpers/location';
+import { AlertItem } from '@/services/helpers/types';
+import { Workspace } from '@/services/workspace-adapter';
+import { AppState } from '@/store';
+import { selectDefaultDevfile } from '@/store/DevfileRegistries/selectors';
 import {
   selectFactoryResolver,
   selectFactoryResolverConverted,
-} from '../../../../../store/FactoryResolver/selectors';
-import { selectDefaultNamespace } from '../../../../../store/InfrastructureNamespaces/selectors';
-import * as WorkspacesStore from '../../../../../store/Workspaces';
-import { selectDevWorkspaceWarnings } from '../../../../../store/Workspaces/devWorkspaces/selectors';
-import { selectAllWorkspaces } from '../../../../../store/Workspaces/selectors';
-import ExpandableWarning from '../../../../ExpandableWarning';
-import { MIN_STEP_DURATION_MS, TIMEOUT_TO_CREATE_SEC } from '../../../const';
-import { ProgressStep, ProgressStepProps, ProgressStepState } from '../../../ProgressStep';
-import { ProgressStepTitle } from '../../../StepTitle';
-import { TimeLimit } from '../../../TimeLimit';
-import { configureProjectRemotes } from './getGitRemotes';
-import { getProjectFromLocation } from './getProjectFromLocation';
-import { prepareDevfile } from './prepareDevfile';
+} from '@/store/FactoryResolver/selectors';
+import { selectDefaultNamespace } from '@/store/InfrastructureNamespaces/selectors';
+import * as WorkspacesStore from '@/store/Workspaces';
+import { selectDevWorkspaceWarnings } from '@/store/Workspaces/devWorkspaces/selectors';
+import { selectAllWorkspaces } from '@/store/Workspaces/selectors';
 
 export class CreateWorkspaceError extends Error {
   constructor(message: string) {
@@ -63,20 +67,21 @@ export type State = ProgressStepState & {
   newWorkspaceName?: string; // a workspace name to create
   shouldCreate: boolean; // should the loader create a workspace
   warning?: string; // the devWorkspace warning to show
-  continueWithDefaultDevfile?: boolean; //
+  continueWithDefaultDevfile: boolean; //
 };
 
 class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
-  protected readonly name = 'Applying devfile';
-  protected readonly toDispose = new DisposableCollection();
+  protected readonly name = 'Generating a DevWorkspace from the Devfile';
 
   constructor(props: Props) {
     super(props);
 
+    const factoryParams = buildFactoryParams(props.searchParams);
     this.state = {
       factoryParams: buildFactoryParams(props.searchParams),
       shouldCreate: true,
       name: this.name,
+      continueWithDefaultDevfile: factoryParams.useDefaultDevfile,
     };
   }
 
@@ -85,8 +90,6 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
   }
 
   public componentDidUpdate() {
-    this.toDispose.dispose();
-
     this.init();
   }
 
@@ -207,8 +210,6 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
   }
 
   protected async runStep(): Promise<boolean> {
-    await delay(MIN_STEP_DURATION_MS);
-
     const { factoryResolverConverted, factoryResolver, defaultDevfile } = this.props;
     const { shouldCreate, devfile, warning, continueWithDefaultDevfile } = this.state;
 
@@ -242,7 +243,11 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
         if (defaultDevfile === undefined) {
           throw new Error('Failed to resolve the default devfile.');
         }
-        this.updateCurrentDevfile(defaultDevfile);
+        const _devfile = cloneDeep(defaultDevfile);
+        if (!_devfile.attributes) {
+          _devfile.attributes = {};
+        }
+        this.updateCurrentDevfile(_devfile);
       } else {
         try {
           await this.createWorkspaceFromDevfile(devfile);
@@ -260,10 +265,12 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
       if (defaultDevfile === undefined) {
         throw new Error('Failed to resolve the default devfile.');
       }
-
       if (devfile === undefined) {
         const _devfile = cloneDeep(defaultDevfile);
 
+        if (!_devfile.attributes) {
+          _devfile.attributes = {};
+        }
         if (factoryResolverConverted?.devfileV2 !== undefined) {
           const { metadata, projects } = factoryResolverConverted.devfileV2;
           _devfile.projects = projects;
@@ -328,6 +335,9 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
   }
 
   protected handleRestart(alertKey: string): void {
+    const searchParams = new URLSearchParams(this.props.history.location.search);
+    searchParams.delete(USE_DEFAULT_DEVFILE);
+    this.props.history.location.search = searchParams.toString();
     this.props.onHideError(alertKey);
 
     this.setState({
@@ -339,6 +349,9 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
   }
 
   private handleContinueWithDefaultDevfile(alertKey: string): void {
+    const searchParams = new URLSearchParams(this.props.history.location.search);
+    searchParams.set(USE_DEFAULT_DEVFILE, 'true');
+    this.props.history.location.search = searchParams.toString();
     this.props.onHideError(alertKey);
 
     this.setState({
@@ -373,7 +386,7 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
         ),
         actionCallbacks: [
           {
-            title: 'Continue with the default devfile',
+            title: 'Continue with default devfile',
             callback: () => this.handleContinueWithDefaultDevfile(key),
           },
           {
@@ -390,6 +403,10 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
       children: helpers.errors.getMessage(error),
       actionCallbacks: [
         {
+          title: 'Continue with default devfile',
+          callback: () => this.handleContinueWithDefaultDevfile(key),
+        },
+        {
           title: 'Click to try again',
           callback: () => this.handleRestart(key),
         },
@@ -398,7 +415,7 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
   }
 
   render(): React.ReactElement {
-    const { distance } = this.props;
+    const { distance, hasChildren } = this.props;
     const { name, lastError, warning } = this.state;
 
     const isActive = distance === 0;
@@ -410,7 +427,12 @@ class CreatingStepApplyDevfile extends ProgressStep<Props, State> {
         {isActive && (
           <TimeLimit timeLimitSec={TIMEOUT_TO_CREATE_SEC} onTimeout={() => this.handleTimeout()} />
         )}
-        <ProgressStepTitle distance={distance} isError={isError} isWarning={isWarning}>
+        <ProgressStepTitle
+          distance={distance}
+          hasChildren={hasChildren}
+          isError={isError}
+          isWarning={isWarning}
+        >
           {name}
         </ProgressStepTitle>
       </React.Fragment>

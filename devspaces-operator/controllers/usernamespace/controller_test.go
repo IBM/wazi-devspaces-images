@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2019-2021 Red Hat, Inc.
+// Copyright (c) 2019-2023 Red Hat, Inc.
 // This program and the accompanying materials are made
 // available under the terms of the Eclipse Public License 2.0
 // which is available at https://www.eclipse.org/legal/epl-2.0/
@@ -341,7 +341,7 @@ func TestCreatesDataInNamespace(t *testing.T) {
 		assert.Equal(t, "true", proxySettings.GetLabels()[dwconstants.DevWorkspaceMountLabel],
 			"proxy settings should be labeled as mounted")
 
-		assert.Equal(t, 1, len(proxySettings.Data), "Expecting just 1 element in the default proxy settings")
+		assert.Equal(t, 2, len(proxySettings.Data), "Expecting 2 elements in the default proxy settings")
 
 		assert.Equal(t, ".svc", proxySettings.Data["NO_PROXY"], "Unexpected proxy settings")
 
