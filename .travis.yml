@@ -22,7 +22,7 @@ before_install:
   # Index Image
   - touch ${INDEX_CONTEXT}/bundles.db
 install:
-  - docker buildx build --load --tag ${INDEX_IMAGE}:travis --file ${INDEX_DOCKERFILE} ${INDEX_CONTEXT}
-  - docker buildx build --load --tag ${BUNDLE_IMAGE}:travis --file ${BUNDLE_DOCKERFILE} ${BUNDLE_CONTEXT}
+  - docker build --tag ${INDEX_IMAGE}:travis --file ${INDEX_DOCKERFILE} ${INDEX_CONTEXT}
+  - docker build --tag ${BUNDLE_IMAGE}:travis --file ${BUNDLE_DOCKERFILE} ${BUNDLE_CONTEXT}
 script: 
   - echo "Success!"
