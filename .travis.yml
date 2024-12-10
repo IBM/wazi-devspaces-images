@@ -12,18 +12,30 @@ env:
     - BUILDKIT_PROGRESS="plain"
     - DOCKER_DEFAULT_PLATFORM="linux/amd64"
     # Images
-    - INDEX_IMAGE="ibm-wazi-for-devspaces-catalog"
-    - INDEX_CONTEXT="./devspaces-operator-bundle"
-    - INDEX_DOCKERFILE="${INDEX_CONTEXT}/wazi.index.Dockerfile"
-    - BUNDLE_IMAGE="ibm-wazi-for-devspaces-operator-bundle"
-    - BUNDLE_CONTEXT="./devspaces-operator-bundle"
-    - BUNDLE_DOCKERFILE="${BUNDLE_CONTEXT}/wazi.bundle.Dockerfile"
+    - SIDECAR_IMAGE="ibm-wazi-for-devspaces-sidecar"
+    - SIDECAR_CONTEXT="./devspaces-sidecar"
+    - SIDECAR_DOCKERFILE="${SIDECAR_CONTEXT}/wazi.Dockerfile"
+    - SIDECAR_MINI_CONTEXT="./devspaces-sidecar-minimal"
+    - SIDECAR_MINI_DOCKERFILE="${SIDECAR_CONTEXT}/wazi.Dockerfile"
 before_install:
+  - if ! docker buildx version 2>/dev/null; then
+      sudo apt-get install -qq ca-certificates ;
+      sudo apt-get update -qq ;
+      sudo apt-get install docker-buildx ;
+    fi
   - echo $DOCKER_KEY | docker login -u $DOCKER_USER --password-stdin registry.redhat.io
-  # Index Image
-  - touch ${INDEX_CONTEXT}/bundles.db
+  - docker buildx create --use
+  - docker buildx inspect --bootstrap
+  - echo "NPM_USER=${ART_USER}" >> .docker_secret
+  - echo "NPM_KEY=${NPM_KEY}"   >> .docker_secret
+  - echo "NPM_URI=${NPM_URI}"   >> .docker_secret
+  - echo "NPM_REG=${NPM_REG}"   >> .docker_secret
+
 install:
-  - docker build --tag ${INDEX_IMAGE}:travis --file ${INDEX_DOCKERFILE} ${INDEX_CONTEXT}
-  - docker build --tag ${BUNDLE_IMAGE}:travis --file ${BUNDLE_DOCKERFILE} ${BUNDLE_CONTEXT}
-script: 
+  # Simpler command if you do not use artifactory for @ibm scoped packages
+  # - docker buildx build --load --tag ${SIDECAR_IMAGE}:travis --file ${SIDECAR_DOCKERFILE} ${SIDECAR_CONTEXT}
+  - docker buildx build --load --tag ${SIDECAR_IMAGE}:travis --file ${SIDECAR_DOCKERFILE} --secret id=docker_secret,src=.docker_secret ${SIDECAR_CONTEXT}
+  - docker buildx build --load --tag ${SIDECAR_IMAGE}:travis --file ${SIDECAR_MINI_DOCKERFILE} --secret id=docker_secret,src=.docker_secret ${SIDECAR_MINI_CONTEXT}
+
+script:
   - echo "Success!"

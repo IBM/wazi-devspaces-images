@@ -1,6 +1,6 @@
 ###############################################################################
 # Licensed Materials - Property of IBM.
-# Copyright IBM Corporation 2023. All Rights Reserved.
+# Copyright IBM Corporation 2023, 2024. All Rights Reserved.
 # U.S. Government Users Restricted Rights - Use, duplication or disclosure
 # restricted by GSA ADP Schedule Contract with IBM Corp.
 #
@@ -16,15 +16,15 @@ FROM registry.redhat.io/devspaces/udi-rhel8:latest AS core
 ###
 ###########################################
 
-ARG PRODUCT_VERSION="4.0.0"
+ARG PRODUCT_VERSION="5.1.0"
 USER 0
 
 ENV \
     JAVA_VERSION="17" \
-    SEMERU_VERSION="17.0.9.9_0.41.0-1"
+    SEMERU_VERSION="17.0.13.11_0.48.0-1"
 
-COPY LICENSE PRODUCT_LICENSE /licenses/
-COPY *.sh *.zip /tmp/
+COPY LICENSE /licenses/
+COPY *.sh /tmp/
 
 ### *** General *** ###
 RUN \
@@ -39,7 +39,7 @@ RUN \
 ### *** Java (Semeru) *** ###
 RUN \
     ARCH="$(uname -m)" && \
-    SEMERU_JDK="jdk-17.0.9%2B9_openj9-0.41.0" && \
+    SEMERU_JDK="jdk-17.0.13%2B11_openj9-0.48.0" && \
     SEMERU_RPM="https://github.com/ibmruntimes/semeru${JAVA_VERSION}-binaries/releases/download/${SEMERU_JDK}/ibm-semeru-open-${JAVA_VERSION}-jdk-${SEMERU_VERSION}.${ARCH}.rpm" && \
     YUM_PKGS="${SEMERU_RPM}" && \
     yum -y install --nodocs ${YUM_PKGS} && \
@@ -91,9 +91,9 @@ FROM core AS code
 
 ENV \
     ZOWE_CLI_PLUGINS_DIR="/usr/local/lib/node_modules" \
-    ZOWE_CLI_VERSION="zowe-v2-lts" \
+    ZOWE_CLI_VERSION="zowe-v3-lts" \
     RSE_API_VERSION="latest" \
-    NPM_VERSION="9.*"
+    NPM_VERSION="10.*"
 
 COPY --from=code-builder /tmp/wheels/ /tmp/wheels/
 
@@ -114,10 +114,12 @@ RUN \
     python -m pip install --no-cache-dir ansible && \
     ansible-galaxy collection install --no-cache -p ${ANSIBLE_COLLECTIONS} ${ANSIBLE_PKGS}
 
-### *** Install Zowe CLI, Zapp Core, RSE API *** ###
+### *** Install Zowe CLI, RSE API *** ###
 RUN \
     --mount=type=secret,id=docker_secret,dst=/run/secrets/docker_secret source /run/secrets/docker_secret && \
-    /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" && \
+    if [[ -n "${NPM_REG}" ]] ; then \
+      /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" ; \
+    fi && \
     NPM_PKGS=("@zowe/cli@${ZOWE_CLI_VERSION}" "@ibm/rse-api-for-zowe-cli@${RSE_API_VERSION}") && \
     NODE_PATH=/usr/lib/node_modules && \
     for NPM_PKG in "${NPM_PKGS[@]}"; do \
@@ -128,34 +130,6 @@ RUN \
     zowe plugins install  "$NODE_PATH/@ibm/rse-api-for-zowe-cli" && \
     zowe plugins list && \
     rm -rfv "/home/user/.npmrc"
-
-FROM code AS analyze
-
-###########################################
-###
-###   Analyze Instruction Set
-###
-###########################################
-
-ENV \
-    WA="${HOME}/wazianalyze" \
-    WADATA="${HOME}/wazianalyze/data" \
-    WADATA_TEMPLATES="${HOME}/wazianalyze/templates" \
-    AZN_SSL_LAX="true" \
-    PATH="${HOME}/wazianalyze/script${PATH:+:${PATH}}"
-
-EXPOSE 5000/tcp
-EXPOSE 8001/tcp
-EXPOSE 4680/tcp
-
-RUN \
-    ARCH="$(uname -m)" && \
-    ANALYZE_BINARIES="analyze_binaries" && \
-    ANALYZE_WORKDIR="/tmp/${ANALYZE_BINARIES}" && \
-    mkdir -pv "${ANALYZE_WORKDIR}" "${WA}" && \
-    echo "Unzipping Wazi Analyze binaries...(please wait)" && \
-    unzip -o "/tmp/${ANALYZE_BINARIES}.zip" "wazianalyze/${ARCH}/"* -d "${ANALYZE_WORKDIR}" > /dev/null && \
-    mv -fv "${ANALYZE_WORKDIR}/wazianalyze/${ARCH}/"* "${WA}"
 
 ###########################################
 
@@ -172,10 +146,10 @@ ENTRYPOINT [ "/entrypoint.sh" ]
 CMD ["tail", "-f", "/dev/null"]
 
 ENV \
-    SUMMARY="IBM Wazi for Dev Spaces" \
-    DESCRIPTION="IBM Wazi for Dev Spaces" \
-    PRODNAME="Wazi Code" \
-    COMPNAME="Wazi" \
+    SUMMARY="IBM Developer for z/OS on Red Hat OpenShift Dev Spaces" \
+    DESCRIPTION="Extended developer image for using enterprise appliation development with IBM Developer for z/OS on VS Code tools." \
+    PRODNAME="IBM Developer for z/OS on Red Hat OpenShift Dev Spaces" \
+    COMPNAME="IDzEE" \
     CLOUDPAK_ID="9d41d2d8126f4200b62ba1acc0dffa2e" \
     PRODUCT_ID="0e775d0d3f354a5ca074a6a4398045f3" \
     PRODUCT_METRIC="AUTHORIZED_USER" \
