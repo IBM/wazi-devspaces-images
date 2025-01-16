@@ -7,4 +7,3 @@ postgresql13.tar.gz
 ds_config.json
 bundles.db
 /.vscode
-.docker_secret
