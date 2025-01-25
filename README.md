@@ -25,7 +25,7 @@ The images build without many prerequites. However, as they are all based on [Re
 Once you logged in with `docker login registry.redhat.io` you can build the image simply by running
 
 ```bash
-docker build -f devspaces-sidecar/wazi.Dockerfile -t idzee-devspaces-sidecar:5.0.0 --secret id=docker_secret,src=.docker_secret ./devspaces-sidecar
+docker build -f devspaces-sidecar/wazi.Dockerfile -t idzee-devspaces-sidecar:5.0.0 ./devspaces-sidecar
 ```
 
 Then you can push the image to your private image registry and use them from your devfiles as described in the documentation. We recommend that you run security scans on these images yourself to assess if you can live with any open security isues that are found. Red Hat and IBM are committed to keeping images up-to-date, but as new issues are discovered every day you want to scan and evaluate the risks as well.

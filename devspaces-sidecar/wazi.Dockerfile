@@ -115,11 +115,14 @@ RUN \
     ansible-galaxy collection install --no-cache -p ${ANSIBLE_COLLECTIONS} ${ANSIBLE_PKGS}
 
 ### *** Install Zowe CLI, RSE API *** ###
+# for building from an inhouse npm registry with Zowe add
+    # --mount=type=secret,id=docker_secret,dst=/run/secrets/docker_secret source /run/secrets/docker_secret && \
+    # if [[ -n "${NPM_REG}" ]] ; then \
+    #   /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" ; \
+    # fi && \
+# then build with
+    # docker build -f devspaces-sidecar/wazi.Dockerfile -t idzee-devspaces-sidecar:5.0.0 --secret id=docker_secret,src=.docker_secret ./devspaces-sidecar
 RUN \
-    --mount=type=secret,id=docker_secret,dst=/run/secrets/docker_secret source /run/secrets/docker_secret && \
-    if [[ -n "${NPM_REG}" ]] ; then \
-      /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" ; \
-    fi && \
     NPM_PKGS=("@zowe/cli@${ZOWE_CLI_VERSION}" "@ibm/rse-api-for-zowe-cli@${RSE_API_VERSION}") && \
     NODE_PATH=/usr/lib/node_modules && \
     for NPM_PKG in "${NPM_PKGS[@]}"; do \
