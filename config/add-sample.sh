@@ -12,5 +12,6 @@
 # and adjust the oc command parameter.
 
 sh ./add-sample.sh
+oc project openshift-operators
 oc create configmap getting-started-samples --from-file=wazi-samples.json -n openshift-operators
 oc label configmap getting-started-samples app.kubernetes.io/part-of=che.eclipse.org app.kubernetes.io/component=getting-started-samples -n openshift-operators
