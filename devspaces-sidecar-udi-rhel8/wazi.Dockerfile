@@ -1,6 +1,6 @@
 ###############################################################################
 # Licensed Materials - Property of IBM.
-# Copyright IBM Corporation 2023, 2024. All Rights Reserved.
+# Copyright IBM Corporation 2023, 2025. All Rights Reserved.
 # U.S. Government Users Restricted Rights - Use, duplication or disclosure
 # restricted by GSA ADP Schedule Contract with IBM Corp.
 #
@@ -8,7 +8,7 @@
 #  IBM Corporation - initial API and implementation
 ###############################################################################
 
-FROM registry.redhat.io/devspaces/udi-rhel8:latest AS core
+FROM registry.redhat.io/devspaces/udi-base-rhel8:latest AS core
 
 ###########################################
 ###
@@ -16,12 +16,13 @@ FROM registry.redhat.io/devspaces/udi-rhel8:latest AS core
 ###
 ###########################################
 
-ARG PRODUCT_VERSION="5.1.0"
+ARG PRODUCT_VERSION="5.2.1"
 USER 0
 
 ENV \
     JAVA_VERSION="17" \
-    SEMERU_VERSION="17.0.13.11_0.48.0-1"
+    SEMERU_VERSION="17.0.15.5_0.51.0-1" \
+    SEMERU_JDK="jdk-17.0.15%2B5_openj9-0.51.0-m2"
 
 COPY LICENSE /licenses/
 COPY *.sh /tmp/
@@ -39,7 +40,6 @@ RUN \
 ### *** Java (Semeru) *** ###
 RUN \
     ARCH="$(uname -m)" && \
-    SEMERU_JDK="jdk-17.0.13%2B11_openj9-0.48.0" && \
     SEMERU_RPM="https://github.com/ibmruntimes/semeru${JAVA_VERSION}-binaries/releases/download/${SEMERU_JDK}/ibm-semeru-open-${JAVA_VERSION}-jdk-${SEMERU_VERSION}.${ARCH}.rpm" && \
     YUM_PKGS="${SEMERU_RPM}" && \
     yum -y install --nodocs ${YUM_PKGS} && \
@@ -116,18 +116,18 @@ RUN \
 
 ### *** Install Zowe CLI, RSE API *** ###
 # for building from an inhouse npm registry with Zowe add
-    # --mount=type=secret,id=docker_secret,dst=/run/secrets/docker_secret source /run/secrets/docker_secret && \
-    # if [[ -n "${NPM_REG}" ]] ; then \
-    #   /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" ; \
-    # fi && \
+# --mount=type=secret,id=docker_secret,dst=/run/secrets/docker_secret source /run/secrets/docker_secret && \
+# if [[ -n "${NPM_REG}" ]] ; then \
+#   /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" ; \
+# fi && \
 # then build with
-    # docker build -f devspaces-sidecar/wazi.Dockerfile -t idzee-devspaces-sidecar:5.0.0 --secret id=docker_secret,src=.docker_secret ./devspaces-sidecar
+# docker build -f devspaces-sidecar/wazi.Dockerfile -t idzee-devspaces-sidecar:5.0.0 --secret id=docker_secret,src=.docker_secret ./devspaces-sidecar
 RUN \
     NPM_PKGS=("@zowe/cli@${ZOWE_CLI_VERSION}" "@ibm/rse-api-for-zowe-cli@${RSE_API_VERSION}") && \
     NODE_PATH=/usr/lib/node_modules && \
     for NPM_PKG in "${NPM_PKGS[@]}"; do \
-        echo "Installing ${NPM_PKG} ..."; \
-        npm install -g ${NPM_PKG} --ignore-scripts --no-audit --no-fund --no-update-notifier; \
+    echo "Installing ${NPM_PKG} ..."; \
+    npm install -g ${NPM_PKG} --ignore-scripts --no-audit --no-fund --no-update-notifier; \
     done && \
     npm list -g --depth=0 && \
     zowe plugins install  "$NODE_PATH/@ibm/rse-api-for-zowe-cli" && \
@@ -160,25 +160,24 @@ ENV \
     PRODUCT_CLOUDPAK_RATIO="5:1"
 
 LABEL \
-      version="${PRODUCT_VERSION}" \
-      productVersion="${PRODUCT_VERSION}" \
-      maintainer="IBM Corporation" \
-      vendor="IBM Corporation" \
-      license="EPLv2" \
-      name="$SUMMARY" \
-      summary="$SUMMARY" \
-      description="$DESCRIPTION" \
-      io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="$DESCRIPTION" \
-      io.openshift.tags="$PRODNAME,$COMPNAME" \
-      com.redhat.component="$PRODNAME-$COMPNAME-container" \
-      io.openshift.expose-services="" \
-      usage="" \
-      cloudpakName="$SUMMARY" \
-      cloudpakId="$CLOUDPAK_ID" \
-      cloudpakMetric="$CLOUDPAK_METRIC" \
-      productName="$PRODNAME" \
-      productID="$PRODUCT_ID" \
-      productMetric="$PRODUCT_METRIC" \
-      productChargedContainers="$PRODUCT_CHARGED_CONTAINERS" \
-      productCloudpakRatio="$PRODUCT_CLOUDPAK_RATIO"
+    version="${PRODUCT_VERSION}" \
+    productVersion="${PRODUCT_VERSION}" \
+    maintainer="IBM Corporation" \
+    vendor="IBM Corporation" \
+    license="EPLv2" \
+    name="$SUMMARY" \
+    summary="$SUMMARY" \
+    description="$DESCRIPTION" \
+    io.k8s.description="$DESCRIPTION" \
+    io.k8s.display-name="$DESCRIPTION" \
+    io.openshift.tags="$PRODNAME,$COMPNAME" \
+    com.redhat.component="$PRODNAME-$COMPNAME-container" \
+    io.openshift.expose-services="" \
+    usage="" \
+    cloudpakName="$SUMMARY" \
+    cloudpakId="$CLOUDPAK_ID" \
+    productName="$PRODNAME" \
+    productID="$PRODUCT_ID" \
+    productMetric="$PRODUCT_METRIC" \
+    productChargedContainers="$PRODUCT_CHARGED_CONTAINERS" \
+    productCloudpakRatio="$PRODUCT_CLOUDPAK_RATIO"

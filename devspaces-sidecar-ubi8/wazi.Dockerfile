@@ -34,8 +34,8 @@ RUN \
     # Change permissions to let any arbitrary user
     mkdir -p /projects && \
     for f in "${HOME}" "/etc/passwd" "/etc/group" "/projects"; do \
-        echo "Changing permissions on ${f}" && chgrp -R 0 ${f} && \
-        chmod -R g+rwX ${f}; \
+    echo "Changing permissions on ${f}" && chgrp -R 0 ${f} && \
+    chmod -R g+rwX ${f}; \
     done && \
     # Generate passwd.template
     cat /etc/passwd | \
@@ -73,13 +73,13 @@ ENV \
 RUN \
     --mount=type=secret,id=docker_secret,dst=/run/secrets/docker_secret source /run/secrets/docker_secret && \
     if [[ -n "${NPM_REG}" ]] ; then \
-      echo "Fetching RSE API Plugin from ${NPM_REG}" ; \
-      /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" ; \
+    echo "Fetching RSE API Plugin from ${NPM_REG}" ; \
+    /tmp/wazi_sidecar.sh --npmrc "/home/user/.npmrc" "${NPM_URI}" "${NPM_REG}" "${NPM_USER}" "${NPM_KEY}" ; \
     fi && \
     NPM_PKGS=("@zowe/cli@${ZOWE_CLI_VERSION}" "@ibm/rse-api-for-zowe-cli@${RSE_API_VERSION}") && \
     for NPM_PKG in "${NPM_PKGS[@]}"; do \
-        echo "Installing ${NPM_PKG} ..."; \
-        npm install -g ${NPM_PKG} --ignore-scripts --no-audit --no-fund --no-update-notifier; \
+    echo "Installing ${NPM_PKG} ..."; \
+    npm install -g ${NPM_PKG} --ignore-scripts --no-audit --no-fund --no-update-notifier; \
     done && \
     npm list -g --depth=0 && \
     zowe plugins install  "@ibm/rse-api-for-zowe-cli" && \
@@ -116,25 +116,24 @@ ENV \
     PRODUCT_CLOUDPAK_RATIO="5:1"
 
 LABEL \
-      version="${PRODUCT_VERSION}" \
-      productVersion="${PRODUCT_VERSION}" \
-      maintainer="IBM Corporation" \
-      vendor="IBM Corporation" \
-      license="EPLv2" \
-      name="$SUMMARY" \
-      summary="$SUMMARY" \
-      description="$DESCRIPTION" \
-      io.k8s.description="$DESCRIPTION" \
-      io.k8s.display-name="$DESCRIPTION" \
-      io.openshift.tags="$PRODNAME,$COMPNAME" \
-      com.redhat.component="$PRODNAME-$COMPNAME-container" \
-      io.openshift.expose-services="" \
-      usage="" \
-      cloudpakName="$SUMMARY" \
-      cloudpakId="$CLOUDPAK_ID" \
-      cloudpakMetric="$CLOUDPAK_METRIC" \
-      productName="$PRODNAME" \
-      productID="$PRODUCT_ID" \
-      productMetric="$PRODUCT_METRIC" \
-      productChargedContainers="$PRODUCT_CHARGED_CONTAINERS" \
-      productCloudpakRatio="$PRODUCT_CLOUDPAK_RATIO"
+    version="${PRODUCT_VERSION}" \
+    productVersion="${PRODUCT_VERSION}" \
+    maintainer="IBM Corporation" \
+    vendor="IBM Corporation" \
+    license="EPLv2" \
+    name="$SUMMARY" \
+    summary="$SUMMARY" \
+    description="$DESCRIPTION" \
+    io.k8s.description="$DESCRIPTION" \
+    io.k8s.display-name="$DESCRIPTION" \
+    io.openshift.tags="$PRODNAME,$COMPNAME" \
+    com.redhat.component="$PRODNAME-$COMPNAME-container" \
+    io.openshift.expose-services="" \
+    usage="" \
+    cloudpakName="$SUMMARY" \
+    cloudpakId="$CLOUDPAK_ID" \
+    productName="$PRODNAME" \
+    productID="$PRODUCT_ID" \
+    productMetric="$PRODUCT_METRIC" \
+    productChargedContainers="$PRODUCT_CHARGED_CONTAINERS" \
+    productCloudpakRatio="$PRODUCT_CLOUDPAK_RATIO"
