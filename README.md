@@ -29,7 +29,7 @@ The images build without many prerequisites. However, as they are all based on R
 Once you logged in with `docker login registry.redhat.io` you can build the image simply by running a command such as such using the directory name of the variant that you want to build
 
 ```bash
-docker build -f devspaces-sidecar-udibase-rhel9/wazi.Dockerfile -t idzee-devspaces-sidecar:5.3.0 ./devspaces-sidecar-udibase-rhel9
+docker build -f devspaces-sidecar-udibase-rhel9/wazi.Dockerfile -t idzee-devspaces-sidecar:6.4.0 ./devspaces-sidecar-udibase-rhel9
 ```
 
 Then you can push the image to your private image registry and use them from your devfiles as described in the [OpenShift Dev Spaces documentation](https://docs.redhat.com/en/documentation/red_hat_openshift_dev_spaces/3.20/html/user_guide/getting-started-with-devspaces). We recommend that you run security scans on these images yourself to assess if you can live with any open security issues that are found. Red Hat and IBM are committed to keeping images up-to-date, but as new issues are discovered every day you want to scan and evaluate the risks as well.
@@ -39,7 +39,7 @@ To build a multi-architecture image that can be used with s390x as well as x86-b
 ```bash
 cd devspaces-sidecar-udibase-rhel9
 docker buildx create --use --name devspaces-builder
-docker buildx build --platform linux/amd64,linux/s390x --tag idzee-devspaces:5.3.0 --builder devspaces-builder -f wazi.Dockerfile .
+docker buildx build --platform linux/amd64,linux/s390x --tag idzee-devspaces:6.4.0 --builder devspaces-builder -f wazi.Dockerfile .
 ```
 
 ## Images available
@@ -73,10 +73,11 @@ components:
           path: /home/user/.zowe
 ```
 
-Instead of `latest` you can use the version number such as `5.3.0` or the SHA listed in the table below. Here is a list of released images.
+Instead of `latest` you can use the version number such as `6.4.0` or the SHA listed in the table below. Here is a list of released images.
 
 | <sub>Registry and Image</sub> | <sub>Version</sub> |
 | :--- | --- |
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:TBD</sub>|<sub><b>6.4.0</b></sub>|
 |<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:2ef78deed87dd21d1f39cfd3c52e035b9b2d74c3a4c2af6a6b615eb3b20b374a</sub>|<sub><b>5.3.0</b></sub>|
 |<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:925aee1f34ee72c65cfa1fe1b03b71dd2872c71aea24a1c82e86c61fa772eeb5</sub>|<sub><b>5.1.0</b></sub>|
 

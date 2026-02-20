@@ -1,6 +1,6 @@
 ###############################################################################
 # Licensed Materials - Property of IBM.
-# Copyright IBM Corporation 2023, 2025. All Rights Reserved.
+# Copyright IBM Corporation 2023, 2026. All Rights Reserved.
 # U.S. Government Users Restricted Rights - Use, duplication or disclosure
 # restricted by GSA ADP Schedule Contract with IBM Corp.
 #
@@ -16,14 +16,16 @@ FROM registry.redhat.io/devspaces/udi-base-rhel9:latest AS core
 ###
 ###########################################
 
-ARG PRODUCT_VERSION="5.3.0"
+ARG PRODUCT_VERSION="6.4.0"
 USER 0
 
+# Fetch Java from GitHub at
+# https://github.com/ibmruntimes/semeru21-binaries/releases/download/jdk-21.0.9%2B10_openj9-0.56.0/ibm-semeru-open-21-jdk-21.0.9.10_0.56.0-1.x86_64.rpm
 ENV \
-    JAVA_VERSION="17" \
-    SEMERU_JDK="jdk-17.0.15%2B5_openj9-0.51.0-m2" \
-    SEMERU_VERSION="17.0.15.5_0.51.0-1" \
-    NODEJS_VERSION="20" \
+    JAVA_VERSION="21" \
+    SEMERU_JDK="jdk-21.0.9%2B10_openj9-0.56.0" \
+    SEMERU_VERSION="21.0.9.10_0.56.0-1" \
+    NODEJS_VERSION="22" \
     MAVEN_VERSION="3.8"
 
 COPY LICENSE /licenses/
@@ -42,8 +44,8 @@ RUN \
     dnf -y install --noplugins --nodocs ${DNF_PKGS}
 
 ### *** For CVE Remediation
-RUN \
-    dnf -y remove podman
+# RUN \
+#     dnf -y remove podman
 
 ### *** Install IBM Semeru Java *** ###
 RUN \

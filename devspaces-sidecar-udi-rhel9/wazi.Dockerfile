@@ -1,6 +1,6 @@
 ###############################################################################
 # Licensed Materials - Property of IBM.
-# Copyright IBM Corporation 2023, 2025. All Rights Reserved.
+# Copyright IBM Corporation 2023, 2026. All Rights Reserved.
 # U.S. Government Users Restricted Rights - Use, duplication or disclosure
 # restricted by GSA ADP Schedule Contract with IBM Corp.
 #
@@ -16,13 +16,15 @@ FROM registry.redhat.io/devspaces/udi-rhel9:latest AS core
 ###
 ###########################################
 
-ARG PRODUCT_VERSION="5.3.0"
+ARG PRODUCT_VERSION="6.4.0"
 USER 0
 
+# Fetch Java from GitHub at
+# https://github.com/ibmruntimes/semeru21-binaries/releases/download/jdk-21.0.9%2B10_openj9-0.56.0/ibm-semeru-open-21-jdk-21.0.9.10_0.56.0-1.x86_64.rpm
 ENV \
-    JAVA_VERSION="17" \
-    SEMERU_JDK="jdk-17.0.15%2B5_openj9-0.51.0-m2" \
-    SEMERU_VERSION="17.0.15.5_0.51.0-1"
+    JAVA_VERSION="21" \
+    SEMERU_JDK="jdk-21.0.9%2B10_openj9-0.56.0" \
+    SEMERU_VERSION="21.0.9.10_0.56.0-1"
 
 COPY LICENSE /licenses/
 COPY *.sh /tmp/
@@ -50,15 +52,9 @@ RUN \
 
 ### *** For CVE Remediation
 
-RUN \
-    ARCH="$(uname -m)" && \
-    YUM_PKGS="git-lfs" && \
-    export HELM_INSTALL_DIR="/usr/bin" && \
-    export ODO_INSTALL_DIR="$(which odo)" && \
-    curl -o- -skL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash && \
-    curl -o- -skL https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh | bash && \
-    curl -skL https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/odo/latest/odo-linux-${ARCH} -o ${ODO_INSTALL_DIR} && \
-    yum -y install --nodocs ${YUM_PKGS}
+# RUN \
+#     ARCH="$(uname -m)" && \
+#     YUM_PKGS="git-lfs" && \
 
 FROM core AS code
 
