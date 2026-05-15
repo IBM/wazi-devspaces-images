@@ -16,15 +16,15 @@ FROM registry.redhat.io/devspaces/udi-base-rhel9:latest AS core
 ###
 ###########################################
 
-ARG PRODUCT_VERSION="6.4.0"
+ARG PRODUCT_VERSION="6.5.0"
 USER 0
 
 # Fetch Java from GitHub at
-# https://github.com/ibmruntimes/semeru21-binaries/releases/download/jdk-21.0.9%2B10_openj9-0.56.0/ibm-semeru-open-21-jdk-21.0.9.10_0.56.0-1.x86_64.rpm
+# https://github.com/ibmruntimes/semeru21-binaries/releases/download/jdk-21.0.10%2B7.1_openj9-0.57.0/ibm-semeru-open-21-jdk-21.0.10.1-1.x86_64.rpm
 ENV \
     JAVA_VERSION="21" \
-    SEMERU_JDK="jdk-21.0.9%2B10_openj9-0.56.0" \
-    SEMERU_VERSION="21.0.9.10_0.56.0-1" \
+    SEMERU_JDK="jdk-21.0.10%2B7.1_openj9-0.57.0" \
+    SEMERU_VERSION="21.0.10.1-1" \
     NODEJS_VERSION="22" \
     MAVEN_VERSION="3.8"
 
