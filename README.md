@@ -77,7 +77,7 @@ Instead of `latest` you can use the version number such as `6.6.0` or the SHA li
 
 | <sub>Registry and Image</sub> | <sub>Version</sub> |
 | :--- | --- |
-|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:TBD</sub>|<sub><b>6.6.0</b></sub>|
+|<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:2a6178208a4d5a8784d5f32109c9f4c7370b862af931732df5bb7bdf6ae14e2b</sub>|<sub><b>6.6.0</b></sub>|
 |<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:2ef78deed87dd21d1f39cfd3c52e035b9b2d74c3a4c2af6a6b615eb3b20b374a</sub>|<sub><b>5.3.0</b></sub>|
 |<sub>icr.io/wazi-code/ibm-wazi-for-devspaces-sidecar@sha256:925aee1f34ee72c65cfa1fe1b03b71dd2872c71aea24a1c82e86c61fa772eeb5</sub>|<sub><b>5.1.0</b></sub>|
 
